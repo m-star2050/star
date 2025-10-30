@@ -99,7 +99,14 @@ class ContactController extends Controller
     public function destroy(Contact $contact)
     {
         $contact->delete();
-        return redirect()->route('crm.contacts.index')->with('status', 'Contact deleted');
+        return redirect()->route('crm.contacts.index')->with('status', 'Contact archived');
+    }
+
+    public function restore($id)
+    {
+        $contact = Contact::withTrashed()->findOrFail($id);
+        $contact->restore();
+        return redirect()->route('crm.contacts.index')->with('status', 'Contact restored');
     }
 
     public function inline(Request $request, Contact $contact)
