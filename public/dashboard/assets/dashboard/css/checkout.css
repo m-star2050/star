@@ -1,0 +1,253 @@
+/*--------------------------------------*/
+
+/* Fonts
+/*--------------------------------------*/
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
+/*--------------------------------------*/
+
+/*Element Base
+/*--------------------------------------*/
+body,
+html,
+header,
+footer,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.h1,
+.h2,
+.h3,
+.h4,
+.h5,
+.h6,
+ul,
+li,
+p,
+section,
+main,
+nav{
+	margin:0px;
+	padding:0px;
+	display:block;
+}
+*{
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+:focus-visible {
+    outline: -webkit-focus-ring-color auto 0px;
+}
+.navbar-toggler:focus,
+button:focus,
+.btn-close:focus,
+.btn-check:focus+.btn,
+.btn:focus,
+.accordion-button:focus,
+.form-check-input:focus,
+.form-control:focus,
+.page-link:focus{
+	box-shadow: none;
+}
+body{
+	overflow-x: hidden;
+}
+a{
+	text-decoration: none;
+}
+img{
+	max-width: 100%;
+	height:auto;
+	object-fit: cover;
+	vertical-align: middle;
+}
+.navbar-toggler{
+	border: 0;
+}
+.z-index-9{
+	z-index: 9;
+}
+.cursor-pointer{
+	cursor: pointer;
+}
+.centerflex{
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+.betweenflex{
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+.alignflex{
+	display: flex;
+	align-items: center;
+}
+/* Fonts */
+:root {
+	--font-default: "Poppins", sans-serif;
+}
+/* Colors */
+:root {
+	--color-default: #222222;
+	--color-primary: #1d293f;
+	--color-warning: #ef6c20;
+}
+/* Smooth scroll behavior */
+:root {
+	scroll-behavior: smooth;
+}
+body{
+	font-size: 16px;
+	line-height: 1.5;
+	font-family: "Poppins", sans-serif;
+	color: #FFF;
+}
+.spad{
+	padding: 80px 0;
+}
+.spad-2{
+	padding: 40px 0;
+}
+.primary-bg{
+	background-color: var(--color-primary);
+}
+body {
+	/*height: 100vh;*/
+    background-color: #000000;
+    background-image: url(../images/body-bg.jpeg);
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+    /* backdrop-filter: blur(1px); */
+    /* background-color: rgba(28, 26, 26, 0.6);*/
+}
+
+.transparent-bg{
+	background-color: transparent;
+	backdrop-filter: blur(15px);
+	color: #FFF;
+}
+/*--------------------------------------*/
+
+/*Typography
+/*--------------------------------------*/
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.h1,
+.h2,
+.h3,
+.h4,
+.h5,
+.h6{
+	font-family: "Playfair Display", serif;
+	font-weight: 600;
+}
+.section-header{
+    position: relative;
+	max-width: 460px;
+	margin: 0 auto;
+}
+.section-header:after {
+    content: "";
+    position: absolute;
+    display: block;
+    width: 100px;
+    height: 2px;
+    background-color: #7366f4;
+    left: 0;
+    right: 0;
+    bottom: -10px;
+    margin: auto;
+}
+/*--------------------------------------*/
+
+/*Button
+/*--------------------------------------*/
+.btn{
+	border-radius: 20px;
+	padding: 6px 48px;
+}
+/*--------------------------------------*/
+
+/*Form Control
+/*--------------------------------------*/
+.form-control{
+	background-color: transparent;
+	border-radius: 0;
+	border: 0;
+	border-bottom: 2px solid #ccc;
+	color: #FFF;
+	padding-left: 0;
+}
+.form-control::placeholder{
+	color: #FFF;
+}
+/*--------------------------------------*/
+
+/*Scroll top button
+/*--------------------------------------*/
+.scroll-top {
+  position: fixed;
+  visibility: hidden;
+  opacity: 0;
+  right: 15px;
+  bottom: 15px;
+  z-index: 99999;
+  background-color: #7366f4;
+  width: 36px;
+  height: 36px;
+  border-radius: 50px;
+  transition: all 0.4s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--color-primary);
+}
+.scroll-top i {
+  font-size: 28px;
+  color: #FFFFFF;
+  line-height: 0;
+}
+.scroll-top:hover {
+  background-color: #7366f4;
+  color: #FFFFFF;
+  box-shadow: 0 0 4px;
+}
+.scroll-top.active {
+  visibility: visible;
+  opacity: 1;
+}
+/*--------------------------------------*/
+
+/*checkout-page
+/*--------------------------------------*/
+.checkout-page .card-left{
+	margin-top: 80px;
+}
+.checkout-page .nav-tabs .nav-link{
+	color: #FFF;
+	font-weight: 600;
+}
+.checkout-page .nav-tabs .nav-item.show .nav-link,
+.checkout-page .nav-tabs .nav-link.active{
+	background-color: transparent;
+    border: 0;
+    border-bottom: 3px solid;
+}
+.checkout-page .nav-tabs .nav-link:focus,
+.checkout-page .nav-tabs .nav-link:hover{
+	border: 0;
+	border-bottom: 3px solid;
+}
+/*--------------------------------------*/

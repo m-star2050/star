@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+    Afli Social
+    </title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@2.2.0/fonts/remixicon.css" />
+    <link rel="stylesheet" href="https://unpkg.com/css-pro-layout@1.1.0/dist/css/css-pro-layout.css" />
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&amp;display=swap" />
+
+    <link href="assets/dashboard/css/logout-falling.css" rel="stylesheet" type="text/css" />
+    <link href="assets/dashboard/css/common.css" rel="stylesheet" type="text/css" />
+    <link href="assets/dashboard/css/main.css" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="assets/css/global.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/magnific-popup@1.1.0/dist/magnific-popup.css">
+    
+
+    <link href="assets/dashboard/css/cms-style.css" rel="stylesheet" type="text/css" />
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.4/jquery-confirm.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Exo:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-confirm@3.3.4/dist/jquery-confirm.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: "Exo", sans-serif !important;
+        }
+    
+        .exo {
+            font-family: "Exo", sans-serif !important;
+    
+        }
+    </style>
+    <style>
+        thead th {
+            text-align: center;
+        }
+    </style>
+    <style>
+        .exo {
+            font-family: "Exo", sans-serif;
+            font-optical-sizing: auto;
+            font-weight: 500;
+            font-style: normal;
+        }
+    
+        thead th {
+            text-align: center;
+        }
+    
+        .card-video-container {
+            height: 450px !important;
+        }
+    
+        .pendingtext {
+            position: absolute;
+            top: -150%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 18px;
+            width: 100%;
+            text-align: center
+        }
+    
+        .pendingtext p {
+            text-align: center;
+        }
+    
+        .jconfirm.jconfirm-modern .jconfirm-box {
+            background: rgba(55, 55, 55, 0.6) !important;
+        }
+    
+        .jconfirm.jconfirm-modern .jconfirm-box div.jconfirm-content {
+            color: #fff !important;
+        }
+    
+        .modal-content {
+    
+            background: rgba(55, 55, 55, 1.0) !important;
+        }
+    
+        #paymentModalHeading {
+            color: #fff !important;
+        }
+    
+        #paymentModal label {
+            color: #fff !important;
+        }
+    
+        #paymentModal .card_elements {
+            background-color: transparent;
+            border-color: #fff !important;
+        }
+    
+        #paymentModal .card_elements::placeholder {
+            color: lightgray;
+        }
+    
+        #paymentModal .card_elements {
+            color: #fff !important;
+        }
+    
+        #completeCreditCardPayment {
+            background: linear-gradient(45deg, var(--golden) 0%, var(--light-golden) 100%);
+            border-radius: 100px;
+            will-change: transform;
+            color: black;
+            font-weight: 600;
+            font-size: 14px;
+            margin-top: 10px;
+            transition: .4s all ease;
+            padding-left: 30px;
+            padding-right: 30px;
+            text-align: center;
+            margin: 10px auto;
+            border-color: transparent;
+        }
+    </style>
+    
+    <style>
+        .nissan-header-main {
+            position: relative;
+            left: 0;
+            top: 0;
+            width: 100%;
+            z-index: 999;
+        }
+    
+        .left-bumber-front-style-set {
+            width: 60px;
+            position: relative;
+            background-color: white;
+            clip-path: polygon(100% 0%, 100% 100%, 50% 61%, 11% 12%, 24% 0%);
+            margin-right: -1px;
+        }
+    
+        .right-bumber-front-style-set {
+            width: 60px;
+            position: relative;
+            background-color: white;
+            clip-path: polygon(0% 0%, 0% 100%, 50% 61%, 89% 12%, 76% 0%);
+            margin-left: -1px;
+        }
+    
+        .left-bmp-style-set-s-d {
+            /* Adding backdrop filter for glass blur effect */
+            backdrop-filter: blur(15px);
+            /* Increase the blur value for more effect */
+            -webkit-backdrop-filter: blur(15px);
+            /* Safari support */
+    
+            /* Optional: You can adjust opacity for a better glass effect */
+            opacity: 0.9;
+            /* Adjust the transparency to make the effect more prominent */
+            background: linear-gradient(135deg,
+                    rgba(204, 204, 204, 0.837),
+                    rgba(170, 170, 170, 0.8));
+    
+            /* background-color: red; */
+            clip-path: polygon(0% 0%,
+                    85% 0%,
+                    82% 17%,
+                    87% 50%,
+                    98% 100%,
+                    10% 100%,
+                    2% 50%);
+            margin-right: -45px;
+        }
+    
+        .left-bmp-style-set-s-d ul {
+            margin-right: 60px;
+        }
+    
+        .left-bmp-style-set-s-d {
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+    
+            background: linear-gradient(135deg,
+                    rgba(204, 204, 204, 0.837),
+                    rgba(170, 170, 170, 0.86));
+    
+            clip-path: polygon(0% 0%,
+                    85% 0%,
+                    82% 17%,
+                    87% 50%,
+                    98% 100%,
+                    10% 100%,
+                    2% 50%);
+            margin-right: -45px;
+        }
+    
+        .left-bmp-style-set-s-d ul {
+            margin-right: 60px;
+        }
+    
+        .right-bmp-style-set-s-d {
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+    
+            background: linear-gradient(135deg,
+                    rgba(204, 204, 204, 0.837),
+                    rgba(170, 170, 170, 0.86));
+    
+            clip-path: polygon(100% 0%,
+                    15% 0%,
+                    18% 17%,
+                    13% 50%,
+                    2% 100%,
+                    90% 100%,
+                    98% 50%);
+    
+            margin-left: -45px;
+        }
+    
+        .right-bmp-style-set-s-d .welcome-container {
+            margin-left: 60px;
+        }
+    
+        .welcome-container {
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+    
+        .welcome-text {
+            color: white;
+            font-size: 14px;
+            font-weight: 400;
+            margin: 0;
+        }
+    
+        .separator {
+            color: white;
+            margin: 0 4px;
+        }
+    
+        .avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            object-fit: cover;
+            background-color: #ccc;
+        }
+    
+        .overlay-style-set-d-s {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.342);
+            z-index: 10;
+            display: none;
+            transition: 0.3s;
+        }
+    
+        .offcanvas-main-sidebar-style-set-d {
+            position: fixed;
+            left: -300px;
+            top: 0;
+            min-height: 100vh;
+            width: 300px;
+            background-color: white;
+            z-index: 11;
+            /* display: none; */
+            transition: 0.3s;
+        }
+    
+        #sideBarCloseBtn {
+            display: block;
+            text-align: center;
+        }
+    
+        .mobile-view-menu-style-set {
+            display: none;
+        }
+    
+        .bottom-icons-sidebar-fixed-style {
+            width: 267px;
+        }
+    
+        .nav-link-style-set-s {
+            font-size: 20px;
+            text-align: start;
+        }
+    
+        .sidebar-list-height-set-style {
+            height: 100vh;
+        }
+    
+        .cart-count-style {
+            position: absolute;
+            right: -7px;
+            top: -5px;
+            background-color: #000;
+            color: white;
+            border-radius: 50%;
+            width: 17px;
+            height: 17px;
+            font-size: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    
+        @media(max-width:550px) {
+            .hideMobile {
+                display: none !important;
+            }
+        }
+    
+        .nissan-header-main {
+            max-width: 100vw;
+    
+        }
+    
+        .popup-menu {
+            position: absolute !important;
+            top: 60px;
+            /* Adjust based on avatar size */
+            right: 30px;
+            background: white;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+            padding: 10px;
+            min-width: 150px;
+            z-index: 9999;
+            /* Ensure it's always above */
+            text-align: left;
+            display: none;
+    
+        }
+    
+        .popup-menu a {
+            display: block;
+            /* Ensure each link is on a new line */
+            padding: 10px;
+            text-decoration: none;
+            color: black;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+    
+        .popup-menu a:hover {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+    
+        .content-library .tab-content .card .more-edit {
+            display: block !important;
+        }
+    </style>
+    <link rel="stylesheet" href="assets/dashboard/css/cms-style.css">
+
+</head>
+
+<body>
+
+
+
+
+    <div class="layout has-sidebar fixed-sidebar fixed-header subscription-page">
+        <aside id="sidebar" class="sidebar break-point-sm has-bg-image">
+            <a id="btn-collapse" class="sidebar-collapser"><i class="ri-arrow-left-s-line"></i></a>
+            <div class="image-wrapper">
+            </div>
+            <div class="sidebar-layout">
+                <div class="sidebar-header">
+                    <div class="pro-sidebar-logo">
+                        <img src="round1.png" width="50px" alt="">
+                        <h5>Welcome User</h5>
+                    </div>
+                </div>
+                <div class="sidebar-content">
+                    <nav class="menu open-current-submenu">
+                        <ul>
+                            <li class="menu-header"><span style="font-weight: 700; color: #000;"> GENERAL </span></li>
+                            <li class="menu-item">
+                                <a href="#">
+                                    <span class="menu-icon">
+                                        <i class="ri-book-2-fill"></i>
+                                    </span>
+                                    <span class="menu-title">Dashboard</span>
+                                </a>
+                            </li>
+        
+                            <li class="menu-item">
+                                <a href="#">
+                                    <span class="menu-icon">
+                                        <i class="ri-shopping-cart-fill"></i>
+                                    </span>
+                                    <span class="menu-title">Ecommerce</span>
+                                </a>
+                            </li>
+                            <li class="menu-item">
+                                <a href="#">
+                                    <span class="menu-icon">
+                                        <i class="ri-money-dollar-circle-fill"></i>
+                                    </span>
+                                    <span class="menu-title">Transactions</span>
+                                </a>
+                            </li>
+        
+                        </ul>
+                    </nav>
+                </div>
+                <!-- <div class="sidebar-footer">
+                  <div class="footer-box">
+                    
+                  </div>
+                </div> -->
+            </div>
+        </aside>
+        <div id="overlay" class="overlay"></div>
+        <div class="layout">
+            <main class="content">
+                
+    
+                <header class="nissan-header-main py-3">
+                    <div id="overlayStyleSectionSS"></div>
+                    <div class="container text-center">
+                        <div class="d-inline-block">
+                            <div class="d-flex menu-mobile-transparent">
+                                <div class="left-bmp-style-set-s-d d-flex align-items-center pe-5">
+                                    <ul class="d-flex ps-0 align-items-center mb-0">
+                                        <li class="mx-5 list-unstyled">
+                                            <a href="{{ url('service') }}"
+                                                class="text-decoration-none text-white fw-semibold exo">Home</a>
+                                        </li>
+                                        <li class="mx-3 list-unstyled hideMobile">
+                                            <a href="{{ route('ai.ecommerce.buy') }}"
+                                                class="text-decoration-none text-white fw-semibold exo">Pricing</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="left-bumber-front-style-set"></div>
+                                <div
+                                    class="d-flex justify-content-around bg-white mid-menu-style-ss p-2 align-items-center">
+                                    <div class="mx-4 hideMobile">
+                                        <a href="#" class="text-black text-decoration-none position-relative">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="23" height="23"
+                                                fill="currentColor" class="bi bi-cart" viewBox="0 0 16 16">
+                                                <path
+                                                    d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5M3.102 4l1.313 7h8.17l1.313-7zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4m7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4m-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2m7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2" />
+                                            </svg>
+                                        </a>
+                                    </div>
+                                    <div class="logo mx-4 m-brand-logo hideMobile" style="width:35px;height:35px;">
+                                        <a href="#"><img src="{{ asset('assets/logo_maker/img/logo/logo2.png') }}"
+                                                height="40px" alt="" /></a>
+                                    </div>
+                                    <div class="menu-btn mx-4">
+                                        <button class="bg-transparent border-0 side-bar-style-btn-open-close-s btn-toggle"
+                                            id="left-side-menu-btn-set">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30"
+                                                fill="currentColor" class="bi bi-list" viewBox="0 0 16 16">
+                                                <path fill-rule="evenodd"
+                                                    d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="right-bumber-front-style-set hideMobile"></div>
+                                <div class="right-bmp-style-set-s-d d-flex align-items-center pe-5">
+                                    <div class="welcome-container">
+                                        
+                                        <span class="welcome-text exo">Welcome</span>
+                                        <span class="separator">—</span>
+                                        <img id="userAvatar" src="assets/images/userr.webp" alt="User avatar"
+                                            class="avatar" />
+                                    </div>
+                                </div>
+                                <div id="popupMenu" class="popup-menu">
+                                    <a href="#">Login</a>
+                                    <a href="#">Register</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+    
+                <div class="position-relative">
+    
+                    <div class="betweenflex mt-5">
+                        <h4 class="text-white">Subscriptions (2)</h4>
+                        <a href="#" class="btn btn-dark transparent-btn fs-6">Add</a>
+                    </div>
+    
+    
+                </div>
+    
+    
+    
+    
+                <div class="nestcart-table 1table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <td class="rounded-top-left fw-semibold">Product</td>
+                                <td align="center" class="fw-semibold">Domain</td>
+                                <td align="center" class="fw-semibold">Email</td>
+                                <td align="right" class="fw-semibold">Expiration</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+                            <tr>
+                                <td class="text-start">
+                                    <div class="dropdown">
+                                        <a class="1dropdown-toggle domain" data-bs-toggle="dropdown" aria-expanded="false">
+                                            Brand Name
+                                        </a>
+                            
+                                    </div>
+                                    <span class="gray-text text-uppercase text-dark fw-bold">
+                                        Package
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <p class="mb-1">
+                            
+                                      
+                            
+                                        <span class="circle-block position-relative">
+                                            <span data-bs-toggle="tooltip" data-bs-placement="top"
+                                                class="circle pending"></span>
+                                            <span>
+                                                https://google.com
+                                            </span>
+                                        </span>
+                            
+                                    </p>
+                                    <a href="#"
+                                        class="btn btn-sm btn-primary transparent-btn mt-1">
+                                        <i class="fa fa-cog"></i>
+                                    </a>
+                                    <a href="#" target="_blank" class="btn btn-sm btn-primary transparent-btn mt-1">
+                                        <i class="fa fa-eye"></i>
+                                    </a>
+                                    <a href="#" target="_blank"
+                                        class="btn btn-sm btn-primary transparent-btn mt-1">
+                                        CRM
+                                    </a>
+                         
+                            
+                                </td>
+                                <td align="center">
+                                    <div class="dropdown">
+                                        <a class="1dropdown-toggle domain" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
+                                                class="bi bi-envelope" viewBox="0 0 16 16">
+                                                <path
+                                                    d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1zm13 2.383-4.708 2.825L15 11.105zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741M1 11.105l4.708-2.897L1 5.383z">
+                                                </path>
+                                            </svg>
+                                        </a>
+                                        <ul class="dropdown-menu">
+                                            <li>
+                                                <a class="dropdown-item createEmail"  href="javascript:void(0)">Create</a>
+                                            </li>
+                            
+                                            <li><a class="dropdown-item manageEmail" href="javascript:void(0)">Manage</a></li>
+                                            <li><a class="dropdown-item" href="javascript:void(0)">Login</a></li>
+                                        </ul>
+                                    </div>
+                                </td>
+                                <td class="text-end">
+                                    <div class="dropdown">
+                                    <a class="1dropdown-toggle domain text-warning" data-bs-toggle="dropdown" aria-expanded="false">
+                                        $10/mo
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item renewSubscription" href="javascript:void(0)">Renew</a>
+                                        </li>
+                                        <li><a class="dropdown-item cancelSubscription"
+                                                href="javascript:void(0)">Cancel</a>
+                                        </li>
+                                    </ul>
+                            
+                                    </div>
+                                    <span class="gray-text">
+                                        <span style="color: red;">(Expired)</span>
+                                    </span>
+                                </td>
+                            </tr>
+    
+                        </tbody>
+                    </table>
+                </div>
+    
+    
+               
+    
+                <nav aria-label="Page navigation example">
+                    <ul class="pagination justify-content-end">
+                        
+                        <li class="page-item ">
+                            <a class="page-link" href="#">
+                               
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                    class="bi bi-chevron-left" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd"
+                                        d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0" />
+                                </svg>
+                            </a>
+                        </li>
+                        <li class="page-item active">
+                            <a class="page-link" >1</a>
+                        </li>
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                        class="bi bi-chevron-right" viewBox="0 0 16 16">
+                                        <path fill-rule="evenodd"
+                                            d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708" />
+                                    </svg>
+                                </a>
+                            </li>
+                    </ul>
+                </nav>
+    
+    
+                
+            </main>
+            <div class="overlay"></div>
+        </div>
+    </div>
+
+    <a href="https://wa.me/+971582422625" target="_blank" class="whatsapp-float">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp"
+            class="whatsapp-icon">
+    </a>
+    <script src="https://code.jquery.com/jquery-3.7.1.js"
+        integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous">
+        </script>
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/magnific-popup@1.1.0/dist/jquery.magnific-popup.min.js"></script>
+
+    <script src="{{ asset('assets/services/js/logout-falling.js') }}"></script>
+
+    <script>
+        function _defineProperty(obj, key, value) {
+            if (key in obj) {
+                Object.defineProperty(obj, key, {
+                    value: value,
+                    enumerable: true,
+                    configurable: true,
+                    writable: true
+                });
+            } else {
+                obj[key] = value;
+            }
+            return obj;
+        }
+        const ANIMATION_DURATION = 300;
+
+        const SIDEBAR_EL = document.getElementById("sidebar");
+
+        const SUB_MENU_ELS = document.querySelectorAll(
+            ".menu > ul > .menu-item.sub-menu");
+
+
+        const FIRST_SUB_MENUS_BTN = document.querySelectorAll(
+            ".menu > ul > .menu-item.sub-menu > a");
+
+
+        const INNER_SUB_MENUS_BTN = document.querySelectorAll(
+            ".menu > ul > .menu-item.sub-menu .menu-item.sub-menu > a");
+
+
+        class PopperObject {
+
+
+
+
+            constructor(reference, popperTarget) {
+                _defineProperty(this, "instance", null);
+                _defineProperty(this, "reference", null);
+                _defineProperty(this, "popperTarget", null);
+                this.init(reference, popperTarget);
+            }
+
+            init(reference, popperTarget) {
+                this.reference = reference;
+                this.popperTarget = popperTarget;
+                this.instance = Popper.createPopper(this.reference, this.popperTarget, {
+                    placement: "right",
+                    strategy: "fixed",
+                    resize: true,
+                    modifiers: [{
+                        name: "computeStyles",
+                        options: {
+                            adaptive: false
+                        }
+                    },
+
+
+                    {
+                        name: "flip",
+                        options: {
+                            fallbackPlacements: ["left", "right"]
+                        }
+                    }
+                    ]
+                });
+
+
+
+
+
+                document.addEventListener(
+                    "click",
+                    e => this.clicker(e, this.popperTarget, this.reference),
+                    false);
+
+
+                const ro = new ResizeObserver(() => {
+                    this.instance.update();
+                });
+
+                ro.observe(this.popperTarget);
+                ro.observe(this.reference);
+            }
+
+            clicker(event, popperTarget, reference) {
+                if (
+                    SIDEBAR_EL.classList.contains("collapsed") &&
+                    !popperTarget.contains(event.target) &&
+                    !reference.contains(event.target)) {
+                    this.hide();
+                }
+            }
+
+            hide() {
+                this.instance.state.elements.popper.style.visibility = "hidden";
+            }
+        }
+
+
+        class Poppers {
+
+
+            constructor() {
+                _defineProperty(this, "subMenuPoppers", []);
+                this.init();
+            }
+
+            init() {
+                SUB_MENU_ELS.forEach(element => {
+                    this.subMenuPoppers.push(
+                        new PopperObject(element, element.lastElementChild));
+
+                    this.closePoppers();
+                });
+            }
+
+            togglePopper(target) {
+                if (window.getComputedStyle(target).visibility === "hidden")
+                    target.style.visibility = "visible";
+                else
+                    target.style.visibility = "hidden";
+            }
+
+            updatePoppers() {
+                this.subMenuPoppers.forEach(element => {
+                    element.instance.state.elements.popper.style.display = "none";
+                    element.instance.update();
+                });
+            }
+
+            closePoppers() {
+                this.subMenuPoppers.forEach(element => {
+                    element.hide();
+                });
+            }
+        }
+
+
+        const slideUp = (target, duration = ANIMATION_DURATION) => {
+            const {
+                parentElement
+            } = target;
+            parentElement.classList.remove("open");
+            target.style.transitionProperty = "height, margin, padding";
+            target.style.transitionDuration = `${duration}ms`;
+            target.style.boxSizing = "border-box";
+            target.style.height = `${target.offsetHeight}px`;
+            target.offsetHeight;
+            target.style.overflow = "hidden";
+            target.style.height = 0;
+            target.style.paddingTop = 0;
+            target.style.paddingBottom = 0;
+            target.style.marginTop = 0;
+            target.style.marginBottom = 0;
+            window.setTimeout(() => {
+                target.style.display = "none";
+                target.style.removeProperty("height");
+                target.style.removeProperty("padding-top");
+                target.style.removeProperty("padding-bottom");
+                target.style.removeProperty("margin-top");
+                target.style.removeProperty("margin-bottom");
+                target.style.removeProperty("overflow");
+                target.style.removeProperty("transition-duration");
+                target.style.removeProperty("transition-property");
+            }, duration);
+        };
+        const slideDown = (target, duration = ANIMATION_DURATION) => {
+            const {
+                parentElement
+            } = target;
+            parentElement.classList.add("open");
+            target.style.removeProperty("display");
+            let {
+                display
+            } = window.getComputedStyle(target);
+            if (display === "none") display = "block";
+            target.style.display = display;
+            const height = target.offsetHeight;
+            target.style.overflow = "hidden";
+            target.style.height = 0;
+            target.style.paddingTop = 0;
+            target.style.paddingBottom = 0;
+            target.style.marginTop = 0;
+            target.style.marginBottom = 0;
+            target.offsetHeight;
+            target.style.boxSizing = "border-box";
+            target.style.transitionProperty = "height, margin, padding";
+            target.style.transitionDuration = `${duration}ms`;
+            target.style.height = `${height}px`;
+            target.style.removeProperty("padding-top");
+            target.style.removeProperty("padding-bottom");
+            target.style.removeProperty("margin-top");
+            target.style.removeProperty("margin-bottom");
+            window.setTimeout(() => {
+                target.style.removeProperty("height");
+                target.style.removeProperty("overflow");
+                target.style.removeProperty("transition-duration");
+                target.style.removeProperty("transition-property");
+            }, duration);
+        };
+
+        const slideToggle = (target, duration = ANIMATION_DURATION) => {
+            if (window.getComputedStyle(target).display === "none")
+                return slideDown(target, duration);
+            return slideUp(target, duration);
+        };
+
+        const PoppersInstance = new Poppers();
+
+        /**
+         * wait for the current animation to finish and update poppers position
+         */
+        const updatePoppersTimeout = () => {
+            setTimeout(() => {
+                PoppersInstance.updatePoppers();
+            }, ANIMATION_DURATION);
+        };
+
+
+
+        document.getElementById("left-side-menu-btn-set").addEventListener("click", () => {
+            SIDEBAR_EL.classList.toggle("collapsed");
+            PoppersInstance.closePoppers();
+            if (SIDEBAR_EL.classList.contains("collapsed"))
+                FIRST_SUB_MENUS_BTN.forEach(element => {
+                    element.parentElement.classList.remove("open");
+                });
+
+
+            updatePoppersTimeout();
+        });
+
+        /**
+         * sidebar collapse handler
+         */
+        document.getElementById("btn-collapse").addEventListener("click", () => {
+            SIDEBAR_EL.classList.toggle("collapsed");
+            PoppersInstance.closePoppers();
+            if (SIDEBAR_EL.classList.contains("collapsed"))
+                FIRST_SUB_MENUS_BTN.forEach(element => {
+                    element.parentElement.classList.remove("open");
+                });
+
+
+            updatePoppersTimeout();
+        });
+
+        /**
+         * sidebar toggle handler (on break point )
+         */
+        document.getElementByClass("btn-toggle").addEventListener("click", () => {
+            SIDEBAR_EL.classList.toggle("toggled");
+
+            updatePoppersTimeout();
+        });
+
+        /**
+         * toggle sidebar on overlay click
+         */
+        document.getElementById("overlay").addEventListener("click", () => {
+            SIDEBAR_EL.classList.toggle("toggled");
+        });
+
+        const defaultOpenMenus = document.querySelectorAll(".menu-item.sub-menu.open");
+
+        defaultOpenMenus.forEach(element => {
+            element.lastElementChild.style.display = "block";
+        });
+
+        /**
+         * handle top level submenu click
+         */
+        FIRST_SUB_MENUS_BTN.forEach(element => {
+            element.addEventListener("click", () => {
+                if (SIDEBAR_EL.classList.contains("collapsed"))
+                    PoppersInstance.togglePopper(element.nextElementSibling);
+                else {
+                    const parentMenu = element.closest(".menu.open-current-submenu");
+                    if (parentMenu)
+                        parentMenu.
+                            querySelectorAll(":scope > ul > .menu-item.sub-menu > a").
+                            forEach(
+                                (el) =>
+                                    window.getComputedStyle(el.nextElementSibling).display !==
+                                    "none" && slideUp(el.nextElementSibling));
+
+                    slideToggle(element.nextElementSibling);
+                }
+            });
+        });
+
+        /**
+         * handle inner submenu click
+         */
+        INNER_SUB_MENUS_BTN.forEach(element => {
+            element.addEventListener("click", () => {
+                slideToggle(element.nextElementSibling);
+            });
+        });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.4/jquery-confirm.min.js"></script>
+    <script>
+        $(".logoutButton").on('click', function () {
+
+            $.ajax({
+                url: '/logout', // Route for logout
+                type: 'POST',
+                data: {
+                    _token: $('meta[name="csrf-token"]').attr('content') // CSRF token
+                },
+                success: function (response) {
+                    if (response.success) {
+                        window.location.href = '/'; // Redirect to the homepage or login page
+                    } else {
+                        window.location.href = '/';
+                    }
+                },
+                error: function (xhr, status, error) {
+                    window.location.href = '/';
+                }
+            });
+
+        });
+    </script>
+    <script>
+        document.getElementById("userAvatar").addEventListener("click", function (event) {
+
+            var menu = document.getElementById("popupMenu");
+            menu.style.display = (menu.style.display === "block") ? "none" : "block";
+        });
+
+        // Close menu when clicking outside
+        document.addEventListener("click", function (event) {
+            var menu = document.getElementById("popupMenu");
+            if (event.target.id !== "userAvatar" && !menu.contains(event.target)) {
+                menu.style.display = "none";
+            }
+        });
+    </script>
+</body>
+
+</html>

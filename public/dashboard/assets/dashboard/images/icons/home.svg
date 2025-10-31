@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="24px" height="24px" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 54.1 (76490) - https://sketchapp.com -->
+    <title>icon/product/domain@2x</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <path d="M20.0000208,21.0006332 C20.5523056,21.0006332 21.0000208,20.5529179 21.0000208,20.0006332 L21.0000208,11.1106332 C21.0016988,10.8377762 20.9019046,10.5740343 20.7200208,10.3706332 L12.8500208,1.37063317 C12.6305366,1.13428983 12.32256,1 12.0000208,1 C11.6774817,1 11.369505,1.13428983 11.1500208,1.37063317 L3.28002082,10.3706332 C3.09813701,10.5740343 2.99834281,10.8377762 3.00002082,11.1106332 L3.00002082,20.0006332 C3.00002082,20.5529179 3.44773607,21.0006332 4.00002082,21.0006332 L10.0000208,21.0006332 L10.0000208,15.0006332 L14.0000208,15.0006332 L14.0000208,21.0006332 L20.0000208,21.0006332 Z" id="path-1"></path>
+    </defs>
+    <g id="icon/product/domain" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="art/icon/product/domain">
+            <mask id="mask-2" fill="white">
+                <use xlink:href="#path-1"></use>
+            </mask>
+            <use id="domain" fill="#2F3133" fill-rule="nonzero" xlink:href="#path-1"></use>
+            <g id="mixin/color/primary/gray-base" mask="url(#mask-2)" fill="#6D6E70" fill-rule="evenodd">
+                <rect id="gray-base" x="0" y="0" width="24" height="24"></rect>
+            </g>
+        </g>
+    </g>
+</svg>

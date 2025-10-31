@@ -1,0 +1,55 @@
+/*--------------------------------------*/
+
+/* Responsive
+/*--------------------------------------*/
+@media only screen and (min-width: 1554px) and (max-width: 1920px) {
+	
+}
+
+@media only screen and (min-width: 1200px) and (max-width: 1250px) {
+	
+}
+
+@media only screen and (min-width: 992px) and (max-width: 1199px) {
+	
+}
+@media only screen and (min-width: 768px) and (max-width: 991px) {
+	
+}
+
+/* `xxl` applies to x-large devices (large desktops, less than 1400px) */
+@media (max-width: 1399.98px) {
+	
+}
+
+/* `xl` applies to large devices (desktops, less than 1200px) */
+@media (max-width: 1199.98px) {
+	
+}
+
+/* `lg` applies to medium devices (tablets, less than 992px) */
+@media (max-width: 991.98px) {
+	.services-section .voliet-btn{
+		margin: 0px auto 30px;
+	}
+}
+
+/* `md` applies to small devices (landscape phones, less than 768px) */
+@media (max-width: 767.98px) {
+	
+}
+
+@media (max-width: 640px) {
+	
+}
+
+/* `sm` applies to x-small devices (portrait phones, less than 576px) */
+@media (max-width: 575.98px) {
+	
+}
+
+/* `xs` returns only a ruleset and no media query */
+@media (max-width: 480px) {
+	
+}
+/*--------------------------------------*/
