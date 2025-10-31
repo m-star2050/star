@@ -27,16 +27,13 @@
         .glass { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.35); box-shadow: inset 0 0 0 1px rgba(255,255,255,.15); }
         .sidebar-link{ display:flex; align-items:center; gap:.75rem; color:#0f172a; text-decoration:none; padding:.6rem .9rem; border-radius:.6rem; }
         .sidebar-link:hover{ background: rgba(0,0,0,.06); }
-        /* Keep sidebar icon size constant */
         .sidebar-link svg{ width:20px; height:20px; min-width:20px; min-height:20px; }
-        /* Header ribbons */
         .hdr-wrap{max-width:1120px}
     </style>
 </head>
 <body>
 
 <div x-data="{open:true, showCreate:false, showEdit:false, showDelete:false, showBulkDelete:false, editId:null, editName:'', editCompany:'', editEmail:'', editPhone:'', editAssigned:'', editStatus:'active', editTags:'', editNotes:''}" class="relative">
-    <!-- Collapsible Sidebar -->
     <aside class="fixed top-3 left-3 h-[calc(100vh-24px)] glass rounded-2xl p-3 transition-all duration-300" :class="open ? 'w-64' : 'w-16'">
         <div class="flex items-center justify-between mb-4">
             <div class="text-gray-900 font-extrabold tracking-wide" :class="open ? 'opacity-100' : 'opacity-0 pointer-events-none'">WELCOME USER</div>
@@ -44,20 +41,17 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="open ? 'M15 19l-7-7 7-7' : 'M9 5l7 7-7 7'"/></svg>
             </button>
         </div>
-        <div class="text-gray-900/80 text-xs uppercase tracking-wider mb-2" :class="open ? 'opacity-100' : 'opacity-0 pointer-events-none'">General</div>
-        <nav class="space-y-1">
+        <div class="text-gray-900/80 text-xs uppercase tracking-wider mb-2 mt-16" :class="open ? 'opacity-100' : 'opacity-0 pointer-events-none'">General</div>
+        <nav class="space-y-1 mt-4">
             <a href="#" class="sidebar-link">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 1.293a1 1 0 00-1.414 0l-7 7A1 1 0 003 10h1v7a1 1 0 001 1h4v-4h2v4h4a1 1 0 001-1v-7h1a1 1 0 00.707-1.707l-7-7z"/></svg>
-                <span x-show="open" x-transition>Dashboard</span>
+                <span x-show="open" x-transition>Contacts</span>
             </a>
             <a href="#" class="sidebar-link">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M3 3h2l.4 2M7 13h8l2-8H5.4M7 13L6 6m1 7l-1 4m8-4l1 4m-5-4v4"/></svg>
-                <span x-show="open" x-transition>Ecommerce</span>
+                <span x-show="open" x-transition>Leads</span>
             </a>
-            <a href="#" class="sidebar-link">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 4a3 3 0 00-3 3v6a3 3 0 003 3h10a3 3 0 003-3V7a3 3 0 00-3-3H5zm2 3a1 1 0 112 0 1 1 0 01-2 0zm-1 5a3 3 0 116 0H6z" clip-rule="evenodd"/></svg>
-                <span x-show="open" x-transition>Transactions</span>
-            </a>
+ 
         </nav>
     </aside>
 
@@ -81,41 +75,45 @@
                             <input id="mainsearch" type="text" name="search" value="{{ request('search') }}" class="bg-transparent border-0 outline-none ring-0 focus:ring-0 w-full text-gray-900 placeholder-gray-400 text-base px-2 py-1" placeholder="" autocomplete="off">
                         </form>
                         <button type="submit" formaction="#" class="hidden" aria-hidden="true"></button>
-                        <!-- Move filter submit up here -->
                     </div>
                 </div>
                 <div class="mb-4">
-                    <div class="font-semibold text-md text-gray-700 mb-1 ml-1 tracking-wide">Filter</div>
                     <form method="GET" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                    <div class="md:col-span-5 flex items-center justify-between">
+  <div class="font-semibold text-md text-gray-700 ml-1 tracking-wide">Filter</div>
+  <button
+    type="submit"
+    class="px-5 py-2 rounded-xl bg-blue-600 text-white shadow hover:bg-blue-700"
+  >
+    Filter
+  </button>
+</div>
+
                         <div>
-                            <input type="text" name="company" value="{{ request('company') }}" class="w-full border rounded-xl px-3 py-2 bg-white/60 text-gray-700 shadow-inner focus:ring-2 focus:ring-blue-400 placeholder-gray-400" autocomplete="off" placeholder="Company">
+                            <input type="text" name="company" value="{{ request('company') }}" class="w-full border rounded-xl px-3 py-2 bg-transparent text-gray-800 focus:ring-2 focus:ring-blue-400 placeholder-gray-500" autocomplete="off" placeholder="Company">
                         </div>
                         <div>
-                            <input type="number" name="assigned_user_id" value="{{ request('assigned_user_id') }}" class="w-full border rounded-xl px-3 py-2 bg-white/60 text-gray-700 shadow-inner focus:ring-2 focus:ring-blue-400 placeholder-gray-400" autocomplete="off" placeholder="Assigned User">
+                            <input type="number" name="assigned_user_id" value="{{ request('assigned_user_id') }}" class="w-full border rounded-xl px-3 py-2 bg-transparent text-gray-800 focus:ring-2 focus:ring-blue-400 placeholder-gray-500" autocomplete="off" placeholder="Assigned User">
                         </div>
                         <div>
-                            <select name="status" class="w-full border rounded-xl px-3 py-2 bg-white/60 text-gray-700 shadow-inner focus:ring-2 focus:ring-blue-400">
-                                <option value="">Any Status</option>
+                            <select name="status" class="w-full border rounded-xl px-3 py-2 bg-transparent text-gray-800 focus:ring-2 focus:ring-blue-400">
+                                <option value="">All Status</option>
                                 <option value="active" @selected(request('status')==='active')>Active</option>
                                 <option value="archived" @selected(request('status')==='archived')>Archived</option>
                             </select>
                         </div>
                         <div>
-                            <input type="date" name="created_from" value="{{ request('created_from') }}" class="w-full border rounded-xl px-3 py-2 bg-white/60 text-gray-700 shadow-inner focus:ring-2 focus:ring-blue-400" autocomplete="off">
+                            <input type="date" name="created_from" value="{{ request('created_from') }}" class="w-full border rounded-xl px-3 py-2 bg-transparent text-gray-800 focus:ring-2 focus:ring-blue-400" autocomplete="off">
                         </div>
                         <div>
-                            <input type="date" name="created_to" value="{{ request('created_to') }}" class="w-full border rounded-xl px-3 py-2 bg-white/60 text-gray-700 shadow-inner focus:ring-2 focus:ring-blue-400" autocomplete="off">
+                            <input type="date" name="created_to" value="{{ request('created_to') }}" class="w-full border rounded-xl px-3 py-2 bg-transparent text-gray-800 focus:ring-2 focus:ring-blue-400" autocomplete="off">
                         </div>
-                        <!-- Submit button moved to top bar -->
                     </form>
                 </div>
                 <form method="POST" action="{{ route('crm.contacts.bulk-delete') }}" x-ref="bulkForm">
                     @csrf
                     <div class="mb-2 flex items-end gap-2 px-2">
                         <button type="button" class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow" @click="showBulkDelete=true">Delete Selected</button>
-                        <form method="GET">
-                            <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 text-white shadow hover:bg-blue-700">Filter</button>
-                        </form>
                         <span class="text-sm text-gray-500 pb-1 ml-4">Click the 'Export' button to download to Excel.</span>
                     </div>
                     <div class="overflow-x-auto rounded-xl shadow-xl glass">
@@ -144,28 +142,66 @@
                                 <td class="p-2 text-center">{{ $c->phone }}</td>
                                 <td class="p-2 text-center">@php $assigned = $c->assigned_user_id ? ('User '.$c->assigned_user_id) : '-'; @endphp <span>{{ $assigned }}</span></td>
                                 <td class="p-2 text-center">@php $tagsText = implode(',', (array) $c->tags); @endphp <span>{{ $tagsText ?: '-' }}</span></td>
-                                <td class="p-2 text-center"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-white/60 text-gray-600">{{ $c->created_at?->format('Y-m-d') }}</span></td>
+                                <td class="p-2 text-center">{{ $c->created_at?->format('Y-m-d') }}</td>
                                 <td class="p-2 text-center">
                                     @php $isArchived = (($c->status ?? null) === 'archived' || !is_null($c->deleted_at ?? null)); @endphp
-                                    <span class="px-2 py-0.5 rounded text-xs font-semibold" :class="''" style="background-color: {{ (($c->status ?? null) === 'archived' || !is_null($c->deleted_at ?? null)) ? '#fee2e2' : '#dcfce7' }}; color: {{ (($c->status ?? null) === 'archived' || !is_null($c->deleted_at ?? null)) ? '#b91c1c' : '#166534' }};">{{ $isArchived ? 'Archived' : 'Active' }}</span>
+                                    @if($isArchived)
+                                        <span class="inline-flex items-center gap-1 text-red-600" title="Archived">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.54-10.46a.75.75 0 00-1.06-1.06L10 8.94 7.52 6.48a.75.75 0 00-1.06 1.06L8.94 10l-2.48 2.48a.75.75 0 101.06 1.06L10 11.06l2.48 2.48a.75.75 0 101.06-1.06L11.06 10l2.48-2.46z" clip-rule="evenodd"/></svg>
+                                            Archived
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 text-blue-600" title="Active">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-7.364 7.364a1 1 0 01-1.414 0L3.293 10.435a1 1 0 011.414-1.414l3.221 3.221 6.657-6.657a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                            Active
+                                        </span>
+                                    @endif
                                 </td>
                                 <td class="p-2 text-center">
-                                    <button type="button" class="px-3 py-1 rounded-xl bg-blue-100 text-blue-700 hover:bg-blue-200 shadow-sm font-medium"
-                                    data-id="{{ $c->id }}" data-name="{{ $c->name }}" data-company="{{ $c->company }}" data-email="{{ $c->email }}" data-phone="{{ $c->phone }}" data-assigned="{{ $c->assigned_user_id }}" data-status="{{ $c->status }}" data-tags="{{ implode(',', (array) $c->tags) }}" data-notes="{{ $c->notes }}"
-                                    @click.prevent="editId=$el.dataset.id; editName=$el.dataset.name; editCompany=$el.dataset.company; editEmail=$el.dataset.email; editPhone=$el.dataset.phone; editAssigned=$el.dataset.assigned; editStatus=$el.dataset.status||'active'; editTags=$el.dataset.tags||''; editNotes=$el.dataset.notes||''; showEdit=true;">
-                                    Edit
+                                    <button
+                                        type="button"
+                                        class="inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-blue-400 text-blue-600 hover:bg-blue-50 shadow-sm"
+                                        data-id="{{ $c->id }}" data-name="{{ $c->name }}" data-company="{{ $c->company }}"
+                                        data-email="{{ $c->email }}" data-phone="{{ $c->phone }}" data-assigned="{{ $c->assigned_user_id }}"
+                                        data-status="{{ $c->status }}" data-tags="{{ implode(',', (array) $c->tags) }}" data-notes="{{ $c->notes }}"
+                                        @click.prevent="
+                                        editId=$el.dataset.id;
+                                        editName=$el.dataset.name;
+                                        editCompany=$el.dataset.company;
+                                        editEmail=$el.dataset.email;
+                                        editPhone=$el.dataset.phone;
+                                        editAssigned=$el.dataset.assigned;
+                                        editStatus=$el.dataset.status||'active';
+                                        editTags=$el.dataset.tags||'';
+                                        editNotes=$el.dataset.notes||'';
+                                        showEdit=true;
+                                        ">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-8.5 8.5a2 2 0 01-.878.515l-3.3.943a.5.5 0 01-.62-.62l.943-3.3a2 2 0 01.515-.878l8.5-8.5z"/></svg>Edit
                                     </button>
-                                    <button type="button" class="px-3 py-1 rounded-xl bg-red-100 text-red-700 hover:bg-red-200 shadow-sm font-medium"
-                                    data-id="{{ $c->id }}"
-                                    @click.prevent="editId=$el.dataset.id; showDelete=true;">Del</button>
-
+                                    <button type="button"class="inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-red-400 text-red-600 hover:bg-red-50 shadow-sm"data-id="{{ $c->id }}" @click.prevent="editId=$el.dataset.id; showDelete=true;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M6 8a1 1 0 011 1v6a1 1 0 102 0V9a1 1 0 112 0v6a1 1 0 102 0V9a1 1 0 011-1h1a1 1 0 100-2h-1V5a2 2 0 00-2-2H9a2 2 0 00-2 2v1H6a1 1 0 100 2h1zm3-3h2v1H9V5z" clip-rule="evenodd"/></svg>Del
+                                    </button>
                                 </td>
+
                             </tr>
                         @empty
                             <tr><td colspan="8" class="p-4 text-center text-gray-400">No contacts found</td></tr>
                         @endforelse
                         </tbody>
                     </table>
+                </div>
+                <!-- Bulk Delete Confirm Modal moved inside the form so selected checkboxes submit correctly -->
+                <div x-show="showBulkDelete" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center">
+                    <div class="absolute inset-0 bg-black/50" @click="showBulkDelete=false"></div>
+                    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+                        <div class="text-lg font-semibold mb-3">Delete Selected</div>
+                        <p class="text-sm text-gray-600 mb-4">Are you sure you want to delete the selected contacts?</p>
+                        <div class="flex justify-end gap-2">
+                            <button type="button" class="px-4 py-2 rounded-lg border" @click="showBulkDelete=false">Cancel</button>
+                            <button type="submit" class="px-4 py-2 rounded-lg bg-red-600 text-white">Delete</button>
+                        </div>
+                    </div>
                 </div>
                 </form>
                 <div class="flex flex-col md:flex-row items-center md:justify-between gap-3 p-3">
@@ -296,17 +332,7 @@
         </div>
     </div>
 
-    <div x-show="showBulkDelete" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center">
-        <div class="absolute inset-0 bg-black/50" @click="showBulkDelete=false"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-            <div class="text-lg font-semibold mb-3">Delete Selected</div>
-            <p class="text-sm text-gray-600 mb-4">Are you sure you want to delete the selected contacts?</p>
-            <div class="flex justify-end gap-2">
-                <button type="button" class="px-4 py-2 rounded-lg border" @click="showBulkDelete=false">Cancel</button>
-                <button type="button" class="px-4 py-2 rounded-lg bg-red-600 text-white" @click="$refs.bulkForm.submit()">Delete</button>
-            </div>
-        </div>
-    </div>
+    
 </div>
 </body>
 </html>
