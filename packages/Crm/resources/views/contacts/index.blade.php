@@ -25,21 +25,26 @@
             font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
         }
         .glass { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.35); box-shadow: inset 0 0 0 1px rgba(255,255,255,.15); }
-        .sidebar-link{ display:flex; align-items:center; gap:.75rem; color:#fff; text-decoration:none; padding:.6rem .9rem; border-radius:.6rem; }
-        .sidebar-link:hover{ background: rgba(255,255,255,.18); }
+        .sidebar-link{ display:flex; align-items:center; gap:.75rem; color:#0f172a; text-decoration:none; padding:.6rem .9rem; border-radius:.6rem; }
+        .sidebar-link:hover{ background: rgba(0,0,0,.06); }
+        /* Keep sidebar icon size constant */
+        .sidebar-link svg{ width:20px; height:20px; min-width:20px; min-height:20px; }
+        /* Header ribbons */
+        .hdr-wrap{max-width:1120px}
     </style>
 </head>
 <body>
 
-<div x-data="{open:true, showCreate:false, showEdit:false, showDelete:false, editId:null, editName:'', editCompany:'', editEmail:'', editPhone:'', editAssigned:'', editStatus:'active', editTags:'', editNotes:''}" class="relative">
+<div x-data="{open:true, showCreate:false, showEdit:false, showDelete:false, showBulkDelete:false, editId:null, editName:'', editCompany:'', editEmail:'', editPhone:'', editAssigned:'', editStatus:'active', editTags:'', editNotes:''}" class="relative">
+    <!-- Collapsible Sidebar -->
     <aside class="fixed top-3 left-3 h-[calc(100vh-24px)] glass rounded-2xl p-3 transition-all duration-300" :class="open ? 'w-64' : 'w-16'">
         <div class="flex items-center justify-between mb-4">
-            <div class="text-white font-extrabold tracking-wide" :class="open ? 'opacity-100' : 'opacity-0 pointer-events-none'">WELCOME USER</div>
+            <div class="text-gray-900 font-extrabold tracking-wide" :class="open ? 'opacity-100' : 'opacity-0 pointer-events-none'">WELCOME USER</div>
             <button @click="open=!open" class="text-white bg-white/20 border border-white/40 rounded-full w-7 h-7 flex items-center justify-center hover:bg-white/30" :aria-expanded="open">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="open ? 'M15 19l-7-7 7-7' : 'M9 5l7 7-7 7'"/></svg>
             </button>
         </div>
-        <div class="text-white/80 text-xs uppercase tracking-wider mb-2" :class="open ? 'opacity-100' : 'opacity-0 pointer-events-none'">General</div>
+        <div class="text-gray-900/80 text-xs uppercase tracking-wider mb-2" :class="open ? 'opacity-100' : 'opacity-0 pointer-events-none'">General</div>
         <nav class="space-y-1">
             <a href="#" class="sidebar-link">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 1.293a1 1 0 00-1.414 0l-7 7A1 1 0 003 10h1v7a1 1 0 001 1h4v-4h2v4h4a1 1 0 001-1v-7h1a1 1 0 00.707-1.707l-7-7z"/></svg>
@@ -76,6 +81,7 @@
                             <input id="mainsearch" type="text" name="search" value="{{ request('search') }}" class="bg-transparent border-0 outline-none ring-0 focus:ring-0 w-full text-gray-900 placeholder-gray-400 text-base px-2 py-1" placeholder="" autocomplete="off">
                         </form>
                         <button type="submit" formaction="#" class="hidden" aria-hidden="true"></button>
+                        <!-- Move filter submit up here -->
                     </div>
                 </div>
                 <div class="mb-4">
@@ -89,7 +95,7 @@
                         </div>
                         <div>
                             <select name="status" class="w-full border rounded-xl px-3 py-2 bg-white/60 text-gray-700 shadow-inner focus:ring-2 focus:ring-blue-400">
-                                <option value="">All</option>
+                                <option value="">Any Status</option>
                                 <option value="active" @selected(request('status')==='active')>Active</option>
                                 <option value="archived" @selected(request('status')==='archived')>Archived</option>
                             </select>
@@ -100,14 +106,17 @@
                         <div>
                             <input type="date" name="created_to" value="{{ request('created_to') }}" class="w-full border rounded-xl px-3 py-2 bg-white/60 text-gray-700 shadow-inner focus:ring-2 focus:ring-blue-400" autocomplete="off">
                         </div>
+                        <!-- Submit button moved to top bar -->
                     </form>
                 </div>
-                <form method="POST" action="{{ route('crm.contacts.bulk-delete') }}">
+                <form method="POST" action="{{ route('crm.contacts.bulk-delete') }}" x-ref="bulkForm">
                     @csrf
                     <div class="mb-2 flex items-end gap-2 px-2">
-                        <button type="submit" class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow" onclick="return confirm('Delete selected?')">Delete Selected</button>
+                        <button type="button" class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow" @click="showBulkDelete=true">Delete Selected</button>
+                        <form method="GET">
+                            <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 text-white shadow hover:bg-blue-700">Filter</button>
+                        </form>
                         <span class="text-sm text-gray-500 pb-1 ml-4">Click the 'Export' button to download to Excel.</span>
-                        <button type="button" class="ml-auto px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow">Filter</button>
                     </div>
                     <div class="overflow-x-auto rounded-xl shadow-xl glass">
                         <table class="min-w-full text-sm bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl">
@@ -122,6 +131,7 @@
                                     <th class="p-3 font-semibold tracking-widest text-center">Tags</th>
                                     <th class="p-3 font-semibold tracking-widest text-center">Created</th>
                                     <th class="p-3 font-semibold tracking-widest text-center">Actions</th>
+                                    <th class="p-3 font-semibold tracking-widest text-center"></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -136,19 +146,19 @@
                                 <td class="p-2 text-center">@php $tagsText = implode(',', (array) $c->tags); @endphp <span>{{ $tagsText ?: '-' }}</span></td>
                                 <td class="p-2 text-center"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-white/60 text-gray-600">{{ $c->created_at?->format('Y-m-d') }}</span></td>
                                 <td class="p-2 text-center">
-                                    <div class="inline-flex gap-2 items-center">
-                                        <button type="button" class="px-3 py-1 rounded-xl bg-blue-100 text-blue-700 hover:bg-blue-200 shadow-sm font-medium" title="Edit"
-                                            data-id="{{ $c->id }}" data-name="{{ $c->name }}" data-company="{{ $c->company }}" data-email="{{ $c->email }}" data-phone="{{ $c->phone }}" data-assigned="{{ $c->assigned_user_id }}" data-status="{{ $c->status }}" data-tags="{{ implode(',', (array) $c->tags) }}" data-notes="{{ $c->notes }}"
-                                            @click.prevent="editId=$el.dataset.id; editName=$el.dataset.name; editCompany=$el.dataset.company; editEmail=$el.dataset.email; editPhone=$el.dataset.phone; editAssigned=$el.dataset.assigned; editStatus=$el.dataset.status||'active'; editTags=$el.dataset.tags||''; editNotes=$el.dataset.notes||''; showEdit=true;">
-                                            Edit
-                                        </button>
-                                        <button type="button" class="px-3 py-1 rounded-xl bg-red-100 text-red-700 hover:bg-red-200 shadow-sm font-medium" title="Delete"
-                                        data-id="{{ $c->id }}"
-                                        @click.prevent="editId=$el.dataset.id; showDelete=true;">Del</button>
-                                        @if(($c->status ?? null) === 'archived' || !is_null($c->deleted_at ?? null))
-                                            <span class="text-red-500" title="Archived">&#10003;</span>
-                                        @endif
-                                    </div>
+                                    @php $isArchived = (($c->status ?? null) === 'archived' || !is_null($c->deleted_at ?? null)); @endphp
+                                    <span class="px-2 py-0.5 rounded text-xs font-semibold" :class="''" style="background-color: {{ (($c->status ?? null) === 'archived' || !is_null($c->deleted_at ?? null)) ? '#fee2e2' : '#dcfce7' }}; color: {{ (($c->status ?? null) === 'archived' || !is_null($c->deleted_at ?? null)) ? '#b91c1c' : '#166534' }};">{{ $isArchived ? 'Archived' : 'Active' }}</span>
+                                </td>
+                                <td class="p-2 text-center">
+                                    <button type="button" class="px-3 py-1 rounded-xl bg-blue-100 text-blue-700 hover:bg-blue-200 shadow-sm font-medium"
+                                    data-id="{{ $c->id }}" data-name="{{ $c->name }}" data-company="{{ $c->company }}" data-email="{{ $c->email }}" data-phone="{{ $c->phone }}" data-assigned="{{ $c->assigned_user_id }}" data-status="{{ $c->status }}" data-tags="{{ implode(',', (array) $c->tags) }}" data-notes="{{ $c->notes }}"
+                                    @click.prevent="editId=$el.dataset.id; editName=$el.dataset.name; editCompany=$el.dataset.company; editEmail=$el.dataset.email; editPhone=$el.dataset.phone; editAssigned=$el.dataset.assigned; editStatus=$el.dataset.status||'active'; editTags=$el.dataset.tags||''; editNotes=$el.dataset.notes||''; showEdit=true;">
+                                    Edit
+                                    </button>
+                                    <button type="button" class="px-3 py-1 rounded-xl bg-red-100 text-red-700 hover:bg-red-200 shadow-sm font-medium"
+                                    data-id="{{ $c->id }}"
+                                    @click.prevent="editId=$el.dataset.id; showDelete=true;">Del</button>
+
                                 </td>
                             </tr>
                         @empty
@@ -283,6 +293,18 @@
                 <button type="button" class="px-4 py-2 rounded-lg border" @click="showDelete=false">Cancel</button>
                 <button class="px-4 py-2 rounded-lg bg-red-600 text-white">Delete</button>
             </form>
+        </div>
+    </div>
+
+    <div x-show="showBulkDelete" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center">
+        <div class="absolute inset-0 bg-black/50" @click="showBulkDelete=false"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <div class="text-lg font-semibold mb-3">Delete Selected</div>
+            <p class="text-sm text-gray-600 mb-4">Are you sure you want to delete the selected contacts?</p>
+            <div class="flex justify-end gap-2">
+                <button type="button" class="px-4 py-2 rounded-lg border" @click="showBulkDelete=false">Cancel</button>
+                <button type="button" class="px-4 py-2 rounded-lg bg-red-600 text-white" @click="$refs.bulkForm.submit()">Delete</button>
+            </div>
         </div>
     </div>
 </div>
