@@ -13,9 +13,9 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>CRM Contacts</title>
+    <title>CRM Pipeline</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <parameter name="script" src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <style>
         body {
@@ -28,12 +28,17 @@
         .sidebar-link{ display:flex; align-items:center; gap:.75rem; color:#0f172a; text-decoration:none; padding:.6rem .9rem; border-radius:.6rem; }
         .sidebar-link:hover{ background: rgba(0,0,0,.06); }
         .sidebar-link svg{ width:20px; height:20px; min-width:20px; min-height:20px; }
-        .hdr-wrap{max-width:1120px}
     </style>
 </head>
 <body>
 
-<div x-data="{open:true, showCreate:false, showEdit:false, showDelete:false, showBulkDelete:false, editId:null, editName:'', editCompany:'', editEmail:'', editPhone:'', editAssigned:'', editStatus:'active', editTags:'', editNotes:''}" class="relative">
+<div x-data="{open:true, showCreate:false, showEdit:false, showDelete:false, showBulkDelete:false, editId:null, editDealName:'', editStage:'prospect', editValue:'', editOwner:'', editCloseDate:'', editProbability:'', editContactId:'', editCompany:'', editNotes:''}" 
+     x-init="
+        window.addEventListener('show-edit-modal', () => { showEdit = true; });
+        window.addEventListener('close-edit-modal', () => { showEdit = false; });
+        window.addEventListener('show-delete-modal', () => { showDelete = true; editId = window.pipelineModal.editId; });
+        window.addEventListener('close-delete-modal', () => { showDelete = false; });
+     " class="relative">
     <aside class="fixed top-3 left-3 h-[calc(100vh-24px)] glass rounded-2xl p-3 transition-all duration-300" :class="open ? 'w-64' : 'w-16'">
         <div class="flex items-center justify-between mb-4">
             <div class="text-gray-900 font-extrabold tracking-wide mt-5" :class="open ? 'opacity-100' : 'opacity-0 pointer-events-none'">WELCOME USER</div>
@@ -55,11 +60,10 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/></svg>
                 <span x-show="open" x-transition>Tasks</span>
             </a>
-            <a href="{{ route('crm.pipeline.index') }}" class="sidebar-link">
+            <a href="{{ route('crm.pipeline.index') }}" class="sidebar-link bg-white/20">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z"/><path d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z"/><path d="M17 5c0 1.657-3.134 3-7 3S3 6.657 3 5s3.134-3 7-3 7 1.343 7 3z"/></svg>
                 <span x-show="open" x-transition>Pipeline</span>
             </a>
- 
         </nav>
     </aside>
 
@@ -67,13 +71,16 @@
         <div class="min-h-screen flex flex-col justify-center items-center px-2 py-8">
             <div class="w-full max-w-6xl mx-auto px-3 md:px-4 py-3">
                 <div class="glass w-full rounded-xl px-6 py-3 mb-4 flex items-center justify-between text-white">
-                    <div class="text-lg md:text-xl font-semibold tracking-wide">CONTACTS</div>
+                    <div class="text-lg md:text-xl font-semibold tracking-wide">PIPELINE</div>
+                    <a href="{{ route('crm.pipeline.kanban') }}" class="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-medium shadow-md text-sm">
+                        Switch to Kanban
+                    </a>
                 </div>
                 <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
                     <div class="flex items-end gap-6 w-full md:max-w-xl">
                         <button type="button" @click="showCreate=true" class="flex-shrink-0 flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 20 20" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"/></svg>
-                            New Contact
+                            New Deal
                         </button>
                     </div>
                     <div class="flex items-end gap-3 md:ml-auto w-full md:w-auto">
@@ -94,27 +101,30 @@
                     </div>
 
                         <div>
-                            <input type="text" name="company" value="{{ request('company') }}" class="w-full border rounded-xl px-3 py-2 bg-transparent text-gray-800 focus:ring-2 focus:ring-blue-400 placeholder-gray-500" autocomplete="off" placeholder="Company">
-                        </div>
-                        <div>
-                            <input type="number" name="assigned_user_id" value="{{ request('assigned_user_id') }}" class="w-full border rounded-xl px-3 py-2 bg-transparent text-gray-800 focus:ring-2 focus:ring-blue-400 placeholder-gray-500" autocomplete="off" placeholder="Assigned User">
-                        </div>
-                        <div>
-                            <select name="status" class="w-full border rounded-xl px-3 py-2 bg-transparent text-gray-800 focus:ring-2 focus:ring-blue-400">
-                                <option value="">All Status</option>
-                                <option value="active" @selected(request('status')==='active')>Active</option>
-                                <option value="archived" @selected(request('status')==='archived')>Archived</option>
+                            <select name="stage" class="w-full border rounded-xl px-3 py-2 bg-transparent text-gray-800 focus:ring-2 focus:ring-blue-400">
+                                <option value="">All Stages</option>
+                                <option value="prospect" @selected(request('stage')==='prospect')>Prospect</option>
+                                <option value="negotiation" @selected(request('stage')==='negotiation')>Negotiation</option>
+                                <option value="proposal" @selected(request('stage')==='proposal')>Proposal</option>
+                                <option value="closed_won" @selected(request('stage')==='closed_won')>Closed Won</option>
+                                <option value="closed_lost" @selected(request('stage')==='closed_lost')>Closed Lost</option>
                             </select>
                         </div>
                         <div>
-                            <input type="date" name="created_from" value="{{ request('created_from') }}" class="w-full border rounded-xl px-3 py-2 bg-transparent text-gray-800 focus:ring-2 focus:ring-blue-400" autocomplete="off">
+                            <input type="number" name="owner_user_id" value="{{ request('owner_user_id') }}" class="w-full border rounded-xl px-3 py-2 bg-transparent text-gray-800 focus:ring-2 focus:ring-blue-400 placeholder-gray-500" autocomplete="off" placeholder="Owner User ID">
                         </div>
                         <div>
-                            <input type="date" name="created_to" value="{{ request('created_to') }}" class="w-full border rounded-xl px-3 py-2 bg-transparent text-gray-800 focus:ring-2 focus:ring-blue-400" autocomplete="off">
+                            <input type="number" name="value_min" value="{{ request('value_min') }}" class="w-full border rounded-xl px-3 py-2 bg-transparent text-gray-800 focus:ring-2 focus:ring-blue-400 placeholder-gray-500" autocomplete="off" placeholder="Min Value" step="0.01">
+                        </div>
+                        <div>
+                            <input type="number" name="value_max" value="{{ request('value_max') }}" class="w-full border rounded-xl px-3 py-2 bg-transparent text-gray-800 focus:ring-2 focus:ring-blue-400 placeholder-gray-500" autocomplete="off" placeholder="Max Value" step="0.01">
+                        </div>
+                        <div>
+                            <input type="date" name="close_date_from" value="{{ request('close_date_from') }}" class="w-full border rounded-xl px-3 py-2 bg-transparent text-gray-800 focus:ring-2 focus:ring-blue-400" autocomplete="off" placeholder="Close From">
                         </div>
                     </form>
                 </div>
-                <form method="POST" action="{{ route('crm.contacts.bulk-delete') }}" x-ref="bulkForm">
+                <form method="POST" action="{{ route('crm.pipeline.bulk-delete') }}" x-ref="bulkForm">
                     @csrf
                     <div class="mb-2 flex items-end gap-2 px-2">
                         <button type="button" class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow" @click="showBulkDelete=true">Delete Selected</button>
@@ -125,64 +135,34 @@
                             <thead class="uppercase bg-white/40 text-gray-800 rounded-xl">
                                 <tr>
                                     <th class="p-3 text-center"><input type="checkbox" @click="$el.closest('table').querySelectorAll('.row-check').forEach(cb=>cb.checked=$event.target.checked)"></th>
-                                    <th class="p-3 font-semibold tracking-widest text-center">Name</th>
+                                    <th class="p-3 font-semibold tracking-widest text-center">Deal Name</th>
+                                    <th class="p-3 font-semibold tracking-widest text-center">Stage</th>
+                                    <th class="p-3 font-semibold tracking-widest text-center">Value</th>
+                                    <th class="p-3 font-semibold tracking-widest text-center">Owner</th>
+                                    <th class="p-3 font-semibold tracking-widest text-center">Close Date</th>
+                                    <th class="p-3 font-semibold tracking-widest text-center">Probability</th>
                                     <th class="p-3 font-semibold tracking-widest text-center">Company</th>
-                                    <th class="p-3 font-semibold tracking-widest text-center">Email</th>
-                                    <th class="p-3 font-semibold tracking-widest text-center">Phone</th>
-                                    <th class="p-3 font-semibold tracking-widest text-center">Assigned</th>
-                                    <th class="p-3 font-semibold tracking-widest text-center">Tags</th>
-                                    <th class="p-3 font-semibold tracking-widest text-center">Created</th>
                                     <th class="p-3 font-semibold tracking-widest text-center">Actions</th>
-                                    <th class="p-3 font-semibold tracking-widest text-center"></th>
                                 </tr>
                             </thead>
                             <tbody>
-                        @forelse($contacts as $c)
+                        @forelse($pipelines as $p)
                             <tr class="border-b border-white/30 bg-white/20 hover:bg-white/40 transition">
-                                <td class="p-2 text-center"><input type="checkbox" class="row-check" name="ids[]" value="{{ $c->id }}"></td>
-                                <td class="p-2 text-center font-medium">{{ $c->name }}</td>
-                                <td class="p-2 text-center">{{ $c->company }}</td>
-                                <td class="p-2 text-center">{{ $c->email }}</td>
-                                <td class="p-2 text-center">{{ $c->phone }}</td>
-                                <td class="p-2 text-center">@php $assigned = $c->assigned_user_id ? ('User '.$c->assigned_user_id) : '-'; @endphp <span>{{ $assigned }}</span></td>
-                                <td class="p-2 text-center">@php $tagsText = implode(',', (array) $c->tags); @endphp <span>{{ $tagsText ?: '-' }}</span></td>
-                                <td class="p-2 text-center">{{ $c->created_at?->format('Y-m-d') }}</td>
+                                <td class="p-2 text-center"><input type="checkbox" class="row-check" name="ids[]" value="{{ $p->id }}"></td>
+                                <td class="p-2 text-center font-medium">{{ $p->deal_name }}</td>
                                 <td class="p-2 text-center">
-                                    @php $isArchived = (($c->status ?? null) === 'archived' || !is_null($c->deleted_at ?? null)); @endphp
-                                    @if($isArchived)
-                                        <span class="inline-flex items-center gap-1 text-red-600" title="Archived">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.54-10.46a.75.75 0 00-1.06-1.06L10 8.94 7.52 6.48a.75.75 0 00-1.06 1.06L8.94 10l-2.48 2.48a.75.75 0 101.06 1.06L10 11.06l2.48 2.48a.75.75 0 101.06-1.06L11.06 10l2.48-2.46z" clip-rule="evenodd"/></svg>
-                                            Archived
-                                        </span>
-                                    @else
-                                        <span class="inline-flex items-center gap-1 text-blue-600" title="Active">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-7.364 7.364a1 1 0 01-1.414 0L3.293 10.435a1 1 0 011.414-1.414l3.221 3.221 6.657-6.657a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                                            Active
-                                        </span>
-                                    @endif
+                                    <span class="text-sm font-semibold text-gray-700">{{ $p->getStageLabel() }}</span>
                                 </td>
+                                <td class="p-2 text-center font-semibold text-green-700">${{ number_format($p->value, 2) }}</td>
+                                <td class="p-2 text-center">{{ $p->owner_user_id ? 'User '.$p->owner_user_id : '-' }}</td>
+                                <td class="p-2 text-center">{{ $p->close_date?->format('Y-m-d') ?? '-' }}</td>
+                                <td class="p-2 text-center">{{ $p->probability ? $p->probability.'%' : '-' }}</td>
+                                <td class="p-2 text-center">{{ $p->company ?? '-' }}</td>
                                 <td class="p-2 text-center">
-                                    <button
-                                        type="button"
-                                        class="inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-blue-400 text-blue-600 hover:bg-blue-50 shadow-sm"
-                                        data-id="{{ $c->id }}" data-name="{{ $c->name }}" data-company="{{ $c->company }}"
-                                        data-email="{{ $c->email }}" data-phone="{{ $c->phone }}" data-assigned="{{ $c->assigned_user_id }}"
-                                        data-status="{{ $c->status }}" data-tags="{{ implode(',', (array) $c->tags) }}" data-notes="{{ $c->notes }}"
-                                        @click.prevent="
-                                        editId=$el.dataset.id;
-                                        editName=$el.dataset.name;
-                                        editCompany=$el.dataset.company;
-                                        editEmail=$el.dataset.email;
-                                        editPhone=$el.dataset.phone;
-                                        editAssigned=$el.dataset.assigned;
-                                        editStatus=$el.dataset.status||'active';
-                                        editTags=$el.dataset.tags||'';
-                                        editNotes=$el.dataset.notes||'';
-                                        showEdit=true;
-                                        ">
+                                    <button type="button" class="inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-blue-400 text-blue-600 hover:bg-blue-50 shadow-sm" onclick="openEditModal({{ $p->id }}, '{{ addslashes($p->deal_name) }}', '{{ $p->stage }}', {{ $p->value }}, {{ $p->owner_user_id ?? 'null' }}, '{{ $p->close_date?->format('Y-m-d') ?? '' }}', {{ $p->probability ?? 'null' }}, {{ $p->contact_id ?? 'null' }}, '{{ addslashes($p->company ?? '') }}', '{{ addslashes($p->notes ?? '') }}')">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-8.5 8.5a2 2 0 01-.878.515l-3.3.943a.5.5 0 01-.62-.62l.943-3.3a2 2 0 01.515-.878l8.5-8.5z"/></svg>Edit
                                     </button>
-                                    <button type="button"class="inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-red-400 text-red-600 hover:bg-red-50 shadow-sm"data-id="{{ $c->id }}" @click.prevent="editId=$el.dataset.id; showDelete=true;">
+                                    <button type="button" class="inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-red-400 text-red-600 hover:bg-red-50 shadow-sm" onclick="openDeleteModal({{ $p->id }})">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                         <path fill-rule="evenodd" d="M6 8a1 1 0 011 1v6a1 1 0 102 0V9a1 1 0 112 0v6a1 1 0 102 0V9a1 1 0 011-1h1a1 1 0 100-2h-1V5a2 2 0 00-2-2H9a2 2 0 00-2 2v1H6a1 1 0 100 2h1zm3-3h2v1H9V5z" clip-rule="evenodd"/></svg>Del
                                     </button>
@@ -190,7 +170,7 @@
 
                             </tr>
                         @empty
-                            <tr><td colspan="8" class="p-4 text-center text-gray-400">No contacts found</td></tr>
+                            <tr><td colspan="9" class="p-4 text-center text-gray-400">No deals found</td></tr>
                         @endforelse
                         </tbody>
                     </table>
@@ -199,7 +179,7 @@
                     <div class="absolute inset-0 bg-black/50" @click="showBulkDelete=false"></div>
                     <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
                         <div class="text-lg font-semibold mb-3">Delete Selected</div>
-                        <p class="text-sm text-gray-600 mb-4">Are you sure you want to delete the selected contacts?</p>
+                        <p class="text-sm text-gray-600 mb-4">Are you sure you want to delete the selected deals?</p>
                         <div class="flex justify-end gap-2">
                             <button type="button" class="px-4 py-2 rounded-lg border" @click="showBulkDelete=false">Cancel</button>
                             <button type="submit" class="px-4 py-2 rounded-lg bg-red-600 text-white">Delete</button>
@@ -209,17 +189,17 @@
                 </form>
                 <div class="flex flex-col md:flex-row items-center md:justify-between gap-3 p-3">
                     <div class="text-sm text-gray-600">
-                        Showing <span class="font-medium">{{ $contacts->firstItem() ?? 0 }}</span>–<span class="font-medium">{{ $contacts->lastItem() ?? 0 }}</span> of <span class="font-medium">{{ $contacts->total() }}</span>
+                        Showing <span class="font-medium">{{ $pipelines->firstItem() ?? 0 }}</span>–<span class="font-medium">{{ $pipelines->lastItem() ?? 0 }}</span> of <span class="font-medium">{{ $pipelines->total() }}</span>
                     </div>
                     <div class="flex gap-1 items-center">
-                        @if ($contacts->onFirstPage())
+                        @if ($pipelines->onFirstPage())
                             <span class="px-3 py-2 rounded-xl border text-gray-400 cursor-not-allowed">&laquo; Prev</span>
                         @else
-                            <a href="{{ $contacts->previousPageUrl() }}" class="px-3 py-2 rounded-xl border hover:bg-white/40">&laquo; Prev</a>
+                            <a href="{{ $pipelines->previousPageUrl() }}" class="px-3 py-2 rounded-xl border hover:bg-white/40">&laquo; Prev</a>
                         @endif
                         @php
-                            $current = $contacts->currentPage();
-                            $last = $contacts->lastPage();
+                            $current = $pipelines->currentPage();
+                            $last = $pipelines->lastPage();
                             $window = 2;
                             $pages = [];
                             if ($last <= 7) {
@@ -240,11 +220,11 @@
                             @elseif ($p == $current)
                                 <span class="px-3 py-2 rounded-xl border bg-blue-600 text-white">{{ $p }}</span>
                             @else
-                                <a href="{{ $contacts->url($p) }}" class="px-3 py-2 rounded-xl border hover:bg-white/60">{{ $p }}</a>
+                                <a href="{{ $pipelines->url($p) }}" class="px-3 py-2 rounded-xl border hover:bg-white/60">{{ $p }}</a>
                             @endif
                         @endforeach
-                        @if ($contacts->hasMorePages())
-                            <a href="{{ $contacts->nextPageUrl() }}" class="px-3 py-2 rounded-xl border hover:bg-white/40">Next &raquo;</a>
+                        @if ($pipelines->hasMorePages())
+                            <a href="{{ $pipelines->nextPageUrl() }}" class="px-3 py-2 rounded-xl border hover:bg-white/40">Next &raquo;</a>
                         @else
                             <span class="px-3 py-2 rounded-xl border text-gray-400 cursor-not-allowed">Next &raquo;</span>
                         @endif
@@ -253,38 +233,44 @@
                         <label class="text-sm text-gray-600">Items per page</label>
                         <input type="number" name="per_page" min="1" max="100" value="{{ request('per_page', 10) }}" class="w-20 border rounded-xl px-3 py-2 bg-white/60 text-gray-700 shadow-inner">
                         <input type="hidden" name="search" value="{{ request('search') }}">
-                        <input type="hidden" name="company" value="{{ request('company') }}">
-                        <input type="hidden" name="assigned_user_id" value="{{ request('assigned_user_id') }}">
-                        <input type="hidden" name="status" value="{{ request('status') }}">
-                        <input type="hidden" name="created_from" value="{{ request('created_from') }}">
-                        <input type="hidden" name="created_to" value="{{ request('created_to') }}">
+                        <input type="hidden" name="stage" value="{{ request('stage') }}">
+                        <input type="hidden" name="owner_user_id" value="{{ request('owner_user_id') }}">
+                        <input type="hidden" name="value_min" value="{{ request('value_min') }}">
+                        <input type="hidden" name="value_max" value="{{ request('value_max') }}">
+                        <input type="hidden" name="close_date_from" value="{{ request('close_date_from') }}">
                         <input type="hidden" name="sort" value="{{ request('sort') }}">
                         <input type="hidden" name="direction" value="{{ request('direction') }}">
                         <button class="px-4 py-2 rounded-xl border hover:bg-white/70 bg-white/40 text-gray-700">Apply</button>
-                        <a href="{{ route('crm.contacts.export', request()->query()) }}" class="px-4 py-2 rounded-xl border bg-green-100 hover:bg-green-200 text-green-700 ml-2">Export</a>
-                        <a href="{{ route('crm.contacts.index') }}" class="px-4 py-2 rounded-xl border bg-gray-100 hover:bg-gray-200 text-gray-600 ml-2">Reset</a>
+                        <a href="{{ route('crm.pipeline.export', request()->query()) }}" class="px-4 py-2 rounded-xl border bg-green-100 hover:bg-green-200 text-green-700 ml-2">Export</a>
+                        <a href="{{ route('crm.pipeline.index') }}" class="px-4 py-2 rounded-xl border bg-gray-100 hover:bg-gray-200 text-gray-600 ml-2">Reset</a>
                     </form>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Create Deal Modal -->
     <div x-show="showCreate" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center">
         <div class="absolute inset-0 bg-black/50" @click="showCreate=false"></div>
         <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl p-6">
-            <div class="text-lg font-semibold mb-4">Create Contact</div>
-            <form method="POST" action="{{ route('crm.contacts.store') }}" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="text-lg font-semibold mb-4">Create Deal</div>
+            <form method="POST" action="{{ route('crm.pipeline.store') }}" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 @csrf
-                <input name="name" class="border rounded-lg px-3 py-2" placeholder="Name" required>
-                <input name="company" class="border rounded-lg px-3 py-2" placeholder="Company">
-                <input name="email" type="email" class="border rounded-lg px-3 py-2" placeholder="Email">
-                <input name="phone" class="border rounded-lg px-3 py-2" placeholder="Phone">
-                <input name="assigned_user_id" type="number" class="border rounded-lg px-3 py-2" placeholder="Assigned User ID">
-                <select name="status" class="border rounded-lg px-3 py-2">
-                    <option value="active">Active</option>
-                    <option value="archived">Archived</option>
+                <input type="hidden" name="view_mode" value="list">
+                <input name="deal_name" class="border rounded-lg px-3 py-2 md:col-span-2" placeholder="Deal Name" required>
+                <select name="stage" class="border rounded-lg px-3 py-2">
+                    <option value="prospect" selected>Prospect</option>
+                    <option value="negotiation">Negotiation</option>
+                    <option value="proposal">Proposal</option>
+                    <option value="closed_won">Closed Won</option>
+                    <option value="closed_lost">Closed Lost</option>
                 </select>
-                <input name="tags[]" class="border rounded-lg px-3 py-2 md:col-span-2" placeholder="Tags (comma separated)">
+                <input name="value" type="number" step="0.01" class="border rounded-lg px-3 py-2" placeholder="Deal Value" required>
+                <input name="owner_user_id" type="number" class="border rounded-lg px-3 py-2" placeholder="Owner User ID">
+                <input name="close_date" type="date" class="border rounded-lg px-3 py-2" placeholder="Close Date">
+                <input name="probability" type="number" min="0" max="100" class="border rounded-lg px-3 py-2" placeholder="Probability (%)">
+                <input name="company" class="border rounded-lg px-3 py-2" placeholder="Company Name">
+                <input name="contact_id" type="number" class="border rounded-lg px-3 py-2" placeholder="Contact ID (optional)">
                 <textarea name="notes" class="border rounded-lg px-3 py-2 md:col-span-2" rows="3" placeholder="Notes"></textarea>
                 <div class="md:col-span-2 flex justify-end gap-2 mt-2">
                     <button type="button" class="px-4 py-2 rounded-lg border" @click="showCreate=false">Cancel</button>
@@ -294,47 +280,104 @@
         </div>
     </div>
 
+    <!-- Edit Deal Modal -->
     <div x-show="showEdit" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center">
-        <div class="absolute inset-0 bg-black/50" @click="showEdit=false"></div>
+        <div class="absolute inset-0 bg-black/50" onclick="closeEditModal()"></div>
         <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl p-6">
-            <div class="text-lg font-semibold mb-4">Edit Contact</div>
-            <form :action="'{{ route('crm.contacts.update','__ID__') }}'.replace('__ID__', editId)" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="text-lg font-semibold mb-4">Edit Deal</div>
+            <form id="editForm" action="" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 @csrf
                 @method('PUT')
-                <input name="name" class="border rounded-lg px-3 py-2" placeholder="Name" x-model="editName" required>
-                <input name="company" class="border rounded-lg px-3 py-2" placeholder="Company" x-model="editCompany">
-                <input name="email" type="email" class="border rounded-lg px-3 py-2" placeholder="Email" x-model="editEmail">
-                <input name="phone" class="border rounded-lg px-3 py-2" placeholder="Phone" x-model="editPhone">
-                <input name="assigned_user_id" type="number" class="border rounded-lg px-3 py-2" placeholder="Assigned User ID" x-model="editAssigned">
-                <select name="status" class="border rounded-lg px-3 py-2" x-model="editStatus">
-                    <option value="active">Active</option>
-                    <option value="archived">Archived</option>
+                <input type="hidden" name="view_mode" value="list">
+                <input id="editDealName" name="deal_name" class="border rounded-lg px-3 py-2 md:col-span-2" placeholder="Deal Name" required>
+                <select id="editStage" name="stage" class="border rounded-lg px-3 py-2">
+                    <option value="prospect">Prospect</option>
+                    <option value="negotiation">Negotiation</option>
+                    <option value="proposal">Proposal</option>
+                    <option value="closed_won">Closed Won</option>
+                    <option value="closed_lost">Closed Lost</option>
                 </select>
-                <input name="tags[]" class="border rounded-lg px-3 py-2 md:col-span-2" placeholder="Tags (comma separated)" x-model="editTags">
-                <textarea name="notes" class="border rounded-lg px-3 py-2 md:col-span-2" rows="3" placeholder="Notes" x-model="editNotes"></textarea>
+                <input id="editValue" name="value" type="number" step="0.01" class="border rounded-lg px-3 py-2" placeholder="Deal Value" required>
+                <input id="editOwner" name="owner_user_id" type="number" class="border rounded-lg px-3 py-2" placeholder="Owner User ID">
+                <input id="editCloseDate" name="close_date" type="date" class="border rounded-lg px-3 py-2">
+                <input id="editProbability" name="probability" type="number" min="0" max="100" class="border rounded-lg px-3 py-2" placeholder="Probability (%)">
+                <input id="editCompany" name="company" class="border rounded-lg px-3 py-2" placeholder="Company Name">
+                <input id="editContactId" name="contact_id" type="number" class="border rounded-lg px-3 py-2" placeholder="Contact ID">
+                <textarea id="editNotes" name="notes" class="border rounded-lg px-3 py-2 md:col-span-2" rows="3" placeholder="Notes"></textarea>
                 <div class="md:col-span-2 flex justify-end gap-2 mt-2">
-                    <button type="button" class="px-4 py-2 rounded-lg border" @click="showEdit=false">Cancel</button>
+                    <button type="button" class="px-4 py-2 rounded-lg border" onclick="closeEditModal()">Cancel</button>
                     <button class="px-4 py-2 rounded-lg bg-blue-600 text-white">Save</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- Delete Deal Modal -->
     <div x-show="showDelete" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center">
-        <div class="absolute inset-0 bg-black/50" @click="showDelete=false"></div>
+        <div class="absolute inset-0 bg-black/50" onclick="closeDeleteModal()"></div>
         <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-            <div class="text-lg font-semibold mb-3">Delete Contact</div>
-            <p class="text-sm text-gray-600 mb-4">Are you sure you want to delete this contact?</p>
-            <form :action="'{{ route('crm.contacts.destroy','__ID__') }}'.replace('__ID__', editId)" method="POST" class="flex justify-end gap-2">
+            <div class="text-lg font-semibold mb-3">Delete Deal</div>
+            <p class="text-sm text-gray-600 mb-4">Are you sure you want to delete this deal?</p>
+            <form id="deleteForm" action="" method="POST" class="flex justify-end gap-2">
                 @csrf
                 @method('DELETE')
-                <button type="button" class="px-4 py-2 rounded-lg border" @click="showDelete=false">Cancel</button>
-                <button class="px-4 py-2 rounded-lg bg-red-600 text-white">Delete</button>
+                <button type="button" class="px-4 py-2 rounded-lg border" onclick="closeDeleteModal()">Cancel</button>
+                <button type="submit" class="px-4 py-2 rounded-lg bg-red-600 text-white">Delete</button>
             </form>
         </div>
     </div>
 
-    
+    <script>
+        // Store modal state globally
+        window.pipelineModal = {
+            showEdit: false,
+            showDelete: false,
+            editId: null
+        };
+
+        function openEditModal(id, dealName, stage, value, owner, closeDate, probability, contactId, company, notes) {
+            // First, ensure delete modal is closed
+            window.pipelineModal.showDelete = false;
+            window.dispatchEvent(new CustomEvent('close-delete-modal'));
+            
+            // Then set up and open edit modal
+            document.getElementById('editForm').action = '{{ url("crm/pipeline") }}/' + id;
+            document.getElementById('editDealName').value = dealName;
+            document.getElementById('editStage').value = stage;
+            document.getElementById('editValue').value = value;
+            document.getElementById('editOwner').value = owner || '';
+            document.getElementById('editCloseDate').value = closeDate || '';
+            document.getElementById('editProbability').value = probability || '';
+            document.getElementById('editContactId').value = contactId || '';
+            document.getElementById('editCompany').value = company || '';
+            document.getElementById('editNotes').value = notes || '';
+            
+            window.pipelineModal.showEdit = true;
+            window.dispatchEvent(new CustomEvent('show-edit-modal'));
+        }
+
+        function closeEditModal() {
+            window.pipelineModal.showEdit = false;
+            window.dispatchEvent(new CustomEvent('close-edit-modal'));
+        }
+
+        function openDeleteModal(id) {
+            // First, ensure edit modal is closed
+            window.pipelineModal.showEdit = false;
+            window.dispatchEvent(new CustomEvent('close-edit-modal'));
+            
+            // Then set up and open delete modal
+            document.getElementById('deleteForm').action = '{{ url("crm/pipeline") }}/' + id;
+            window.pipelineModal.editId = id;
+            window.pipelineModal.showDelete = true;
+            window.dispatchEvent(new CustomEvent('show-delete-modal'));
+        }
+
+        function closeDeleteModal() {
+            window.pipelineModal.showDelete = false;
+            window.dispatchEvent(new CustomEvent('close-delete-modal'));
+        }
+    </script>
 </div>
 </body>
 </html>

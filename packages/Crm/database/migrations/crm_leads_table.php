@@ -13,10 +13,11 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->nullable()->index();
             $table->string('company')->nullable();
-            $table->string('source')->nullable()->index();
-            $table->enum('stage', ['new', 'contacted', 'qualified', 'won', 'lost'])->default('new')->index();
+            $table->string('source')->nullable();
+            $table->enum('stage', ['new','contacted','qualified','won','lost'])->default('new')->index();
             $table->unsignedBigInteger('assigned_user_id')->nullable()->index();
             $table->unsignedInteger('lead_score')->nullable();
+            $table->json('tags')->nullable();
             $table->text('notes')->nullable();
             $table->softDeletes();
             $table->timestamps();
