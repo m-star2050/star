@@ -164,7 +164,7 @@ class PipelineController extends Controller
     public function destroy(Pipeline $pipeline)
     {
         $pipeline->delete();
-        return redirect()->route('crm.pipeline.index')->with('status', 'Deal deleted successfully');
+        return redirect()->route('crm.pipeline.index');
     }
 
     /**
@@ -201,7 +201,7 @@ class PipelineController extends Controller
     {
         $ids = (array) $request->input('ids', []);
         Pipeline::whereIn('id', $ids)->delete();
-        return redirect()->route('crm.pipeline.index')->with('status', 'Selected deals deleted successfully');
+        return redirect()->route('crm.pipeline.index');
     }
 
     /**

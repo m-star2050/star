@@ -74,6 +74,14 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z"/><path d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z"/><path d="M17 5c0 1.657-3.134 3-7 3S3 6.657 3 5s3.134-3 7-3 7 1.343 7 3z"/></svg>
                 <span x-show="open" x-transition>Pipeline</span>
             </a>
+            <a href="{{ route('crm.reports.index') }}" class="sidebar-link">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>
+                <span x-show="open" x-transition>Reports</span>
+            </a>
+            <a href="{{ route('crm.files.index') }}" class="sidebar-link">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/></svg>
+                <span x-show="open" x-transition>Files</span>
+            </a>
         </nav>
     </aside>
 
@@ -103,7 +111,7 @@
                     <form method="GET" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
                     <div class="md:col-span-5 flex items-center justify-between">
                         <div class="font-semibold text-xl text-gray-700 ml-1 tracking-wide">Filter</div>
-                        <button type="submit"class="px-5 py-2 rounded-xl bg-blue-600 text-white shadow hover:bg-blue-700">Filter
+                        <button type="submit"class="px-5 py-2 rounded-xl bg-blue-600 text-white shadow hover:bg-blue-700">Apply Filters
                         </button>
                     </div>
 

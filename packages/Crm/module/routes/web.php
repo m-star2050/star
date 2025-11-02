@@ -5,8 +5,6 @@ use Packages\Crm\Http\Controllers\ContactController;
 use Packages\Crm\Http\Controllers\LeadController;
 use Packages\Crm\Http\Controllers\TaskController;
 use Packages\Crm\Http\Controllers\PipelineController;
-use Packages\Crm\Http\Controllers\ReportsController;
-use Packages\Crm\Http\Controllers\FilesController;
 
 Route::prefix('crm')->group(function () {
     Route::get('check', function(){
@@ -43,27 +41,13 @@ Route::prefix('crm')->group(function () {
             Route::post('pipeline/{id}/restore', [PipelineController::class, 'restore'])->name('pipeline.restore');
             Route::post('pipeline/bulk-delete', [PipelineController::class, 'bulkDelete'])->name('pipeline.bulk-delete');
             Route::get('pipeline-export', [PipelineController::class, 'export'])->name('pipeline.export');
-
-            Route::get('reports', [ReportsController::class, 'index'])->name('reports.index');
-            Route::get('reports-export', [ReportsController::class, 'export'])->name('reports.export');
-
-            Route::get('files', [FilesController::class, 'index'])->name('files.index');
-            Route::post('files', [FilesController::class, 'store'])->name('files.store');
-            Route::get('files/{file}/download', [FilesController::class, 'download'])->name('files.download');
-            Route::get('files/{file}/preview', [FilesController::class, 'preview'])->name('files.preview');
-            Route::delete('files/{file}', [FilesController::class, 'destroy'])->name('files.destroy');
-            Route::post('files/bulk-delete', [FilesController::class, 'bulkDelete'])->name('files.bulk-delete');
         });
     });
 
   
 });
 
-Route::get('/crm', function () {
-    return 'CRM Module Connected!';
+Route::get('/module/test', function () {
+    return 'Module working!';
 });
-
-
-
-
 

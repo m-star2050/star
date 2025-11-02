@@ -40,12 +40,12 @@ class Pipeline extends Model
     public function getStageColorClass()
     {
         return match($this->stage) {
-            'prospect' => 'bg-gray-100 text-gray-700',
-            'negotiation' => 'bg-blue-100 text-blue-700',
-            'proposal' => 'bg-yellow-100 text-yellow-700',
-            'closed_won' => 'bg-green-100 text-green-700',
-            'closed_lost' => 'bg-red-100 text-red-700',
-            default => 'bg-gray-100 text-gray-700',
+            'prospect' => 'text-gray-700',
+            'negotiation' => 'text-blue-700',
+            'proposal' => 'text-yellow-700',
+            'closed_won' => 'text-green-700',
+            'closed_lost' => 'text-red-700',
+            default => 'text-gray-700',
         };
     }
 

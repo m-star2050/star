@@ -15,7 +15,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>CRM Pipeline</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <parameter name="script" src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <style>
         body {
@@ -28,17 +28,12 @@
         .sidebar-link{ display:flex; align-items:center; gap:.75rem; color:#0f172a; text-decoration:none; padding:.6rem .9rem; border-radius:.6rem; }
         .sidebar-link:hover{ background: rgba(0,0,0,.06); }
         .sidebar-link svg{ width:20px; height:20px; min-width:20px; min-height:20px; }
+        .hdr-wrap{max-width:1120px}
     </style>
 </head>
 <body>
 
-<div x-data="{open:true, showCreate:false, showEdit:false, showDelete:false, showBulkDelete:false, editId:null, editDealName:'', editStage:'prospect', editValue:'', editOwner:'', editCloseDate:'', editProbability:'', editContactId:'', editCompany:'', editNotes:''}" 
-     x-init="
-        window.addEventListener('show-edit-modal', () => { showEdit = true; });
-        window.addEventListener('close-edit-modal', () => { showEdit = false; });
-        window.addEventListener('show-delete-modal', () => { showDelete = true; editId = window.pipelineModal.editId; });
-        window.addEventListener('close-delete-modal', () => { showDelete = false; });
-     " class="relative">
+<div x-data="{open:true, showCreate:false, showEdit:false, showDelete:false, showBulkDelete:false, editId:null, editDeal:'', editStage:'prospect', editValue:0, editOwner:'', editCloseDate:'', editProbability:0, editContact:'', editCompany:'', editNotes:''}" class="relative">
     <aside class="fixed top-3 left-3 h-[calc(100vh-24px)] glass rounded-2xl p-3 transition-all duration-300" :class="open ? 'w-64' : 'w-16'">
         <div class="flex items-center justify-between mb-4">
             <div class="text-gray-900 font-extrabold tracking-wide mt-5" :class="open ? 'opacity-100' : 'opacity-0 pointer-events-none'">WELCOME USER</div>
@@ -60,24 +55,33 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/></svg>
                 <span x-show="open" x-transition>Tasks</span>
             </a>
-            <a href="{{ route('crm.pipeline.index') }}" class="sidebar-link bg-white/20">
+            <a href="{{ route('crm.pipeline.index') }}" class="sidebar-link bg-black/10">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z"/><path d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z"/><path d="M17 5c0 1.657-3.134 3-7 3S3 6.657 3 5s3.134-3 7-3 7 1.343 7 3z"/></svg>
                 <span x-show="open" x-transition>Pipeline</span>
+            </a>
+            <a href="{{ route('crm.reports.index') }}" class="sidebar-link">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>
+                <span x-show="open" x-transition>Reports</span>
+            </a>
+            <a href="{{ route('crm.files.index') }}" class="sidebar-link">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/></svg>
+                <span x-show="open" x-transition>Files</span>
             </a>
         </nav>
     </aside>
 
     <div class="transition-all duration-300" :style="open ? 'padding-left:280px' : 'padding-left:88px'">
         <div class="min-h-screen flex flex-col justify-center items-center px-2 py-8">
-            <div class="w-full max-w-6xl mx-auto px-3 md:px-4 py-3">
+            <div class="w-full max-w-7xl mx-auto px-3 md:px-4 py-3">
                 <div class="glass w-full rounded-xl px-6 py-3 mb-4 flex items-center justify-between text-white">
-                    <div class="text-lg md:text-xl font-semibold tracking-wide">PIPELINE</div>
-                    <a href="{{ route('crm.pipeline.kanban') }}" class="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-medium shadow-md text-sm">
-                        Switch to Kanban
+                    <div class="text-lg md:text-xl font-semibold tracking-wide">SALES PIPELINE</div>
+                    <a href="{{ route('crm.pipeline.kanban') }}" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-sm font-semibold transition">
+                        Switch to Kanban View
                     </a>
                 </div>
+
                 <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
-                    <div class="flex items-end gap-6 w-full md:max-w-xl">
+                    <div class="flex items-end gap-3 w-full md:max-w-xl">
                         <button type="button" @click="showCreate=true" class="flex-shrink-0 flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 20 20" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"/></svg>
                             New Deal
@@ -87,21 +91,20 @@
                         <form method="GET" class="flex items-center gap-0 bg-white/30 backdrop-blur-sm rounded-xl px-3 py-2 shadow-inner w-full md:w-80">
                             <label for="mainsearch" class="text-gray-600 px-2 text-base font-medium">Search</label>
                             <span class="inline-flex items-center justify-center pl-2 pr-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 103 10.5a7.5 7.5 0 0013.15 6.15z" /></svg></span>
-                            <input id="mainsearch" type="text" name="search" value="{{ request('search') }}" class="bg-transparent border-0 outline-none ring-0 focus:ring-0 w-full text-gray-900 placeholder-gray-400 text-base px-2 py-1" placeholder="" autocomplete="off">
+                            <input id="mainsearch" type="text" name="search" value="{{ request('search') }}" class="bg-transparent border-0 outline-none ring-0 focus:ring-0 w-full text-gray-900 placeholder-gray-400 text-base px-2 py-1" placeholder="Deal or Company..." autocomplete="off">
                         </form>
-                        <button type="submit" formaction="#" class="hidden" aria-hidden="true"></button>
                     </div>
                 </div>
+
                 <div class="mb-4">
-                    <form method="GET" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
-                    <div class="md:col-span-5 flex items-center justify-between">
-                        <div class="font-semibold text-xl text-gray-700 ml-1 tracking-wide">Filter</div>
-                        <button type="submit"class="px-5 py-2 rounded-xl bg-blue-600 text-white shadow hover:bg-blue-700">Filter
-                        </button>
-                    </div>
+                    <form method="GET" class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
+                        <div class="md:col-span-6 flex items-center justify-between">
+                            <div class="font-semibold text-xl text-gray-700 ml-1 tracking-wide">Filters</div>
+                            <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 text-white shadow hover:bg-blue-700">Apply Filters</button>
+                        </div>
 
                         <div>
-                            <select name="stage" class="w-full border rounded-xl px-3 py-2 bg-transparent text-gray-800 focus:ring-2 focus:ring-blue-400">
+                            <select name="stage" class="w-full border rounded-xl px-3 py-2 bg-white/80 text-gray-800 focus:ring-2 focus:ring-blue-400">
                                 <option value="">All Stages</option>
                                 <option value="prospect" @selected(request('stage')==='prospect')>Prospect</option>
                                 <option value="negotiation" @selected(request('stage')==='negotiation')>Negotiation</option>
@@ -110,82 +113,97 @@
                                 <option value="closed_lost" @selected(request('stage')==='closed_lost')>Closed Lost</option>
                             </select>
                         </div>
+
                         <div>
-                            <input type="number" name="owner_user_id" value="{{ request('owner_user_id') }}" class="w-full border rounded-xl px-3 py-2 bg-transparent text-gray-800 focus:ring-2 focus:ring-blue-400 placeholder-gray-500" autocomplete="off" placeholder="Owner User ID">
+                            <input type="number" name="owner_user_id" value="{{ request('owner_user_id') }}" class="w-full border rounded-xl px-3 py-2 bg-white/80 text-gray-800 focus:ring-2 focus:ring-blue-400 placeholder-gray-500" placeholder="Owner ID" autocomplete="off">
                         </div>
+
                         <div>
-                            <input type="number" name="value_min" value="{{ request('value_min') }}" class="w-full border rounded-xl px-3 py-2 bg-transparent text-gray-800 focus:ring-2 focus:ring-blue-400 placeholder-gray-500" autocomplete="off" placeholder="Min Value" step="0.01">
+                            <input type="number" name="value_min" value="{{ request('value_min') }}" class="w-full border rounded-xl px-3 py-2 bg-white/80 text-gray-800 focus:ring-2 focus:ring-blue-400 placeholder-gray-500" placeholder="Min Value" step="0.01" autocomplete="off">
                         </div>
+
                         <div>
-                            <input type="number" name="value_max" value="{{ request('value_max') }}" class="w-full border rounded-xl px-3 py-2 bg-transparent text-gray-800 focus:ring-2 focus:ring-blue-400 placeholder-gray-500" autocomplete="off" placeholder="Max Value" step="0.01">
+                            <input type="number" name="value_max" value="{{ request('value_max') }}" class="w-full border rounded-xl px-3 py-2 bg-white/80 text-gray-800 focus:ring-2 focus:ring-blue-400 placeholder-gray-500" placeholder="Max Value" step="0.01" autocomplete="off">
                         </div>
+
                         <div>
-                            <input type="date" name="close_date_from" value="{{ request('close_date_from') }}" class="w-full border rounded-xl px-3 py-2 bg-transparent text-gray-800 focus:ring-2 focus:ring-blue-400" autocomplete="off" placeholder="Close From">
+                            <input type="date" name="close_date_from" value="{{ request('close_date_from') }}" class="w-full border rounded-xl px-3 py-2 bg-white/80 text-gray-800 focus:ring-2 focus:ring-blue-400" autocomplete="off">
+                        </div>
+
+                        <div>
+                            <input type="date" name="close_date_to" value="{{ request('close_date_to') }}" class="w-full border rounded-xl px-3 py-2 bg-white/80 text-gray-800 focus:ring-2 focus:ring-blue-400" autocomplete="off">
                         </div>
                     </form>
                 </div>
+
                 <form method="POST" action="{{ route('crm.pipeline.bulk-delete') }}" x-ref="bulkForm">
                     @csrf
                     <div class="mb-2 flex items-end gap-2 px-2">
                         <button type="button" class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow" @click="showBulkDelete=true">Delete Selected</button>
-                        <span class="text-sm text-gray-500 pb-1 ml-4">Click the 'Export' button to download to Excel.</span>
+                        <span class="text-sm text-gray-600 pb-1 ml-4">Click the 'Export' button to download to Excel.
+                        </span>
                     </div>
+
                     <div class="overflow-x-auto rounded-xl shadow-xl glass">
                         <table class="min-w-full text-sm bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl">
                             <thead class="uppercase bg-white/40 text-gray-800 rounded-xl">
                                 <tr>
                                     <th class="p-3 text-center"><input type="checkbox" @click="$el.closest('table').querySelectorAll('.row-check').forEach(cb=>cb.checked=$event.target.checked)"></th>
-                                    <th class="p-3 font-semibold tracking-widest text-center">Deal Name</th>
-                                    <th class="p-3 font-semibold tracking-widest text-center">Stage</th>
-                                    <th class="p-3 font-semibold tracking-widest text-center">Value</th>
-                                    <th class="p-3 font-semibold tracking-widest text-center">Owner</th>
-                                    <th class="p-3 font-semibold tracking-widest text-center">Close Date</th>
-                                    <th class="p-3 font-semibold tracking-widest text-center">Probability</th>
+                                    <th class="p-3 font-semibold tracking-widest text-center">{!! sort_link('deal_name', 'Deal Name') !!}</th>
+                                    <th class="p-3 font-semibold tracking-widest text-center">{!! sort_link('stage', 'Stage') !!}</th>
+                                    <th class="p-3 font-semibold tracking-widest text-center">{!! sort_link('value', 'Value') !!}</th>
+                                    <th class="p-3 font-semibold tracking-widest text-center">{!! sort_link('owner_user_id', 'Owner') !!}</th>
+                                    <th class="p-3 font-semibold tracking-widest text-center">{!! sort_link('close_date', 'Close Date') !!}</th>
+                                    <th class="p-3 font-semibold tracking-widest text-center">{!! sort_link('probability', 'Prob %') !!}</th>
                                     <th class="p-3 font-semibold tracking-widest text-center">Company</th>
+                                    <th class="p-3 font-semibold tracking-widest text-center">Contact</th>
                                     <th class="p-3 font-semibold tracking-widest text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                        @forelse($pipelines as $p)
-                            <tr class="border-b border-white/30 bg-white/20 hover:bg-white/40 transition">
-                                <td class="p-2 text-center"><input type="checkbox" class="row-check" name="ids[]" value="{{ $p->id }}"></td>
-                                <td class="p-2 text-center font-medium">{{ $p->deal_name }}</td>
-                                <td class="p-2 text-center">
-                                    <span class="text-sm font-semibold text-gray-700">{{ $p->getStageLabel() }}</span>
-                                </td>
-                                <td class="p-2 text-center font-semibold text-green-700">${{ number_format($p->value, 2) }}</td>
-                                <td class="p-2 text-center">{{ $p->owner_user_id ? 'User '.$p->owner_user_id : '-' }}</td>
-                                <td class="p-2 text-center">{{ $p->close_date?->format('Y-m-d') ?? '-' }}</td>
-                                <td class="p-2 text-center">{{ $p->probability ? $p->probability.'%' : '-' }}</td>
-                                <td class="p-2 text-center">{{ $p->company ?? '-' }}</td>
-                                <td class="p-2 text-center">
-                                    <button type="button" class="inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-blue-400 text-blue-600 hover:bg-blue-50 shadow-sm" onclick="openEditModal({{ $p->id }}, '{{ addslashes($p->deal_name) }}', '{{ $p->stage }}', {{ $p->value }}, {{ $p->owner_user_id ?? 'null' }}, '{{ $p->close_date?->format('Y-m-d') ?? '' }}', {{ $p->probability ?? 'null' }}, {{ $p->contact_id ?? 'null' }}, '{{ addslashes($p->company ?? '') }}', '{{ addslashes($p->notes ?? '') }}')">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-8.5 8.5a2 2 0 01-.878.515l-3.3.943a.5.5 0 01-.62-.62l.943-3.3a2 2 0 01.515-.878l8.5-8.5z"/></svg>Edit
-                                    </button>
-                                    <button type="button" class="inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-red-400 text-red-600 hover:bg-red-50 shadow-sm" onclick="openDeleteModal({{ $p->id }})">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M6 8a1 1 0 011 1v6a1 1 0 102 0V9a1 1 0 112 0v6a1 1 0 102 0V9a1 1 0 011-1h1a1 1 0 100-2h-1V5a2 2 0 00-2-2H9a2 2 0 00-2 2v1H6a1 1 0 100 2h1zm3-3h2v1H9V5z" clip-rule="evenodd"/></svg>Del
-                                    </button>
-                                </td>
-
-                            </tr>
-                        @empty
-                            <tr><td colspan="9" class="p-4 text-center text-gray-400">No deals found</td></tr>
-                        @endforelse
-                        </tbody>
-                    </table>
-                </div>
-                <div x-show="showBulkDelete" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center">
-                    <div class="absolute inset-0 bg-black/50" @click="showBulkDelete=false"></div>
-                    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-                        <div class="text-lg font-semibold mb-3">Delete Selected</div>
-                        <p class="text-sm text-gray-600 mb-4">Are you sure you want to delete the selected deals?</p>
-                        <div class="flex justify-end gap-2">
-                            <button type="button" class="px-4 py-2 rounded-lg border" @click="showBulkDelete=false">Cancel</button>
-                            <button type="submit" class="px-4 py-2 rounded-lg bg-red-600 text-white">Delete</button>
+                            @forelse($pipelines as $p)
+                                <tr class="border-b border-white/30 bg-white/20 hover:bg-white/40 transition">
+                                    <td class="p-2 text-center"><input type="checkbox" class="row-check" name="ids[]" value="{{ $p->id }}"></td>
+                                    <td class="p-2 text-center font-medium">{{ $p->deal_name }}</td>
+                                    <td class="p-2 text-center">
+                                        <span class="font-semibold {{ $p->getStageColorClass() }}">
+                                            {{ $p->getStageLabel() }}
+                                        </span>
+                                    </td>
+                                    <td class="p-2 text-center font-semibold">${{ number_format($p->value, 2) }}</td>
+                                    <td class="p-2 text-center">{{ $p->owner_user_id ? 'User '.$p->owner_user_id : '-' }}</td>
+                                    <td class="p-2 text-center">{{ $p->close_date?->format('Y-m-d') ?? '-' }}</td>
+                                    <td class="p-2 text-center">{{ $p->probability ?? '-' }}%</td>
+                                    <td class="p-2 text-center">{{ $p->company ?? '-' }}</td>
+                                    <td class="p-2 text-center">{{ $p->contact?->name ?? '-' }}</td>
+                                    <td class="p-2 text-center">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <button type="button" @click="editId={{$p->id}}; editDeal='{{$p->deal_name}}'; editStage='{{$p->stage}}'; editValue={{$p->value}}; editOwner='{{$p->owner_user_id}}'; editCloseDate='{{$p->close_date}}'; editProbability={{$p->probability??0}}; editContact='{{$p->contact_id}}'; editCompany='{{$p->company}}'; editNotes='{{addslashes($p->notes)}}'; showEdit=true;" class="inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-blue-400 text-blue-600 hover:bg-blue-50 shadow-sm">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-8.5 8.5a2 2 0 01-.878.515l-3.3.943a.5.5 0 01-.62-.62l.943-3.3a2 2 0 01.515-.878l8.5-8.5z"/></svg>Edit
+                                            </button>
+                                            <button type="button" @click="editId={{$p->id}}; editDeal='{{$p->deal_name}}'; showDelete=true;" class="inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-red-400 text-red-600 hover:bg-red-50 shadow-sm">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 8a1 1 0 011 1v6a1 1 0 102 0V9a1 1 0 112 0v6a1 1 0 102 0V9a1 1 0 011-1h1a1 1 0 100-2h-1V5a2 2 0 00-2-2H9a2 2 0 00-2 2v1H6a1 1 0 100 2h1zm3-3h2v1H9V5z" clip-rule="evenodd"/></svg>Del
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="10" class="p-8 text-center text-gray-600">No deals found.</td></tr>
+                            @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                    <div x-show="showBulkDelete" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center">
+                        <div class="absolute inset-0 bg-black/50" @click="showBulkDelete=false"></div>
+                        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+                            <div class="text-lg font-semibold mb-3">Delete Selected</div>
+                            <p class="text-sm text-gray-600 mb-4">Are you sure you want to delete the selected deals?</p>
+                            <div class="flex justify-end gap-2">
+                                <button type="button" class="px-4 py-2 rounded-lg border" @click="showBulkDelete=false">Cancel</button>
+                                <button type="submit" class="px-4 py-2 rounded-lg bg-red-600 text-white">Delete</button>
+                            </div>
                         </div>
                     </div>
-                </div>
                 </form>
                 <div class="flex flex-col md:flex-row items-center md:justify-between gap-3 p-3">
                     <div class="text-sm text-gray-600">
@@ -238,6 +256,7 @@
                         <input type="hidden" name="value_min" value="{{ request('value_min') }}">
                         <input type="hidden" name="value_max" value="{{ request('value_max') }}">
                         <input type="hidden" name="close_date_from" value="{{ request('close_date_from') }}">
+                        <input type="hidden" name="close_date_to" value="{{ request('close_date_to') }}">
                         <input type="hidden" name="sort" value="{{ request('sort') }}">
                         <input type="hidden" name="direction" value="{{ request('direction') }}">
                         <button class="px-4 py-2 rounded-xl border hover:bg-white/70 bg-white/40 text-gray-700">Apply</button>
@@ -245,140 +264,151 @@
                         <a href="{{ route('crm.pipeline.index') }}" class="px-4 py-2 rounded-xl border bg-gray-100 hover:bg-gray-200 text-gray-600 ml-2">Reset</a>
                     </form>
                 </div>
+
+                <!-- Create Deal Modal -->
+                <div x-show="showCreate" x-cloak class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto" @click.self="showCreate=false">
+                    <div class="glass rounded-2xl p-6 w-full max-w-2xl m-4">
+                        <h3 class="text-xl font-bold text-gray-900 mb-4">Create New Deal</h3>
+                        <form method="POST" action="{{ route('crm.pipeline.store') }}">
+                            @csrf
+                            <input type="hidden" name="view_mode" value="list">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Deal Name*</label>
+                                    <input type="text" name="deal_name" required class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Stage*</label>
+                                    <select name="stage" required class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400">
+                                        <option value="prospect">Prospect</option>
+                                        <option value="negotiation">Negotiation</option>
+                                        <option value="proposal">Proposal</option>
+                                        <option value="closed_won">Closed Won</option>
+                                        <option value="closed_lost">Closed Lost</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Value*</label>
+                                    <input type="number" name="value" step="0.01" min="0" required class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Owner User ID</label>
+                                    <input type="number" name="owner_user_id" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Close Date</label>
+                                    <input type="date" name="close_date" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Probability (%)</label>
+                                    <input type="number" name="probability" min="0" max="100" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Contact ID</label>
+                                    <input type="number" name="contact_id" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Company</label>
+                                    <input type="text" name="company" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400">
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                                    <textarea name="notes" rows="3" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400"></textarea>
+                                </div>
+                            </div>
+                            <div class="flex justify-end gap-3 mt-6">
+                                <button type="button" @click="showCreate=false" class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg">Cancel</button>
+                                <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">Create Deal</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Edit Deal Modal -->
+                <div x-show="showEdit" x-cloak class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto" @click.self="showEdit=false">
+                    <div class="glass rounded-2xl p-6 w-full max-w-2xl m-4">
+                        <h3 class="text-xl font-bold text-gray-900 mb-4">Edit Deal</h3>
+                        <form method="POST" :action="`{{ route('crm.pipeline.index') }}/${editId}`">
+                            @csrf
+                            @method('PUT')
+                            <input type="hidden" name="view_mode" value="list">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Deal Name*</label>
+                                    <input type="text" name="deal_name" x-model="editDeal" required class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Stage*</label>
+                                    <select name="stage" x-model="editStage" required class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400">
+                                        <option value="prospect">Prospect</option>
+                                        <option value="negotiation">Negotiation</option>
+                                        <option value="proposal">Proposal</option>
+                                        <option value="closed_won">Closed Won</option>
+                                        <option value="closed_lost">Closed Lost</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Value*</label>
+                                    <input type="number" name="value" x-model="editValue" step="0.01" min="0" required class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Owner User ID</label>
+                                    <input type="number" name="owner_user_id" x-model="editOwner" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Close Date</label>
+                                    <input type="date" name="close_date" x-model="editCloseDate" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Probability (%)</label>
+                                    <input type="number" name="probability" x-model="editProbability" min="0" max="100" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Contact ID</label>
+                                    <input type="number" name="contact_id" x-model="editContact" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Company</label>
+                                    <input type="text" name="company" x-model="editCompany" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400">
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                                    <textarea name="notes" x-model="editNotes" rows="3" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400"></textarea>
+                                </div>
+                            </div>
+                            <div class="flex justify-end gap-3 mt-6">
+                                <button type="button" @click="showEdit=false" class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg">Cancel</button>
+                                <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">Update Deal</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Delete Confirmation Modal -->
+                <div x-show="showDelete" x-cloak class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" @click.self="showDelete=false">
+                    <div class="glass rounded-2xl p-6 w-full max-w-md">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Confirm Delete</h3>
+                        <p class="text-gray-700 mb-2">Are you sure you want to delete this deal?</p>
+                        <p class="text-gray-900 font-medium mb-6" x-text="editDeal"></p>
+                        <form method="POST" :action="`{{ route('crm.pipeline.index') }}/${editId}`">
+                            @csrf
+                            @method('DELETE')
+                            <div class="flex justify-end gap-3">
+                                <button type="button" @click="showDelete=false" class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg">Cancel</button>
+                                <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg">Delete</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
-
-    <!-- Create Deal Modal -->
-    <div x-show="showCreate" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center">
-        <div class="absolute inset-0 bg-black/50" @click="showCreate=false"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl p-6">
-            <div class="text-lg font-semibold mb-4">Create Deal</div>
-            <form method="POST" action="{{ route('crm.pipeline.store') }}" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                @csrf
-                <input type="hidden" name="view_mode" value="list">
-                <input name="deal_name" class="border rounded-lg px-3 py-2 md:col-span-2" placeholder="Deal Name" required>
-                <select name="stage" class="border rounded-lg px-3 py-2">
-                    <option value="prospect" selected>Prospect</option>
-                    <option value="negotiation">Negotiation</option>
-                    <option value="proposal">Proposal</option>
-                    <option value="closed_won">Closed Won</option>
-                    <option value="closed_lost">Closed Lost</option>
-                </select>
-                <input name="value" type="number" step="0.01" class="border rounded-lg px-3 py-2" placeholder="Deal Value" required>
-                <input name="owner_user_id" type="number" class="border rounded-lg px-3 py-2" placeholder="Owner User ID">
-                <input name="close_date" type="date" class="border rounded-lg px-3 py-2" placeholder="Close Date">
-                <input name="probability" type="number" min="0" max="100" class="border rounded-lg px-3 py-2" placeholder="Probability (%)">
-                <input name="company" class="border rounded-lg px-3 py-2" placeholder="Company Name">
-                <input name="contact_id" type="number" class="border rounded-lg px-3 py-2" placeholder="Contact ID (optional)">
-                <textarea name="notes" class="border rounded-lg px-3 py-2 md:col-span-2" rows="3" placeholder="Notes"></textarea>
-                <div class="md:col-span-2 flex justify-end gap-2 mt-2">
-                    <button type="button" class="px-4 py-2 rounded-lg border" @click="showCreate=false">Cancel</button>
-                    <button class="px-4 py-2 rounded-lg bg-blue-600 text-white">Create</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Edit Deal Modal -->
-    <div x-show="showEdit" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center">
-        <div class="absolute inset-0 bg-black/50" onclick="closeEditModal()"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl p-6">
-            <div class="text-lg font-semibold mb-4">Edit Deal</div>
-            <form id="editForm" action="" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                @csrf
-                @method('PUT')
-                <input type="hidden" name="view_mode" value="list">
-                <input id="editDealName" name="deal_name" class="border rounded-lg px-3 py-2 md:col-span-2" placeholder="Deal Name" required>
-                <select id="editStage" name="stage" class="border rounded-lg px-3 py-2">
-                    <option value="prospect">Prospect</option>
-                    <option value="negotiation">Negotiation</option>
-                    <option value="proposal">Proposal</option>
-                    <option value="closed_won">Closed Won</option>
-                    <option value="closed_lost">Closed Lost</option>
-                </select>
-                <input id="editValue" name="value" type="number" step="0.01" class="border rounded-lg px-3 py-2" placeholder="Deal Value" required>
-                <input id="editOwner" name="owner_user_id" type="number" class="border rounded-lg px-3 py-2" placeholder="Owner User ID">
-                <input id="editCloseDate" name="close_date" type="date" class="border rounded-lg px-3 py-2">
-                <input id="editProbability" name="probability" type="number" min="0" max="100" class="border rounded-lg px-3 py-2" placeholder="Probability (%)">
-                <input id="editCompany" name="company" class="border rounded-lg px-3 py-2" placeholder="Company Name">
-                <input id="editContactId" name="contact_id" type="number" class="border rounded-lg px-3 py-2" placeholder="Contact ID">
-                <textarea id="editNotes" name="notes" class="border rounded-lg px-3 py-2 md:col-span-2" rows="3" placeholder="Notes"></textarea>
-                <div class="md:col-span-2 flex justify-end gap-2 mt-2">
-                    <button type="button" class="px-4 py-2 rounded-lg border" onclick="closeEditModal()">Cancel</button>
-                    <button class="px-4 py-2 rounded-lg bg-blue-600 text-white">Save</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Delete Deal Modal -->
-    <div x-show="showDelete" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center">
-        <div class="absolute inset-0 bg-black/50" onclick="closeDeleteModal()"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-            <div class="text-lg font-semibold mb-3">Delete Deal</div>
-            <p class="text-sm text-gray-600 mb-4">Are you sure you want to delete this deal?</p>
-            <form id="deleteForm" action="" method="POST" class="flex justify-end gap-2">
-                @csrf
-                @method('DELETE')
-                <button type="button" class="px-4 py-2 rounded-lg border" onclick="closeDeleteModal()">Cancel</button>
-                <button type="submit" class="px-4 py-2 rounded-lg bg-red-600 text-white">Delete</button>
-            </form>
-        </div>
-    </div>
-
-    <script>
-        // Store modal state globally
-        window.pipelineModal = {
-            showEdit: false,
-            showDelete: false,
-            editId: null
-        };
-
-        function openEditModal(id, dealName, stage, value, owner, closeDate, probability, contactId, company, notes) {
-            // First, ensure delete modal is closed
-            window.pipelineModal.showDelete = false;
-            window.dispatchEvent(new CustomEvent('close-delete-modal'));
-            
-            // Then set up and open edit modal
-            document.getElementById('editForm').action = '{{ url("crm/pipeline") }}/' + id;
-            document.getElementById('editDealName').value = dealName;
-            document.getElementById('editStage').value = stage;
-            document.getElementById('editValue').value = value;
-            document.getElementById('editOwner').value = owner || '';
-            document.getElementById('editCloseDate').value = closeDate || '';
-            document.getElementById('editProbability').value = probability || '';
-            document.getElementById('editContactId').value = contactId || '';
-            document.getElementById('editCompany').value = company || '';
-            document.getElementById('editNotes').value = notes || '';
-            
-            window.pipelineModal.showEdit = true;
-            window.dispatchEvent(new CustomEvent('show-edit-modal'));
-        }
-
-        function closeEditModal() {
-            window.pipelineModal.showEdit = false;
-            window.dispatchEvent(new CustomEvent('close-edit-modal'));
-        }
-
-        function openDeleteModal(id) {
-            // First, ensure edit modal is closed
-            window.pipelineModal.showEdit = false;
-            window.dispatchEvent(new CustomEvent('close-edit-modal'));
-            
-            // Then set up and open delete modal
-            document.getElementById('deleteForm').action = '{{ url("crm/pipeline") }}/' + id;
-            window.pipelineModal.editId = id;
-            window.pipelineModal.showDelete = true;
-            window.dispatchEvent(new CustomEvent('show-delete-modal'));
-        }
-
-        function closeDeleteModal() {
-            window.pipelineModal.showDelete = false;
-            window.dispatchEvent(new CustomEvent('close-delete-modal'));
-        }
-    </script>
 </div>
+
+<style>
+    [x-cloak] { display: none !important; }
+</style>
+
 </body>
 </html>
-
