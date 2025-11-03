@@ -15,31 +15,45 @@ class FilesController extends Controller
      */
     public function index(Request $request)
     {
-        $search = $request->input('search');
+        // Validate and set per_page with proper bounds
+        $perPage = (int) $request->input('per_page', 10);
+        if ($perPage < 1) $perPage = 10;
+        if ($perPage > 100) $perPage = 100;
+        
+        $search = trim((string) $request->input('search', ''));
         $fileType = $request->input('file_type');
         $linkedType = $request->input('linked_type');
-        $perPage = $request->input('per_page', 10);
+        $sort = $request->input('sort', 'created_at');
+        $direction = $request->input('direction', 'desc');
 
         $files = CrmFile::query()
-            ->when($search, function($q) use ($search) {
+            ->when(!empty($search), function($q) use ($search) {
                 return $q->where('original_name', 'like', "%{$search}%")
                          ->orWhere('description', 'like', "%{$search}%");
             })
-            ->when($fileType, function($q) use ($fileType) {
+            ->when(!empty($fileType), function($q) use ($fileType) {
                 return $q->where('file_type', $fileType);
             })
-            ->when($linkedType, function($q) use ($linkedType) {
+            ->when(!empty($linkedType), function($q) use ($linkedType) {
                 return $q->where('linked_type', $linkedType);
-            })
-            ->latest()
-            ->paginate($perPage);
+            });
+
+        $allowedSorts = ['original_name', 'file_type', 'file_size', 'linked_type', 'created_at', 'uploaded_by'];
+        if (!in_array($sort, $allowedSorts, true)) {
+            $sort = 'created_at';
+        }
+        $direction = strtolower($direction) === 'asc' ? 'asc' : 'desc';
+
+        $files = $files->orderBy($sort, $direction)
+            ->paginate($perPage)
+            ->withQueryString();
 
         $fileTypes = CrmFile::select('file_type')
             ->distinct()
             ->whereNotNull('file_type')
             ->pluck('file_type');
 
-        return view('crm::files.index', compact('files', 'fileTypes', 'search', 'fileType', 'linkedType', 'perPage'));
+        return view('crm::files.index', compact('files', 'fileTypes', 'search', 'fileType', 'linkedType', 'perPage', 'sort', 'direction'));
     }
 
     /**
@@ -69,7 +83,9 @@ class FilesController extends Controller
             CrmFile::create([
                 'original_name' => $originalName,
                 'stored_name' => $storedName,
+                'file_name' => $originalName, // Add file_name field for database compatibility
                 'file_path' => $filePath,
+                'path' => $filePath, // Add path field for database compatibility (legacy column)
                 'file_type' => $extension,
                 'file_size' => $file->getSize(),
                 'linked_type' => $request->input('linked_type'),
@@ -121,6 +137,10 @@ class FilesController extends Controller
     {
         $ids = (array) $request->input('ids', []);
         
+        if (empty($ids)) {
+            return redirect()->route('crm.files.index')->with('error', 'No files selected');
+        }
+        
         $files = CrmFile::whereIn('id', $ids)->get();
         
         foreach ($files as $file) {
@@ -133,7 +153,7 @@ class FilesController extends Controller
             $file->delete();
         }
 
-        return redirect()->route('crm.files.index');
+        return redirect()->route('crm.files.index')->with('success', count($ids) . ' file(s) deleted successfully');
     }
 
     /**

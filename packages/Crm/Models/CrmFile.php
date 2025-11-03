@@ -15,7 +15,9 @@ class CrmFile extends Model
     protected $fillable = [
         'original_name',
         'stored_name',
+        'file_name',
         'file_path',
+        'path',
         'file_type',
         'file_size',
         'linked_type',
