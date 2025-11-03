@@ -8,7 +8,7 @@
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
-<body style="background: url('/image/Screenshot_16.png') center center / cover no-repeat fixed; min-height: 100vh; font-family: 'Inter', sans-serif;">
+<body style="background: url('{{ asset('image/Screenshot_16.png') }}') center center / cover no-repeat fixed; min-height: 100vh; font-family: 'Inter', sans-serif;">
 
 <style>
     .glass {
@@ -290,16 +290,20 @@
                     </div>
                     
                     <!-- Right Section: Items Per Page and Action Buttons -->
-                    <form method="GET" class="flex items-center gap-2">
-                        <label class="text-sm text-gray-600">Items per page</label>
-                        <input type="number" name="per_page" min="1" max="100" value="{{ request('per_page', 10) }}" class="w-20 border rounded-xl px-3 py-2 bg-white/60 text-gray-700 shadow-inner">
-                        <input type="hidden" name="search" value="{{ request('search') }}">
-                        <input type="hidden" name="file_type" value="{{ request('file_type') }}">
-                        <input type="hidden" name="linked_type" value="{{ request('linked_type') }}">
-                        <input type="hidden" name="sort" value="{{ request('sort', 'created_at') }}">
-                        <input type="hidden" name="direction" value="{{ request('direction', 'desc') }}">
-                        <button class="px-4 py-2 rounded-xl border hover:bg-white/70 bg-white/40 text-gray-700">Apply</button>
-                        <a href="{{ route('crm.files.index') }}" class="px-4 py-2 rounded-xl border bg-gray-100 hover:bg-gray-200 text-gray-600">Reset</a>
+                    <form method="GET" class="flex flex-col sm:flex-row items-center gap-2 flex-wrap">
+                        <div class="flex items-center gap-2">
+                            <label class="text-sm text-gray-600 whitespace-nowrap">Items per page</label>
+                            <input type="number" name="per_page" min="1" max="100" value="{{ request('per_page', 10) }}" class="w-20 border rounded-xl px-3 py-2 bg-white/60 text-gray-700 shadow-inner">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="hidden" name="search" value="{{ request('search') }}">
+                            <input type="hidden" name="file_type" value="{{ request('file_type') }}">
+                            <input type="hidden" name="linked_type" value="{{ request('linked_type') }}">
+                            <input type="hidden" name="sort" value="{{ request('sort', 'created_at') }}">
+                            <input type="hidden" name="direction" value="{{ request('direction', 'desc') }}">
+                            <button class="px-4 py-2 rounded-xl border hover:bg-white/70 bg-white/40 text-gray-700 whitespace-nowrap">Apply</button>
+                            <a href="{{ route('crm.files.index') }}" class="px-4 py-2 rounded-xl border bg-gray-100 hover:bg-gray-200 text-gray-600 whitespace-nowrap">Reset</a>
+                        </div>
                     </form>
                 </div>
 
