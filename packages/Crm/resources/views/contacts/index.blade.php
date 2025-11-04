@@ -93,9 +93,22 @@
         #contactsTable td { padding: 0.5rem; text-align: center; }
         #contactsTable th { padding: 0.75rem; text-align: center; }
         
-        /* Icon alignment in headers - position icons to the right */
+        /* Ensure table container allows full width */
+        #contactsTable {
+            width: 100% !important;
+            table-layout: auto;
+            min-width: 1200px !important;
+        }
+        
+        /* Ensure table wrapper doesn't cut off content */
+        .overflow-x-auto {
+            overflow-x: auto !important;
+            overflow-y: visible !important;
+        }
+        
+        /* Icon alignment in headers - center everything */
         #contactsTable th .flex.items-center {
-            justify-content: flex-end;
+            justify-content: center;
         }
         
         /* DataTables sorting indicators - professional SVG icons */
@@ -275,7 +288,7 @@
 
     <div class="lg:transition-all lg:duration-300 pt-16 lg:pt-0" :class="{'lg:pl-[280px]': open, 'lg:pl-[88px]': !open}">
         <div class="min-h-screen flex flex-col justify-center items-center px-2 py-8">
-            <div class="w-full max-w-6xl mx-auto px-3 md:px-4 py-3">
+            <div class="w-full max-w-[95%] mx-auto px-3 md:px-4 py-3">
                 <div class="glass w-full rounded-xl px-6 py-3 mb-4 flex items-center justify-between text-white">
                     <div class="text-lg md:text-xl font-semibold tracking-wide">CONTACTS</div>
                 </div>
@@ -321,8 +334,8 @@
                     <button type="button" id="bulkDeleteBtn" class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow text-sm">Delete Selected</button>
                     <span class="text-xs sm:text-sm text-gray-500 pb-1">Click the 'Export' button to download to Excel.</span>
                 </div>
-                <div class="overflow-x-auto rounded-xl shadow-xl glass -mx-2 sm:mx-0">
-                    <table id="contactsTable" class="min-w-full text-xs sm:text-sm bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl whitespace-nowrap">
+                <div class="overflow-x-auto rounded-xl shadow-xl glass -mx-2 sm:mx-0" style="overflow-x: auto; overflow-y: visible;">
+                    <table id="contactsTable" class="w-full text-xs sm:text-sm bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl whitespace-nowrap" style="min-width: 1200px;">
                         <thead class="uppercase bg-white/40 text-gray-800 rounded-xl">
                             <tr>
                                 <th class="p-3 text-center"><input type="checkbox" id="selectAll"></th>
