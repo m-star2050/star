@@ -92,6 +92,107 @@
         }
         #contactsTable td { padding: 0.5rem; text-align: center; }
         #contactsTable th { padding: 0.75rem; text-align: center; }
+        
+        /* Icon alignment in headers - position icons to the right */
+        #contactsTable th .flex.items-center {
+            justify-content: flex-end;
+        }
+        
+        /* DataTables sorting indicators - professional SVG icons */
+        #contactsTable th.sorting,
+        #contactsTable th.sorting_asc,
+        #contactsTable th.sorting_desc {
+            position: relative;
+            padding-right: 2rem !important;
+        }
+        
+        /* Hide default DataTables sorting icons */
+        #contactsTable th.sorting:before,
+        #contactsTable th.sorting:after,
+        #contactsTable th.sorting_asc:before,
+        #contactsTable th.sorting_asc:after,
+        #contactsTable th.sorting_desc:before,
+        #contactsTable th.sorting_desc:after {
+            display: none !important;
+        }
+        
+        /* Custom sorting icons - neutral state (both arrows visible, gray) */
+        #contactsTable th.sorting::after {
+            content: '';
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 14px;
+            height: 14px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M5 15l7-7 7 7'/%3E%3C/svg%3E");
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            opacity: 0.5;
+        }
+        
+        #contactsTable th.sorting::before {
+            content: '';
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%) translateY(8px);
+            width: 14px;
+            height: 14px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            opacity: 0.5;
+        }
+        
+        /* Ascending sort - show only up arrow (active, blue) */
+        #contactsTable th.sorting_asc::after {
+            content: '';
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 14px;
+            height: 14px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%232563eb' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M5 15l7-7 7 7'/%3E%3C/svg%3E");
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            opacity: 1;
+        }
+        
+        #contactsTable th.sorting_asc::before {
+            display: none;
+        }
+        
+        /* Descending sort - show only down arrow (active, blue) */
+        #contactsTable th.sorting_desc::before {
+            content: '';
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%) translateY(8px);
+            width: 14px;
+            height: 14px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%232563eb' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            opacity: 1;
+        }
+        
+        #contactsTable th.sorting_desc::after {
+            display: none;
+        }
+        
+        /* Ensure header text doesn't overlap with sorting icons */
+        #contactsTable th.sorting,
+        #contactsTable th.sorting_asc,
+        #contactsTable th.sorting_desc {
+            white-space: nowrap;
+        }
     </style>
 </head>
 <body>
@@ -225,13 +326,63 @@
                         <thead class="uppercase bg-white/40 text-gray-800 rounded-xl">
                             <tr>
                                 <th class="p-3 text-center"><input type="checkbox" id="selectAll"></th>
-                                <th class="p-3 font-semibold tracking-widest text-center">Name</th>
-                                <th class="p-3 font-semibold tracking-widest text-center">Company</th>
-                                <th class="p-3 font-semibold tracking-widest text-center">Email</th>
-                                <th class="p-3 font-semibold tracking-widest text-center">Phone</th>
-                                <th class="p-3 font-semibold tracking-widest text-center">Assigned</th>
-                                <th class="p-3 font-semibold tracking-widest text-center">Tags</th>
-                                <th class="p-3 font-semibold tracking-widest text-center">Created</th>
+                                <th class="p-3 font-semibold tracking-widest text-center">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <span>Name</span>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                            <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
+                                        </svg>
+                                    </div>
+                                </th>
+                                <th class="p-3 font-semibold tracking-widest text-center">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <span>Company</span>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd"/>
+                                        </svg>
+                                    </div>
+                                </th>
+                                <th class="p-3 font-semibold tracking-widest text-center">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <span>Email</span>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                            <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
+                                            <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+                                        </svg>
+                                    </div>
+                                </th>
+                                <th class="p-3 font-semibold tracking-widest text-center">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <span>Phone</span>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                            <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                                        </svg>
+                                    </div>
+                                </th>
+                                <th class="p-3 font-semibold tracking-widest text-center">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <span>Assigned</span>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                            <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
+                                        </svg>
+                                    </div>
+                                </th>
+                                <th class="p-3 font-semibold tracking-widest text-center">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <span>Tags</span>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+                                        </svg>
+                                    </div>
+                                </th>
+                                <th class="p-3 font-semibold tracking-widest text-center">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <span>Created</span>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+                                        </svg>
+                                    </div>
+                                </th>
                                 <th class="p-3 font-semibold tracking-widest text-center">Status</th>
                                 <th class="p-3 font-semibold tracking-widest text-center">Actions</th>
                             </tr>
@@ -697,7 +848,6 @@ $(document).ready(function() {
                 if (createModal.length) {
                     createModal[0].style.display = '';
                 }
-                showNotification('Contact created successfully.', 'success');
             },
             error: function(xhr) {
                 if (xhr.responseJSON && xhr.responseJSON.errors) {
@@ -749,7 +899,6 @@ $(document).ready(function() {
                 if (editModal.length) {
                     editModal[0].style.display = '';
                 }
-                showNotification('Contact updated successfully.', 'success');
             },
             error: function(xhr) {
                 if (xhr.responseJSON && xhr.responseJSON.errors) {
@@ -791,7 +940,6 @@ $(document).ready(function() {
                     deleteModal[0].style.display = '';
                 }
                 currentContactId = null;
-                showNotification('Contact deleted successfully.', 'success');
             },
             error: function() {
                 showNotification('Error deleting contact.', 'error');
@@ -843,7 +991,6 @@ $(document).ready(function() {
                 if (bulkDeleteModal.length) {
                     bulkDeleteModal[0].style.display = '';
                 }
-                showNotification('Selected contacts deleted successfully.', 'success');
             },
             error: function() {
                 showNotification('Error deleting contacts.', 'error');
