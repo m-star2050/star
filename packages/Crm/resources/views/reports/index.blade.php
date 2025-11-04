@@ -105,7 +105,7 @@
     </aside>
 
     <div class="lg:transition-all lg:duration-300 pt-16 lg:pt-0" :class="{'lg:pl-[280px]': open, 'lg:pl-[88px]': !open}">
-        <div class="min-h-screen flex flex-col justify-center items-center px-2 py-8">
+        <div class="min-h-screen flex flex-col justify-center items-center px-2 py-8 w-full">
             <div class="w-full max-w-6xl mx-auto px-3 md:px-4 py-3">
                 <div class="glass w-full rounded-xl px-6 py-3 mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-white">
                     <div class="text-lg md:text-xl font-semibold tracking-wide">REPORTS & ANALYTICS</div>

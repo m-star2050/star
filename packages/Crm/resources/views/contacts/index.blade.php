@@ -170,12 +170,12 @@
                 </div>
                 <form method="POST" action="{{ route('crm.contacts.bulk-delete') }}" x-ref="bulkForm">
                     @csrf
-                    <div class="mb-2 flex flex-col sm:flex-row sm:items-end gap-2 px-2">
+                    <div class="mb-2 flex flex-row items-end gap-2 px-2">
                         <button type="button" class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow text-sm">Delete Selected</button>
-                        <span class="text-xs sm:text-sm text-gray-500 pb-1">Click the 'Export' button to download to Excel.</span>
+                        <span class="text-sm text-gray-500 pb-1">Click the 'Export' button to download to Excel.</span>
                     </div>
-                    <div class="overflow-x-auto rounded-xl shadow-xl glass -mx-2 sm:mx-0">
-                        <table class="min-w-full text-xs sm:text-sm bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl whitespace-nowrap">
+                    <div class="overflow-x-auto rounded-xl shadow-xl glass mx-0">
+                        <table class="min-w-full text-sm bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl whitespace-nowrap">
                             <thead class="uppercase bg-white/40 text-gray-800 rounded-xl">
                                 <tr>
                                     <th class="p-3 text-center"><input type="checkbox" @click="$el.closest('table').querySelectorAll('.row-check').forEach(cb=>cb.checked=$event.target.checked)"></th>
@@ -216,10 +216,10 @@
                                     @endif
                                 </td>
                                 <td class="p-2 text-center">
-                                    <div class="flex flex-col sm:flex-row gap-1 justify-center">
+                                    <div class="flex flex-row gap-1 justify-center">
                                         <button
                                             type="button"
-                                            class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 rounded-lg border border-blue-400 text-blue-600 hover:bg-blue-50 shadow-sm text-xs"
+                                            class="inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-blue-400 text-blue-600 hover:bg-blue-50 shadow-sm text-sm"
                                             data-id="{{ $c->id }}" data-name="{{ $c->name }}" data-company="{{ $c->company }}"
                                             data-email="{{ $c->email }}" data-phone="{{ $c->phone }}" data-assigned="{{ $c->assigned_user_id }}"
                                             data-status="{{ $c->status }}" data-tags="{{ implode(',', (array) $c->tags) }}" data-notes="{{ $c->notes }}"
@@ -235,11 +235,11 @@
                                             editNotes=$el.dataset.notes||'';
                                             showEdit=true;
                                             ">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-8.5 8.5a2 2 0 01-.878.515l-3.3.943a.5.5 0 01-.62-.62l.943-3.3a2 2 0 01.515-.878l8.5-8.5z"/></svg><span class="hidden sm:inline">Edit</span>
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-8.5 8.5a2 2 0 01-.878.515l-3.3.943a.5.5 0 01-.62-.62l.943-3.3a2 2 0 01.515-.878l8.5-8.5z"/></svg><span>Edit</span>
                                         </button>
-                                        <button type="button" class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 rounded-lg border border-red-400 text-red-600 hover:bg-red-50 shadow-sm text-xs" data-id="{{ $c->id }}" @click.prevent="editId=$el.dataset.id; showDelete=true;">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M6 8a1 1 0 011 1v6a1 1 0 102 0V9a1 1 0 112 0v6a1 1 0 102 0V9a1 1 0 011-1h1a1 1 0 100-2h-1V5a2 2 0 00-2-2H9a2 2 0 00-2 2v1H6a1 1 0 100 2h1zm3-3h2v1H9V5z" clip-rule="evenodd"/></svg><span class="hidden sm:inline">Del</span>
+                                        <button type="button" class="inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-red-400 text-red-600 hover:bg-red-50 shadow-sm text-sm" data-id="{{ $c->id }}" @click.prevent="editId=$el.dataset.id; showDelete=true;">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M6 8a1 1 0 011 1v6a1 1 0 102 0V9a1 1 0 112 0v6a1 1 0 102 0V9a1 1 0 011-1h1a1 1 0 100-2h-1V5a2 2 0 00-2-2H9a2 2 0 00-2 2v1H6a1 1 0 100 2h1zm3-3h2v1H9V5z" clip-rule="evenodd"/></svg><span>Del</span>
                                         </button>
                                     </div>
                                 </td>
@@ -253,7 +253,7 @@
                 </div>
     <div x-show="showBulkDelete" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/50" @click="showBulkDelete=false"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-4 sm:p-6">
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
                         <div class="text-lg font-semibold mb-3">Delete Selected</div>
                         <p class="text-sm text-gray-600 mb-4">Are you sure you want to delete the selected contacts?</p>
                         <div class="flex justify-end gap-2">
@@ -263,7 +263,7 @@
                     </div>
                 </div>
                 </form>
-                <div class="flex flex-col md:flex-row items-center md:justify-between gap-3 p-3 text-xs sm:text-sm">
+                <div class="flex flex-col md:flex-row items-center md:justify-between gap-3 p-3 text-sm">
                     <div class="text-gray-600 text-center md:text-left">
                         Showing <span class="font-medium">{{ $contacts->firstItem() ?? 0 }}</span>–<span class="font-medium">{{ $contacts->lastItem() ?? 0 }}</span> of <span class="font-medium">{{ $contacts->total() }}</span>
                     </div>
@@ -305,20 +305,24 @@
                             <span class="px-3 py-2 rounded-xl border text-gray-400 cursor-not-allowed">Next &raquo;</span>
                         @endif
                     </div>
-                    <form method="GET" class="flex flex-wrap items-center gap-2 justify-center">
-                        <label class="text-gray-600 text-xs sm:text-sm">Items:</label>
-                        <input type="number" name="per_page" min="1" max="100" value="{{ request('per_page', 10) }}" class="w-16 sm:w-20 border rounded-xl px-2 sm:px-3 py-1.5 sm:py-2 bg-white/60 text-gray-700 shadow-inner text-xs sm:text-sm">
-                        <input type="hidden" name="search" value="{{ request('search') }}">
-                        <input type="hidden" name="company" value="{{ request('company') }}">
-                        <input type="hidden" name="assigned_user_id" value="{{ request('assigned_user_id') }}">
-                        <input type="hidden" name="status" value="{{ request('status') }}">
-                        <input type="hidden" name="created_from" value="{{ request('created_from') }}">
-                        <input type="hidden" name="created_to" value="{{ request('created_to') }}">
-                        <input type="hidden" name="sort" value="{{ request('sort') }}">
-                        <input type="hidden" name="direction" value="{{ request('direction') }}">
-                        <button class="px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl border hover:bg-white/70 bg-white/40 text-gray-700 text-xs sm:text-sm">Apply</button>
-                        <a href="{{ route('crm.contacts.export', request()->query()) }}" class="px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl border bg-green-100 hover:bg-green-200 text-green-700 text-xs sm:text-sm">Export</a>
-                        <a href="{{ route('crm.contacts.index') }}" class="px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl border bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs sm:text-sm">Reset</a>
+                    <form method="GET" class="flex flex-row items-center gap-2 justify-center max-[400px]:flex-col">
+                        <div class="flex items-center gap-2">
+                            <label class="text-gray-600 text-sm">Items:</label>
+                            <input type="number" name="per_page" min="1" max="100" value="{{ request('per_page', 10) }}" class="w-20 border rounded-xl px-3 py-2 bg-white/60 text-gray-700 shadow-inner text-sm">
+                            <input type="hidden" name="search" value="{{ request('search') }}">
+                            <input type="hidden" name="company" value="{{ request('company') }}">
+                            <input type="hidden" name="assigned_user_id" value="{{ request('assigned_user_id') }}">
+                            <input type="hidden" name="status" value="{{ request('status') }}">
+                            <input type="hidden" name="created_from" value="{{ request('created_from') }}">
+                            <input type="hidden" name="created_to" value="{{ request('created_to') }}">
+                            <input type="hidden" name="sort" value="{{ request('sort') }}">
+                            <input type="hidden" name="direction" value="{{ request('direction') }}">
+                            <button class="px-4 py-2 rounded-xl border hover:bg-white/70 bg-white/40 text-gray-700 text-sm">Apply</button>
+                        </div>
+                        <div class="flex items-center gap-2 max-[400px]:w-full max-[400px]:justify-center">
+                            <a href="{{ route('crm.contacts.export', request()->query()) }}" class="px-4 py-2 rounded-xl border bg-green-100 hover:bg-green-200 text-green-700 text-sm whitespace-nowrap">Export</a>
+                            <a href="{{ route('crm.contacts.index') }}" class="px-4 py-2 rounded-xl border bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm whitespace-nowrap">Reset</a>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -327,7 +331,7 @@
 
     <div x-show="showCreate" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/50" @click="showCreate=false"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl p-6 max-h-[90vh] overflow-y-auto">
             <div class="text-lg font-semibold mb-4">Create Contact</div>
             <form method="POST" action="{{ route('crm.contacts.store') }}" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 @csrf
@@ -352,7 +356,7 @@
 
     <div x-show="showEdit" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/50" @click="showEdit=false"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl p-6 max-h-[90vh] overflow-y-auto">
             <div class="text-lg font-semibold mb-4">Edit Contact</div>
             <form :action="'{{ route('crm.contacts.update','__ID__') }}'.replace('__ID__', editId)" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 @csrf
@@ -378,7 +382,7 @@
 
     <div x-show="showDelete" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/50" @click="showDelete=false"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-4 sm:p-6">
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
             <div class="text-lg font-semibold mb-3">Delete Contact</div>
             <p class="text-sm text-gray-600 mb-4">Are you sure you want to delete this contact?</p>
             <form :action="'{{ route('crm.contacts.destroy','__ID__') }}'.replace('__ID__', editId)" method="POST" class="flex justify-end gap-2">

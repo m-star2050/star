@@ -25,7 +25,6 @@
 </style>
 
 <div x-data="{mobileMenu:false, open:true, showUpload:false, showDelete:false, showBulkDelete:false, showPreview:false, deleteId:null, previewUrl:'', previewType:''}" class="relative">
-    <!-- Mobile Top Navigation -->
     <div class="lg:hidden fixed top-0 left-0 right-0 z-50 glass rounded-b-2xl p-3 shadow-lg">
         <div class="flex items-center justify-between mb-4 mt-7">
             <div class="text-gray-900 font-extrabold tracking-wide text-sm">WELCOME USER</div>
@@ -33,7 +32,6 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
             </button>
         </div>
-        <!-- Mobile Menu Dropdown -->
         <div x-show="mobileMenu" x-transition class="mt-4 pt-4 border-t border-white/30">
             <nav class="space-y-2">
                 <a href="{{ route('crm.contacts.index') }}" class="sidebar-link {{ request()->routeIs('crm.contacts.*') ? 'bg-white/20' : '' }}">
@@ -64,7 +62,6 @@
         </div>
     </div>
 
-    <!-- Desktop Sidebar -->
     <aside class="hidden lg:flex fixed top-3 left-3 h-[calc(100vh-24px)] glass rounded-2xl p-3 transition-all duration-300 z-40 flex-col" :class="open ? 'w-64' : 'w-16'">
         <div class="flex items-center justify-between mb-4">
             <div class="text-gray-900 font-extrabold tracking-wide flex items-center" :class="open ? 'opacity-100' : 'opacity-0 pointer-events-none'">
@@ -126,7 +123,6 @@
                 </div>
             @endif
 
-                <!-- Filters -->
                 <div class="glass rounded-xl p-4 mb-4">
                     <form method="GET" action="{{ route('crm.files.index') }}" class="flex flex-col md:flex-row gap-4 items-end">
                         @if(request()->filled('per_page'))
@@ -179,7 +175,6 @@
                     </form>
                 </div>
 
-                <!-- Files Grid -->
                 <form method="POST" action="{{ route('crm.files.bulk-delete') }}" id="bulkForm">
                 @csrf
                 <div class="mb-2 flex items-end gap-2 px-2">
@@ -242,14 +237,11 @@
                 </div>
                 </form>
 
-                <!-- Pagination -->
                 <div class="flex flex-col md:flex-row items-center gap-3 p-3">
-                    <!-- Left Section: Pagination Status -->
                     <div class="text-sm text-gray-600">
                         Showing <span class="font-medium">{{ $files->firstItem() ?? 0 }}</span>–<span class="font-medium">{{ $files->lastItem() ?? 0 }}</span> of <span class="font-medium">{{ $files->total() }}</span>
                     </div>
                     
-                    <!-- Center Section: Pagination Controls -->
                     <div class="flex gap-1 items-center md:flex-1 md:justify-center">
                         @if ($files->onFirstPage())
                             <span class="px-3 py-2 rounded-xl border text-gray-400 cursor-not-allowed">&laquo; Prev</span>
@@ -309,11 +301,14 @@
 
 
                 <!-- Upload Modal -->
-            <div x-show="showUpload" x-cloak class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto" @click.self="showUpload=false">
+            <div x-show="showUpload" x-cloak 
+                 x-init="$watch('showUpload', value => { if(value) { setTimeout(() => { const form = document.getElementById('uploadForm'); if(form) { const tokenInput = form.querySelector('input[name=\"_token\"]'); const metaToken = document.querySelector('meta[name=\"csrf-token\"]'); if(tokenInput && metaToken) { tokenInput.value = metaToken.getAttribute('content'); } } }, 100); } })"
+                 class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto" 
+                 @click.self="showUpload=false">
                 <div class="glass rounded-2xl p-6 w-full max-w-lg m-4">
                     <h3 class="text-xl font-bold text-white mb-4">Upload File</h3>
-                    <form method="POST" action="{{ route('crm.files.store') }}" enctype="multipart/form-data">
-                        @csrf
+                    <form method="POST" action="{{ route('crm.files.store') }}" enctype="multipart/form-data" id="uploadForm" @submit="const tokenInput = $el.querySelector('input[name=\"_token\"]'); const metaToken = document.querySelector('meta[name=\"csrf-token\"]'); if(tokenInput && metaToken) { tokenInput.value = metaToken.getAttribute('content'); }">
+                        <input type="hidden" name="_token" value="{{ csrf_token() }}">
                         <div class="space-y-4">
                             <div>
                                 <label class="block text-sm font-medium text-white mb-1">Select File *</label>
@@ -390,6 +385,110 @@
     </div>
 </div>
 
-</body>
-</html>
+<script>
+    // Setup CSRF token for all AJAX requests
+    function getCsrfToken() {
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        return meta ? meta.getAttribute('content') : '';
+    }
+    
+    let csrfToken = getCsrfToken();
+    
+    // Setup jQuery AJAX defaults if jQuery is available
+    if (typeof jQuery !== 'undefined') {
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': csrfToken
+            }
+        });
+        
+        // Update token when meta tag changes
+        const observer = new MutationObserver(function(mutations) {
+            csrfToken = getCsrfToken();
+            $.ajaxSetup({
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken
+                }
+            });
+        });
+        
+        const metaElement = document.querySelector('meta[name="csrf-token"]');
+        if (metaElement) {
+            observer.observe(metaElement, { attributes: true, attributeFilter: ['content'] });
+        }
+    }
+    
+    // Setup fetch defaults
+    const originalFetch = window.fetch;
+    window.fetch = function(url, options = {}) {
+        options.headers = options.headers || {};
+        options.headers['X-CSRF-TOKEN'] = getCsrfToken();
+        options.headers['X-Requested-With'] = 'XMLHttpRequest';
+        return originalFetch(url, options);
+    };
+    
+    // Update CSRF token in all forms before submission
+    document.addEventListener('submit', function(e) {
+        const form = e.target;
+        if (form.tagName === 'FORM' && form.method.toUpperCase() === 'POST') {
+            // Check if CSRF token exists in form
+            let csrfInput = form.querySelector('input[name="_token"]');
+            if (!csrfInput) {
+                // Create CSRF token input if it doesn't exist
+                csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = '_token';
+                form.appendChild(csrfInput);
+            }
+            // Always update token value with latest from meta tag
+            const currentToken = getCsrfToken();
+            if (currentToken) {
+                csrfInput.value = currentToken;
+            }
+        }
+    }, true);
+    
+    // Refresh CSRF token when upload modal opens
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('uploadForm', () => ({
+            refreshToken() {
+                const form = document.querySelector('#uploadForm');
+                if (form) {
+                    const tokenInput = form.querySelector('input[name="_token"]');
+                    if (tokenInput) {
+                        tokenInput.value = getCsrfToken();
+                    }
+                }
+            }
+        }));
+    });
+    
+    // Refresh CSRF token on page focus to prevent expiration
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+            // Refresh CSRF token when page becomes visible again
+            fetch('{{ route("crm.files.index") }}', {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            }).then(response => {
+                // Try to extract new token from response if available
+                return response.text();
+            }).then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newToken = doc.querySelector('meta[name="csrf-token"]');
+                if (newToken) {
+                    const metaToken = document.querySelector('meta[name="csrf-token"]');
+                    if (metaToken) {
+                        metaToken.setAttribute('content', newToken.getAttribute('content'));
+                    }
+                }
+            }).catch(() => {
+                // Silently fail - token refresh attempt
+            });
+        }
+    });
+</script>
 
