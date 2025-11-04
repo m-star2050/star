@@ -290,25 +290,21 @@
                             <span class="px-3 py-2 rounded-xl border text-gray-400 cursor-not-allowed">Next &raquo;</span>
                         @endif
                     </div>
-                    <form method="GET" class="flex flex-row items-center gap-2 max-[500px]:flex-col">
-                        <div class="flex items-center gap-2">
-                            <label class="text-sm text-gray-600">Items per page</label>
-                            <input type="number" name="per_page" min="1" max="100" value="{{ request('per_page', 10) }}" class="w-20 border rounded-xl px-3 py-2 bg-white/60 text-gray-700 shadow-inner">
-                            <input type="hidden" name="search" value="{{ request('search') }}">
-                            <input type="hidden" name="stage" value="{{ request('stage') }}">
-                            <input type="hidden" name="owner_user_id" value="{{ request('owner_user_id') }}">
-                            <input type="hidden" name="value_min" value="{{ request('value_min') }}">
-                            <input type="hidden" name="value_max" value="{{ request('value_max') }}">
-                            <input type="hidden" name="close_date_from" value="{{ request('close_date_from') }}">
-                            <input type="hidden" name="close_date_to" value="{{ request('close_date_to') }}">
-                            <input type="hidden" name="sort" value="{{ request('sort') }}">
-                            <input type="hidden" name="direction" value="{{ request('direction') }}">
-                            <button class="px-4 py-2 rounded-xl border hover:bg-white/70 bg-white/40 text-gray-700">Apply</button>
-                        </div>
-                        <div class="flex items-center gap-2 max-[500px]:w-full max-[500px]:justify-center">
-                            <a href="{{ route('crm.pipeline.export', request()->query()) }}" class="px-4 py-2 rounded-xl border bg-green-100 hover:bg-green-200 text-green-700 whitespace-nowrap">Export</a>
-                            <a href="{{ route('crm.pipeline.index') }}" class="px-4 py-2 rounded-xl border bg-gray-100 hover:bg-gray-200 text-gray-600 whitespace-nowrap">Reset</a>
-                        </div>
+                    <form method="GET" class="flex items-center gap-2">
+                        <label class="text-sm text-gray-600">Items per page</label>
+                        <input type="number" name="per_page" min="1" max="100" value="{{ request('per_page', 10) }}" class="w-20 border rounded-xl px-3 py-2 bg-white/60 text-gray-700 shadow-inner">
+                        <input type="hidden" name="search" value="{{ request('search') }}">
+                        <input type="hidden" name="stage" value="{{ request('stage') }}">
+                        <input type="hidden" name="owner_user_id" value="{{ request('owner_user_id') }}">
+                        <input type="hidden" name="value_min" value="{{ request('value_min') }}">
+                        <input type="hidden" name="value_max" value="{{ request('value_max') }}">
+                        <input type="hidden" name="close_date_from" value="{{ request('close_date_from') }}">
+                        <input type="hidden" name="close_date_to" value="{{ request('close_date_to') }}">
+                        <input type="hidden" name="sort" value="{{ request('sort') }}">
+                        <input type="hidden" name="direction" value="{{ request('direction') }}">
+                        <button class="px-4 py-2 rounded-xl border hover:bg-white/70 bg-white/40 text-gray-700">Apply</button>
+                        <a href="{{ route('crm.pipeline.export', request()->query()) }}" class="px-4 py-2 rounded-xl border bg-green-100 hover:bg-green-200 text-green-700 ml-2">Export</a>
+                        <a href="{{ route('crm.pipeline.index') }}" class="px-4 py-2 rounded-xl border bg-gray-100 hover:bg-gray-200 text-gray-600 ml-2">Reset</a>
                     </form>
                 </div>
 

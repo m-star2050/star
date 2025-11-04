@@ -52,8 +52,7 @@
         </div>
         <!-- Mobile Menu Dropdown -->
         <div x-show="mobileMenu" x-transition class="mt-4 pt-4 border-t border-white/30">
-            <div class="text-gray-900/80 text-xs uppercase tracking-wider mb-2 leading-none">CRM</div>
-            <nav class="space-y-2 mb-4">
+            <nav class="space-y-2">
                 <a href="{{ route('crm.contacts.index') }}" class="sidebar-link {{ request()->routeIs('crm.contacts.*') ? 'bg-white/20' : '' }}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 1.293a1 1 0 00-1.414 0l-7 7A1 1 0 003 10h1v7a1 1 0 001 1h4v-4h2v4h4a1 1 0 001-1v-7h1a1 1 0 00.707-1.707l-7-7z"/></svg>
                     <span>Contacts</span>
@@ -70,9 +69,6 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z"/><path d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z"/><path d="M17 5c0 1.657-3.134 3-7 3S3 6.657 3 5s3.134-3 7-3 7 1.343 7 3z"/></svg>
                     <span>Pipeline</span>
                 </a>
-            </nav>
-            <div class="text-gray-900/80 text-xs uppercase tracking-wider mb-2 leading-none mt-4">Reports & Files</div>
-            <nav class="space-y-2">
                 <a href="{{ route('crm.reports.index') }}" class="sidebar-link {{ request()->routeIs('crm.reports.*') ? 'bg-white/20' : '' }}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>
                     <span>Reports</span>
@@ -95,8 +91,8 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="open ? 'M15 19l-7-7 7-7' : 'M9 5l7 7-7 7'"/></svg>
             </button>
         </div>
-        <div class="text-gray-900/80 text-xs uppercase tracking-wider mb-2 leading-none" :class="open ? 'opacity-100' : 'opacity-0 pointer-events-none'">CRM</div>
-        <nav class="space-y-1 mt-4 mb-4">
+        <div class="text-gray-900/80 text-xs uppercase tracking-wider mb-2 leading-none" :class="open ? 'opacity-100' : 'opacity-0 pointer-events-none'">General</div>
+        <nav class="space-y-1 mt-4">
             <a href="{{ route('crm.contacts.index') }}" class="sidebar-link {{ request()->routeIs('crm.contacts.*') ? 'bg-white/20' : '' }}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 1.293a1 1 0 00-1.414 0l-7 7A1 1 0 003 10h1v7a1 1 0 001 1h4v-4h2v4h4a1 1 0 001-1v-7h1a1 1 0 00.707-1.707l-7-7z"/></svg>
                 <span x-show="open" x-transition>Contacts</span>
@@ -113,9 +109,6 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z"/><path d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z"/><path d="M17 5c0 1.657-3.134 3-7 3S3 6.657 3 5s3.134-3 7-3 7 1.343 7 3z"/></svg>
                 <span x-show="open" x-transition>Pipeline</span>
             </a>
-        </nav>
-        <div class="text-gray-900/80 text-xs uppercase tracking-wider mb-2 leading-none mt-4" :class="open ? 'opacity-100' : 'opacity-0 pointer-events-none'">Reports & Files</div>
-        <nav class="space-y-1 mt-4">
             <a href="{{ route('crm.reports.index') }}" class="sidebar-link {{ request()->routeIs('crm.reports.*') ? 'bg-white/20' : '' }}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>
                 <span x-show="open" x-transition>Reports</span>
@@ -326,26 +319,22 @@
                             <span class="px-3 py-2 rounded-xl border text-gray-400 cursor-not-allowed">Next &raquo;</span>
                         @endif
                     </div>
-                    <form method="GET" class="flex flex-row items-center gap-2 max-[500px]:flex-col">
-                        <div class="flex items-center gap-2">
-                            <label class="text-sm text-gray-600">Items per page</label>
-                            <input type="number" name="per_page" min="1" max="100" value="{{ request('per_page', 10) }}" class="w-20 border rounded-xl px-3 py-2 bg-white/60 text-gray-700 shadow-inner">
-                            <input type="hidden" name="search" value="{{ request('search') }}">
-                            <input type="hidden" name="company" value="{{ request('company') }}">
-                            <input type="hidden" name="source" value="{{ request('source') }}">
-                            <input type="hidden" name="stage" value="{{ request('stage') }}">
-                            <input type="hidden" name="assigned_user_id" value="{{ request('assigned_user_id') }}">
-                            <input type="hidden" name="lead_score" value="{{ request('lead_score') }}">
-                            <input type="hidden" name="created_from" value="{{ request('created_from') }}">
-                            <input type="hidden" name="created_to" value="{{ request('created_to') }}">
-                            <input type="hidden" name="sort" value="{{ request('sort') }}">
-                            <input type="hidden" name="direction" value="{{ request('direction') }}">
-                            <button class="px-4 py-2 rounded-xl border hover:bg-white/70 bg-white/40 text-gray-700">Apply</button>
-                        </div>
-                        <div class="flex items-center gap-2 max-[500px]:w-full max-[500px]:justify-center">
-                            <a href="{{ route('crm.leads.export', request()->query()) }}" class="px-4 py-2 rounded-xl border bg-green-100 hover:bg-green-200 text-green-700 whitespace-nowrap">Export</a>
-                            <a href="{{ route('crm.leads.index') }}" class="px-4 py-2 rounded-xl border bg-gray-100 hover:bg-gray-200 text-gray-600 whitespace-nowrap">Reset</a>
-                        </div>
+                    <form method="GET" class="flex items-center gap-2">
+                        <label class="text-sm text-gray-600">Items per page</label>
+                        <input type="number" name="per_page" min="1" max="100" value="{{ request('per_page', 10) }}" class="w-20 border rounded-xl px-3 py-2 bg-white/60 text-gray-700 shadow-inner">
+                        <input type="hidden" name="search" value="{{ request('search') }}">
+                        <input type="hidden" name="company" value="{{ request('company') }}">
+                        <input type="hidden" name="source" value="{{ request('source') }}">
+                        <input type="hidden" name="stage" value="{{ request('stage') }}">
+                        <input type="hidden" name="assigned_user_id" value="{{ request('assigned_user_id') }}">
+                        <input type="hidden" name="lead_score" value="{{ request('lead_score') }}">
+                        <input type="hidden" name="created_from" value="{{ request('created_from') }}">
+                        <input type="hidden" name="created_to" value="{{ request('created_to') }}">
+                        <input type="hidden" name="sort" value="{{ request('sort') }}">
+                        <input type="hidden" name="direction" value="{{ request('direction') }}">
+                        <button class="px-4 py-2 rounded-xl border hover:bg-white/70 bg-white/40 text-gray-700">Apply</button>
+                        <a href="{{ route('crm.leads.export', request()->query()) }}" class="px-4 py-2 rounded-xl border bg-green-100 hover:bg-green-200 text-green-700 ml-2">Export</a>
+                        <a href="{{ route('crm.leads.index') }}" class="px-4 py-2 rounded-xl border bg-gray-100 hover:bg-gray-200 text-gray-600 ml-2">Reset</a>
                     </form>
                 </div>
             </div>

@@ -9,7 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
-<body style="background: url('{{ asset('image/Screenshot_16.png') }}') center center / cover no-repeat fixed; min-height: 100vh; font-family: 'Inter', sans-serif;">
+<body style="background: url('/image/Screenshot_16.png') center center / cover no-repeat fixed; min-height: 100vh; font-family: 'Inter', sans-serif;">
 
 <style>
     .glass {
@@ -105,11 +105,11 @@
     </aside>
 
     <div class="lg:transition-all lg:duration-300 pt-16 lg:pt-0" :class="{'lg:pl-[280px]': open, 'lg:pl-[88px]': !open}">
-        <div class="min-h-screen flex flex-col justify-center items-center px-2 py-8 w-full">
+        <div class="min-h-screen flex flex-col justify-center items-center px-2 py-8">
             <div class="w-full max-w-6xl mx-auto px-3 md:px-4 py-3">
-                <div class="glass w-full rounded-xl px-6 py-3 mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-white">
+                <div class="glass w-full rounded-xl px-6 py-3 mb-4 flex items-center justify-between text-white">
                     <div class="text-lg md:text-xl font-semibold tracking-wide">REPORTS & ANALYTICS</div>
-                    <a href="{{ route('crm.reports.export', request()->query()) }}" class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-sm font-semibold transition whitespace-nowrap w-full sm:w-auto text-center">
+                    <a href="{{ route('crm.reports.export', request()->query()) }}" class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-sm font-semibold transition">
                         Export Report
                     </a>
                 </div>
@@ -129,9 +129,9 @@
                             <label class="block text-sm font-medium text-white mb-1">User ID (Optional)</label>
                             <input type="number" name="user_id" value="{{ $userId }}" placeholder="Filter by user" class="w-full border rounded-lg px-3 py-2 bg-white/60 text-gray-700">
                         </div>
-                        <div class="flex gap-2 flex-shrink-0 w-full md:w-auto">
-                            <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold whitespace-nowrap flex-1 md:flex-initial">Apply Filters</button>
-                            <a href="{{ route('crm.reports.index') }}" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold whitespace-nowrap flex-1 md:flex-initial">Reset</a>
+                        <div class="flex gap-2 flex-shrink-0">
+                            <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold">Apply Filters</button>
+                            <a href="{{ route('crm.reports.index') }}" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold">Reset</a>
                         </div>
                     </form>
                 </div>

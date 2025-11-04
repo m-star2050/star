@@ -17,6 +17,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
     <style>
         body {
             background:
@@ -30,21 +33,79 @@
         .sidebar-link svg{ width:20px; height:20px; min-width:20px; min-height:20px; flex-shrink:0; display:block; }
         .sidebar-link span{ line-height:1.2; display:flex; align-items:center; }
         .hdr-wrap{max-width:1120px}
+        
+        /* DataTables styling */
+        .dataTables_wrapper { font-family: inherit; }
+        .dataTables_filter { margin: 0; }
+        .dataTables_length { margin: 0; }
+        .dataTables_length label { 
+            font-size: 0.875rem !important;
+            color: #374151 !important;
+        }
+        .dataTables_length select { 
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: 0.75rem;
+            padding: 0.5rem 2.5rem 0.5rem 0.875rem;
+            background: rgba(255,255,255,0.6);
+            color: #374151;
+            font-size: 0.875rem;
+            font-weight: 500;
+            appearance: none;
+            min-height: 2.25rem;
+        }
+        .dataTables_info { 
+            margin: 0; 
+            color: #6b7280;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-left: 1rem;
+        }
+        .dataTables_paginate { margin: 0; }
+        .dataTables_paginate .paginate_button {
+            padding: 0.5rem 0.875rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(0,0,0,0.1);
+            margin: 0 0.125rem;
+            cursor: pointer;
+            background: rgba(255,255,255,0.6);
+            color: #374151;
+            font-size: 0.875rem;
+            font-weight: 500;
+            min-height: 2.25rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .dataTables_paginate .paginate_button:hover:not(.disabled):not(.current) {
+            background: rgba(255,255,255,0.8);
+        }
+        .dataTables_paginate .paginate_button.current {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+            font-weight: 600;
+        }
+        .dataTables_paginate .paginate_button.disabled {
+            color: #9ca3af;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        #contactsTable td { padding: 0.5rem; text-align: center; }
+        #contactsTable th { padding: 0.75rem; text-align: center; }
     </style>
 </head>
 <body>
 
-<div x-data="{mobileMenu:false, open:true, showCreate:false, showEdit:false, showDelete:false, showBulkDelete:false, editId:null, editName:'', editCompany:'', editEmail:'', editPhone:'', editAssigned:'', editStatus:'active', editTags:'', editNotes:''}" class="relative">
+<div x-data="{mobileMenu:false, open:true, showCreate:false, showEdit:false, showDelete:false, showBulkDelete:false, editId:null, editName:'', editCompany:'', editEmail:'', editPhone:'', editAssigned:'', editStatus:'active', editTags:'', editNotes:'', showNotification:false, notificationMessage:'', notificationType:'success'}" class="relative">
     <div class="lg:hidden fixed top-0 left-0 right-0 z-50 glass rounded-b-2xl p-3 shadow-lg">
-        <div class="flex items-center justify-between pt-4">
+        <div class="flex items-center justify-between pt-40">
             <div class="text-gray-900 font-extrabold tracking-wide text-sm">WELCOME USER</div>
             <button @click="mobileMenu=!mobileMenu" class="text-gray-900 bg-white/20 border border-white/40 rounded-lg w-10 h-10 flex items-center justify-center hover:bg-white/30">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
             </button>
         </div>
         <div x-show="mobileMenu" x-transition class="mt-4 pt-4 border-t border-white/30">
-            <div class="text-gray-900/80 text-xs uppercase tracking-wider mb-2 leading-none">CRM</div>
-            <nav class="space-y-2 mb-4">
+            <nav class="space-y-2">
                 <a href="{{ route('crm.contacts.index') }}" class="sidebar-link {{ request()->routeIs('crm.contacts.*') ? 'bg-white/20' : '' }}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 1.293a1 1 0 00-1.414 0l-7 7A1 1 0 003 10h1v7a1 1 0 001 1h4v-4h2v4h4a1 1 0 001-1v-7h1a1 1 0 00.707-1.707l-7-7z"/></svg>
                     <span>Contacts</span>
@@ -61,9 +122,6 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z"/><path d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z"/><path d="M17 5c0 1.657-3.134 3-7 3S3 6.657 3 5s3.134-3 7-3 7 1.343 7 3z"/></svg>
                     <span>Pipeline</span>
                 </a>
-            </nav>
-            <div class="text-gray-900/80 text-xs uppercase tracking-wider mb-2 leading-none mt-4">Reports & Files</div>
-            <nav class="space-y-2">
                 <a href="{{ route('crm.reports.index') }}" class="sidebar-link {{ request()->routeIs('crm.reports.*') ? 'bg-white/20' : '' }}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>
                     <span>Reports</span>
@@ -85,8 +143,8 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="open ? 'M15 19l-7-7 7-7' : 'M9 5l7 7-7 7'"/></svg>
             </button>
         </div>
-        <div class="text-gray-900/80 text-xs uppercase tracking-wider mb-2 leading-none" :class="open ? 'opacity-100' : 'opacity-0 pointer-events-none'">CRM</div>
-        <nav class="space-y-1 mt-4 mb-4">
+        <div class="text-gray-900/80 text-xs uppercase tracking-wider mb-2 leading-none" :class="open ? 'opacity-100' : 'opacity-0 pointer-events-none'">General</div>
+        <nav class="space-y-1 mt-4">
             <a href="{{ route('crm.contacts.index') }}" class="sidebar-link {{ request()->routeIs('crm.contacts.*') ? 'bg-white/20' : '' }}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 1.293a1 1 0 00-1.414 0l-7 7A1 1 0 003 10h1v7a1 1 0 001 1h4v-4h2v4h4a1 1 0 001-1v-7h1a1 1 0 00.707-1.707l-7-7z"/></svg>
                 <span x-show="open" x-transition>Contacts</span>
@@ -103,9 +161,6 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z"/><path d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z"/><path d="M17 5c0 1.657-3.134 3-7 3S3 6.657 3 5s3.134-3 7-3 7 1.343 7 3z"/></svg>
                 <span x-show="open" x-transition>Pipeline</span>
             </a>
-        </nav>
-        <div class="text-gray-900/80 text-xs uppercase tracking-wider mb-2 leading-none mt-4" :class="open ? 'opacity-100' : 'opacity-0 pointer-events-none'">Reports & Files</div>
-        <nav class="space-y-1 mt-4">
             <a href="{{ route('crm.reports.index') }}" class="sidebar-link {{ request()->routeIs('crm.reports.*') ? 'bg-white/20' : '' }}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>
                 <span x-show="open" x-transition>Reports</span>
@@ -130,200 +185,83 @@
                             New Contact
                         </button>
                     </div>
-                    <div class="flex items-end gap-3 md:ml-auto w-full md:w-auto">
-                        <form method="GET" class="flex items-center gap-0 bg-white/30 backdrop-blur-sm rounded-xl px-3 py-2 shadow-inner w-full md:w-80">
-                            <label for="mainsearch" class="text-gray-600 px-2 text-base font-medium">Search</label>
-                            <span class="inline-flex items-center justify-center pl-2 pr-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 103 10.5a7.5 7.5 0 0013.15 6.15z" /></svg></span>
-                            <input id="mainsearch" type="text" name="search" value="{{ request('search') }}" class="bg-transparent border-0 outline-none ring-0 focus:ring-0 w-full text-gray-900 placeholder-gray-400 text-base px-2 py-1" placeholder="" autocomplete="off">
-                        </form>
-                        <button type="submit" formaction="#" class="hidden" aria-hidden="true"></button>
+                    <div class="flex items-end gap-3 md:ml-auto w-full md:w-auto" id="datatableSearchContainer">
+                        <!-- DataTables search will be inserted here -->
                     </div>
                 </div>
                 <div class="mb-4">
-                    <form method="GET" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
-                    <div class="md:col-span-5 flex items-center justify-between">
-                        <div class="font-semibold text-xl text-gray-700 ml-1 tracking-wide">Filter</div>
-                        <button type="submit"class="px-5 py-2 rounded-xl bg-blue-600 text-white shadow hover:bg-blue-700">Apply Filters
-                        </button>
-                    </div>
-
-                        <div>
-                            <input type="text" name="company" value="{{ request('company') }}" class="w-full border rounded-xl px-3 py-2 bg-transparent text-gray-800 focus:ring-2 focus:ring-blue-400 placeholder-gray-500" autocomplete="off" placeholder="Company">
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                        <div class="md:col-span-5 flex items-center justify-between">
+                            <div class="font-semibold text-xl text-gray-700 ml-1 tracking-wide">Filter</div>
+                            <button type="button" id="applyFilters" class="px-5 py-2 rounded-xl bg-blue-600 text-white shadow hover:bg-blue-700">Apply Filters</button>
                         </div>
                         <div>
-                            <input type="number" name="assigned_user_id" value="{{ request('assigned_user_id') }}" class="w-full border rounded-xl px-3 py-2 bg-transparent text-gray-800 focus:ring-2 focus:ring-blue-400 placeholder-gray-500" autocomplete="off" placeholder="Assigned User">
+                            <input type="text" id="filterCompany" class="w-full border rounded-xl px-3 py-2 bg-transparent text-gray-800 focus:ring-2 focus:ring-blue-400 placeholder-gray-500" autocomplete="off" placeholder="Company">
                         </div>
                         <div>
-                            <select name="status" class="w-full border rounded-xl px-3 py-2 bg-transparent text-gray-800 focus:ring-2 focus:ring-blue-400">
+                            <input type="number" id="filterAssigned" class="w-full border rounded-xl px-3 py-2 bg-transparent text-gray-800 focus:ring-2 focus:ring-blue-400 placeholder-gray-500" autocomplete="off" placeholder="Assigned User">
+                        </div>
+                        <div>
+                            <select id="filterStatus" class="w-full border rounded-xl px-3 py-2 bg-transparent text-gray-800 focus:ring-2 focus:ring-blue-400">
                                 <option value="">All Status</option>
-                                <option value="active" @selected(request('status')==='active')>Active</option>
-                                <option value="archived" @selected(request('status')==='archived')>Archived</option>
+                                <option value="active">Active</option>
+                                <option value="archived">Archived</option>
                             </select>
                         </div>
                         <div>
-                            <input type="date" name="created_from" value="{{ request('created_from') }}" class="w-full border rounded-xl px-3 py-2 bg-transparent text-gray-800 focus:ring-2 focus:ring-blue-400" autocomplete="off">
+                            <input type="date" id="filterCreatedFrom" class="w-full border rounded-xl px-3 py-2 bg-transparent text-gray-800 focus:ring-2 focus:ring-blue-400" autocomplete="off">
                         </div>
                         <div>
-                            <input type="date" name="created_to" value="{{ request('created_to') }}" class="w-full border rounded-xl px-3 py-2 bg-transparent text-gray-800 focus:ring-2 focus:ring-blue-400" autocomplete="off">
+                            <input type="date" id="filterCreatedTo" class="w-full border rounded-xl px-3 py-2 bg-transparent text-gray-800 focus:ring-2 focus:ring-blue-400" autocomplete="off">
                         </div>
-                    </form>
-                </div>
-                <form method="POST" action="{{ route('crm.contacts.bulk-delete') }}" x-ref="bulkForm">
-                    @csrf
-                    <div class="mb-2 flex flex-row items-end gap-2 px-2">
-                        <button type="button" class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow text-sm">Delete Selected</button>
-                        <span class="text-sm text-gray-500 pb-1">Click the 'Export' button to download to Excel.</span>
                     </div>
-                    <div class="overflow-x-auto rounded-xl shadow-xl glass mx-0">
-                        <table class="min-w-full text-sm bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl whitespace-nowrap">
-                            <thead class="uppercase bg-white/40 text-gray-800 rounded-xl">
-                                <tr>
-                                    <th class="p-3 text-center"><input type="checkbox" @click="$el.closest('table').querySelectorAll('.row-check').forEach(cb=>cb.checked=$event.target.checked)"></th>
-                                    <th class="p-3 font-semibold tracking-widest text-center">Name</th>
-                                    <th class="p-3 font-semibold tracking-widest text-center">Company</th>
-                                    <th class="p-3 font-semibold tracking-widest text-center">Email</th>
-                                    <th class="p-3 font-semibold tracking-widest text-center">Phone</th>
-                                    <th class="p-3 font-semibold tracking-widest text-center">Assigned</th>
-                                    <th class="p-3 font-semibold tracking-widest text-center">Tags</th>
-                                    <th class="p-3 font-semibold tracking-widest text-center">Created</th>
-                                    <th class="p-3 font-semibold tracking-widest text-center">Actions</th>
-                                    <th class="p-3 font-semibold tracking-widest text-center"></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                        @forelse($contacts as $c)
-                            <tr class="border-b border-white/30 bg-white/20 hover:bg-white/40 transition">
-                                <td class="p-2 text-center"><input type="checkbox" class="row-check" name="ids[]" value="{{ $c->id }}"></td>
-                                <td class="p-2 text-center font-medium">{{ $c->name }}</td>
-                                <td class="p-2 text-center">{{ $c->company }}</td>
-                                <td class="p-2 text-center">{{ $c->email }}</td>
-                                <td class="p-2 text-center">{{ $c->phone }}</td>
-                                <td class="p-2 text-center">@php $assigned = $c->assigned_user_id ? ('User '.$c->assigned_user_id) : '-'; @endphp <span>{{ $assigned }}</span></td>
-                                <td class="p-2 text-center">@php $tagsText = implode(',', (array) $c->tags); @endphp <span>{{ $tagsText ?: '-' }}</span></td>
-                                <td class="p-2 text-center">{{ $c->created_at?->format('Y-m-d') }}</td>
-                                <td class="p-2 text-center">
-                                    @php $isArchived = (($c->status ?? null) === 'archived' || !is_null($c->deleted_at ?? null)); @endphp
-                                    @if($isArchived)
-                                        <span class="inline-flex items-center gap-1 text-red-600" title="Archived">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.54-10.46a.75.75 0 00-1.06-1.06L10 8.94 7.52 6.48a.75.75 0 00-1.06 1.06L8.94 10l-2.48 2.48a.75.75 0 101.06 1.06L10 11.06l2.48 2.48a.75.75 0 101.06-1.06L11.06 10l2.48-2.46z" clip-rule="evenodd"/></svg>
-                                            Archived
-                                        </span>
-                                    @else
-                                        <span class="inline-flex items-center gap-1 text-blue-600" title="Active">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-7.364 7.364a1 1 0 01-1.414 0L3.293 10.435a1 1 0 011.414-1.414l3.221 3.221 6.657-6.657a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                                            Active
-                                        </span>
-                                    @endif
-                                </td>
-                                <td class="p-2 text-center">
-                                    <div class="flex flex-row gap-1 justify-center">
-                                        <button
-                                            type="button"
-                                            class="inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-blue-400 text-blue-600 hover:bg-blue-50 shadow-sm text-sm"
-                                            data-id="{{ $c->id }}" data-name="{{ $c->name }}" data-company="{{ $c->company }}"
-                                            data-email="{{ $c->email }}" data-phone="{{ $c->phone }}" data-assigned="{{ $c->assigned_user_id }}"
-                                            data-status="{{ $c->status }}" data-tags="{{ implode(',', (array) $c->tags) }}" data-notes="{{ $c->notes }}"
-                                            @click.prevent="
-                                            editId=$el.dataset.id;
-                                            editName=$el.dataset.name;
-                                            editCompany=$el.dataset.company;
-                                            editEmail=$el.dataset.email;
-                                            editPhone=$el.dataset.phone;
-                                            editAssigned=$el.dataset.assigned;
-                                            editStatus=$el.dataset.status||'active';
-                                            editTags=$el.dataset.tags||'';
-                                            editNotes=$el.dataset.notes||'';
-                                            showEdit=true;
-                                            ">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-8.5 8.5a2 2 0 01-.878.515l-3.3.943a.5.5 0 01-.62-.62l.943-3.3a2 2 0 01.515-.878l8.5-8.5z"/></svg><span>Edit</span>
-                                        </button>
-                                        <button type="button" class="inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-red-400 text-red-600 hover:bg-red-50 shadow-sm text-sm" data-id="{{ $c->id }}" @click.prevent="editId=$el.dataset.id; showDelete=true;">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M6 8a1 1 0 011 1v6a1 1 0 102 0V9a1 1 0 112 0v6a1 1 0 102 0V9a1 1 0 011-1h1a1 1 0 100-2h-1V5a2 2 0 00-2-2H9a2 2 0 00-2 2v1H6a1 1 0 100 2h1zm3-3h2v1H9V5z" clip-rule="evenodd"/></svg><span>Del</span>
-                                        </button>
-                                    </div>
-                                </td>
-
+                </div>
+                <div class="mb-2 flex flex-col sm:flex-row sm:items-end gap-2 px-2">
+                    <button type="button" id="bulkDeleteBtn" class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow text-sm">Delete Selected</button>
+                    <span class="text-xs sm:text-sm text-gray-500 pb-1">Click the 'Export' button to download to Excel.</span>
+                </div>
+                <div class="overflow-x-auto rounded-xl shadow-xl glass -mx-2 sm:mx-0">
+                    <table id="contactsTable" class="min-w-full text-xs sm:text-sm bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl whitespace-nowrap">
+                        <thead class="uppercase bg-white/40 text-gray-800 rounded-xl">
+                            <tr>
+                                <th class="p-3 text-center"><input type="checkbox" id="selectAll"></th>
+                                <th class="p-3 font-semibold tracking-widest text-center">Name</th>
+                                <th class="p-3 font-semibold tracking-widest text-center">Company</th>
+                                <th class="p-3 font-semibold tracking-widest text-center">Email</th>
+                                <th class="p-3 font-semibold tracking-widest text-center">Phone</th>
+                                <th class="p-3 font-semibold tracking-widest text-center">Assigned</th>
+                                <th class="p-3 font-semibold tracking-widest text-center">Tags</th>
+                                <th class="p-3 font-semibold tracking-widest text-center">Created</th>
+                                <th class="p-3 font-semibold tracking-widest text-center">Status</th>
+                                <th class="p-3 font-semibold tracking-widest text-center">Actions</th>
                             </tr>
-                        @empty
-                            <tr><td colspan="8" class="p-4 text-center text-gray-400">No contacts found</td></tr>
-                        @endforelse
+                        </thead>
+                        <tbody>
                         </tbody>
                     </table>
                 </div>
     <div x-show="showBulkDelete" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/50" @click="showBulkDelete=false"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-                        <div class="text-lg font-semibold mb-3">Delete Selected</div>
-                        <p class="text-sm text-gray-600 mb-4">Are you sure you want to delete the selected contacts?</p>
-                        <div class="flex justify-end gap-2">
-                            <button type="button" class="px-4 py-2 rounded-lg border" @click="showBulkDelete=false">Cancel</button>
-                            <button type="submit" class="px-4 py-2 rounded-lg bg-red-600 text-white">Delete</button>
-                        </div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-4 sm:p-6">
+            <div class="text-lg font-semibold mb-3">Delete Selected</div>
+            <p class="text-sm text-gray-600 mb-4">Are you sure you want to delete the selected contacts?</p>
+            <div class="flex justify-end gap-2">
+                <button type="button" class="px-4 py-2 rounded-lg border" @click="showBulkDelete=false">Cancel</button>
+                <button type="button" id="confirmBulkDelete" class="px-4 py-2 rounded-lg bg-red-600 text-white">Delete</button>
+            </div>
+        </div>
+    </div>
+                <div class="flex flex-col md:flex-row items-center md:justify-between gap-3 p-3 text-xs sm:text-sm">
+                    <div class="flex flex-wrap items-center gap-3" id="datatableLengthContainer">
+                        <!-- DataTables length selector and info will be inserted here -->
                     </div>
-                </div>
-                </form>
-                <div class="flex flex-col md:flex-row items-center md:justify-between gap-3 p-3 text-sm">
-                    <div class="text-gray-600 text-center md:text-left">
-                        Showing <span class="font-medium">{{ $contacts->firstItem() ?? 0 }}</span>–<span class="font-medium">{{ $contacts->lastItem() ?? 0 }}</span> of <span class="font-medium">{{ $contacts->total() }}</span>
+                    <div class="flex flex-wrap items-center gap-2 justify-center" id="datatablePaginationContainer">
+                        <!-- DataTables pagination will be inserted here -->
                     </div>
-                    <div class="flex gap-1 items-center flex-wrap justify-center">
-                        @if ($contacts->onFirstPage())
-                            <span class="px-3 py-2 rounded-xl border text-gray-400 cursor-not-allowed">&laquo; Prev</span>
-                        @else
-                            <a href="{{ $contacts->previousPageUrl() }}" class="px-3 py-2 rounded-xl border hover:bg-white/40">&laquo; Prev</a>
-                        @endif
-                        @php
-                            $current = $contacts->currentPage();
-                            $last = $contacts->lastPage();
-                            $window = 2;
-                            $pages = [];
-                            if ($last <= 7) {
-                                $pages = range(1, $last);
-                            } else {
-                                $pages = [1, 2];
-                                $start = max(3, $current - $window);
-                                $end = min($last - 2, $current + $window);
-                                if ($start > 3) $pages[] = '...';
-                                foreach (range($start, $end) as $p) { $pages[] = $p; }
-                                if ($end < $last - 2) $pages[] = '...';
-                                $pages[] = $last - 1; $pages[] = $last;
-                            }
-                        @endphp
-                        @foreach ($pages as $p)
-                            @if ($p === '...')
-                                <span class="px-3 py-2 text-gray-400 select-none">...</span>
-                            @elseif ($p == $current)
-                                <span class="px-3 py-2 rounded-xl border bg-blue-600 text-white">{{ $p }}</span>
-                            @else
-                                <a href="{{ $contacts->url($p) }}" class="px-3 py-2 rounded-xl border hover:bg-white/60">{{ $p }}</a>
-                            @endif
-                        @endforeach
-                        @if ($contacts->hasMorePages())
-                            <a href="{{ $contacts->nextPageUrl() }}" class="px-3 py-2 rounded-xl border hover:bg-white/40">Next &raquo;</a>
-                        @else
-                            <span class="px-3 py-2 rounded-xl border text-gray-400 cursor-not-allowed">Next &raquo;</span>
-                        @endif
+                    <div class="flex flex-wrap items-center gap-2">
+                        <a href="{{ route('crm.contacts.export', request()->query()) }}" class="px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl border bg-green-100 hover:bg-green-200 text-green-700 text-xs sm:text-sm">Export</a>
+                        <button type="button" id="resetFilters" class="px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl border bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs sm:text-sm">Reset</button>
                     </div>
-                    <form method="GET" class="flex flex-row items-center gap-2 justify-center max-[400px]:flex-col">
-                        <div class="flex items-center gap-2">
-                            <label class="text-gray-600 text-sm">Items:</label>
-                            <input type="number" name="per_page" min="1" max="100" value="{{ request('per_page', 10) }}" class="w-20 border rounded-xl px-3 py-2 bg-white/60 text-gray-700 shadow-inner text-sm">
-                            <input type="hidden" name="search" value="{{ request('search') }}">
-                            <input type="hidden" name="company" value="{{ request('company') }}">
-                            <input type="hidden" name="assigned_user_id" value="{{ request('assigned_user_id') }}">
-                            <input type="hidden" name="status" value="{{ request('status') }}">
-                            <input type="hidden" name="created_from" value="{{ request('created_from') }}">
-                            <input type="hidden" name="created_to" value="{{ request('created_to') }}">
-                            <input type="hidden" name="sort" value="{{ request('sort') }}">
-                            <input type="hidden" name="direction" value="{{ request('direction') }}">
-                            <button class="px-4 py-2 rounded-xl border hover:bg-white/70 bg-white/40 text-gray-700 text-sm">Apply</button>
-                        </div>
-                        <div class="flex items-center gap-2 max-[400px]:w-full max-[400px]:justify-center">
-                            <a href="{{ route('crm.contacts.export', request()->query()) }}" class="px-4 py-2 rounded-xl border bg-green-100 hover:bg-green-200 text-green-700 text-sm whitespace-nowrap">Export</a>
-                            <a href="{{ route('crm.contacts.index') }}" class="px-4 py-2 rounded-xl border bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm whitespace-nowrap">Reset</a>
-                        </div>
-                    </form>
                 </div>
             </div>
         </div>
@@ -331,24 +269,24 @@
 
     <div x-show="showCreate" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/50" @click="showCreate=false"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl p-6 max-h-[90vh] overflow-y-auto">
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
             <div class="text-lg font-semibold mb-4">Create Contact</div>
-            <form method="POST" action="{{ route('crm.contacts.store') }}" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form id="createForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 @csrf
-                <input name="name" class="border rounded-lg px-3 py-2" placeholder="Name" required>
-                <input name="company" class="border rounded-lg px-3 py-2" placeholder="Company">
-                <input name="email" type="email" class="border rounded-lg px-3 py-2" placeholder="Email">
-                <input name="phone" class="border rounded-lg px-3 py-2" placeholder="Phone">
-                <input name="assigned_user_id" type="number" class="border rounded-lg px-3 py-2" placeholder="Assigned User ID">
-                <select name="status" class="border rounded-lg px-3 py-2">
+                <input name="name" id="createName" class="border rounded-lg px-3 py-2" placeholder="Name" required>
+                <input name="company" id="createCompany" class="border rounded-lg px-3 py-2" placeholder="Company">
+                <input name="email" id="createEmail" type="email" class="border rounded-lg px-3 py-2" placeholder="Email">
+                <input name="phone" id="createPhone" class="border rounded-lg px-3 py-2" placeholder="Phone">
+                <input name="assigned_user_id" id="createAssigned" type="number" class="border rounded-lg px-3 py-2" placeholder="Assigned User ID">
+                <select name="status" id="createStatus" class="border rounded-lg px-3 py-2">
                     <option value="active">Active</option>
                     <option value="archived">Archived</option>
                 </select>
-                <input name="tags[]" class="border rounded-lg px-3 py-2 md:col-span-2" placeholder="Tags (comma separated)">
-                <textarea name="notes" class="border rounded-lg px-3 py-2 md:col-span-2" rows="3" placeholder="Notes"></textarea>
+                <input name="tags[]" id="createTags" class="border rounded-lg px-3 py-2 md:col-span-2" placeholder="Tags (comma separated)">
+                <textarea name="notes" id="createNotes" class="border rounded-lg px-3 py-2 md:col-span-2" rows="3" placeholder="Notes"></textarea>
                 <div class="md:col-span-2 flex justify-end gap-2 mt-2">
                     <button type="button" class="px-4 py-2 rounded-lg border" @click="showCreate=false">Cancel</button>
-                    <button class="px-4 py-2 rounded-lg bg-blue-600 text-white">Create</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg bg-blue-600 text-white">Create</button>
                 </div>
             </form>
         </div>
@@ -356,25 +294,25 @@
 
     <div x-show="showEdit" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/50" @click="showEdit=false"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl p-6 max-h-[90vh] overflow-y-auto">
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
             <div class="text-lg font-semibold mb-4">Edit Contact</div>
-            <form :action="'{{ route('crm.contacts.update','__ID__') }}'.replace('__ID__', editId)" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form id="editForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 @csrf
                 @method('PUT')
-                <input name="name" class="border rounded-lg px-3 py-2" placeholder="Name" x-model="editName" required>
-                <input name="company" class="border rounded-lg px-3 py-2" placeholder="Company" x-model="editCompany">
-                <input name="email" type="email" class="border rounded-lg px-3 py-2" placeholder="Email" x-model="editEmail">
-                <input name="phone" class="border rounded-lg px-3 py-2" placeholder="Phone" x-model="editPhone">
-                <input name="assigned_user_id" type="number" class="border rounded-lg px-3 py-2" placeholder="Assigned User ID" x-model="editAssigned">
-                <select name="status" class="border rounded-lg px-3 py-2" x-model="editStatus">
+                <input name="name" id="editName" class="border rounded-lg px-3 py-2" placeholder="Name" x-model="editName" required>
+                <input name="company" id="editCompany" class="border rounded-lg px-3 py-2" placeholder="Company" x-model="editCompany">
+                <input name="email" id="editEmail" type="email" class="border rounded-lg px-3 py-2" placeholder="Email" x-model="editEmail">
+                <input name="phone" id="editPhone" class="border rounded-lg px-3 py-2" placeholder="Phone" x-model="editPhone">
+                <input name="assigned_user_id" id="editAssigned" type="number" class="border rounded-lg px-3 py-2" placeholder="Assigned User ID" x-model="editAssigned">
+                <select name="status" id="editStatus" class="border rounded-lg px-3 py-2" x-model="editStatus">
                     <option value="active">Active</option>
                     <option value="archived">Archived</option>
                 </select>
-                <input name="tags[]" class="border rounded-lg px-3 py-2 md:col-span-2" placeholder="Tags (comma separated)" x-model="editTags">
-                <textarea name="notes" class="border rounded-lg px-3 py-2 md:col-span-2" rows="3" placeholder="Notes" x-model="editNotes"></textarea>
+                <input name="tags[]" id="editTags" class="border rounded-lg px-3 py-2 md:col-span-2" placeholder="Tags (comma separated)" x-model="editTags">
+                <textarea name="notes" id="editNotes" class="border rounded-lg px-3 py-2 md:col-span-2" rows="3" placeholder="Notes" x-model="editNotes"></textarea>
                 <div class="md:col-span-2 flex justify-end gap-2 mt-2">
                     <button type="button" class="px-4 py-2 rounded-lg border" @click="showEdit=false">Cancel</button>
-                    <button class="px-4 py-2 rounded-lg bg-blue-600 text-white">Save</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg bg-blue-600 text-white">Save</button>
                 </div>
             </form>
         </div>
@@ -382,20 +320,551 @@
 
     <div x-show="showDelete" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/50" @click="showDelete=false"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-4 sm:p-6">
             <div class="text-lg font-semibold mb-3">Delete Contact</div>
             <p class="text-sm text-gray-600 mb-4">Are you sure you want to delete this contact?</p>
-            <form :action="'{{ route('crm.contacts.destroy','__ID__') }}'.replace('__ID__', editId)" method="POST" class="flex justify-end gap-2">
-                @csrf
-                @method('DELETE')
+            <div class="flex justify-end gap-2">
                 <button type="button" class="px-4 py-2 rounded-lg border" @click="showDelete=false">Cancel</button>
-                <button class="px-4 py-2 rounded-lg bg-red-600 text-white">Delete</button>
-            </form>
+                <button type="button" id="confirmDelete" class="px-4 py-2 rounded-lg bg-red-600 text-white">Delete</button>
+            </div>
         </div>
     </div>
 
+    <!-- Notification Modal -->
+    <div x-show="showNotification" x-transition.opacity class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/50" @click="showNotification=false"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <div class="flex items-start gap-4">
+                <div :class="notificationType === 'success' ? 'bg-green-100 text-green-600' : notificationType === 'error' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'" class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center">
+                    <svg x-show="notificationType === 'success'" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg x-show="notificationType === 'error'" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg x-show="notificationType !== 'success' && notificationType !== 'error'" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-1" x-text="notificationType === 'success' ? 'Success' : notificationType === 'error' ? 'Error' : 'Notice'"></h3>
+                    <p class="text-sm text-gray-600 mb-4 whitespace-pre-line" x-text="notificationMessage"></p>
+                    <div class="flex justify-end">
+                        <button type="button" @click="showNotification=false" class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors">OK</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     
+
 </div>
+
+<script>
+// Setup CSRF token for all AJAX requests
+$.ajaxSetup({
+    headers: {
+        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+    }
+});
+
+$(document).ready(function() {
+    // Initialize DataTables
+    let table = $('#contactsTable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: '{{ route('crm.contacts.datatable') }}',
+            data: function(d) {
+                // Always send filter values (even if empty) so clearing filters works
+                d.company = $('#filterCompany').val() || '';
+                d.assigned_user_id = $('#filterAssigned').val() || '';
+                d.status = $('#filterStatus').val() || '';
+                d.created_from = $('#filterCreatedFrom').val() || '';
+                d.created_to = $('#filterCreatedTo').val() || '';
+            }
+        },
+        columns: [
+            { data: 'id', name: 'id', orderable: false, searchable: false, render: function(data) {
+                return '<input type="checkbox" class="row-check rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" value="' + data + '">';
+            }},
+            { data: 'name', name: 'name', render: function(data) {
+                return '<span class="font-medium text-gray-900">' + (data || '-') + '</span>';
+            }},
+            { data: 'company', name: 'company', render: function(data) {
+                return '<span class="text-gray-700">' + (data || '-') + '</span>';
+            }},
+            { data: 'email', name: 'email', render: function(data) {
+                return '<span class="text-gray-700">' + (data || '-') + '</span>';
+            }},
+            { data: 'phone', name: 'phone', render: function(data) {
+                return '<span class="text-gray-700">' + (data || '-') + '</span>';
+            }},
+            { data: 'assigned', name: 'assigned_user_id', render: function(data) {
+                return '<span class="text-gray-700">' + (data || '-') + '</span>';
+            }},
+            { data: 'tags', name: 'tags', render: function(data) {
+                return '<span class="text-gray-700">' + (data || '-') + '</span>';
+            }},
+            { data: 'created_at', name: 'created_at', render: function(data) {
+                return '<span class="text-gray-700">' + (data || '-') + '</span>';
+            }},
+            { data: 'status_html', name: 'status', orderable: false, searchable: false },
+            { data: 'actions_html', name: 'actions', orderable: false, searchable: false }
+        ],
+        order: [[7, 'desc']],
+        pageLength: 10,
+        dom: '<"top"f>rt<"bottom"lip><"clear">',
+        pagingType: 'simple_numbers',
+        language: {
+            search: "",
+            searchPlaceholder: "Search...",
+            paginate: {
+                first: "First",
+                last: "Last",
+                next: "Next",
+                previous: "Previous"
+            }
+        },
+        initComplete: function() {
+            // Move search to top right container and style it
+            const searchContainer = $('#datatableSearchContainer');
+            const searchInput = $('.dataTables_filter');
+            if (searchContainer.length && searchInput.length) {
+                // Get the input element before moving
+                const input = searchInput.find('input').first();
+                
+                // Create wrapper with styling
+                const wrapper = $('<div class="flex items-center gap-2 bg-white/30 backdrop-blur-sm rounded-xl px-3 py-2 shadow-inner w-full md:w-80"></div>');
+                wrapper.append('<label class="text-gray-600 px-2 text-base font-medium">Search</label>');
+                wrapper.append('<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 103 10.5a7.5 7.5 0 0013.15 6.15z" /></svg>');
+                
+                // Style the search input
+                input.addClass('bg-transparent border-0 outline-none ring-0 focus:ring-0 w-full text-gray-900 placeholder-gray-400 text-base px-2 py-1');
+                input.attr('placeholder', '');
+                
+                // Remove the label and move input into wrapper
+                searchInput.find('label').remove();
+                wrapper.append(input);
+                searchInput.html(wrapper);
+                searchInput.appendTo(searchContainer);
+                
+                // Ensure DataTables search still works after moving
+                // We need to manually trigger search since moving the DOM breaks DataTables handlers
+                let searchTimeout;
+                input.off('keyup.search input.search').on('keyup.search input.search', function() {
+                    clearTimeout(searchTimeout);
+                    const self = this;
+                    searchTimeout = setTimeout(function() {
+                        table.search(self.value).draw();
+                    }, 300); // Debounce for 300ms
+                });
+                
+                // Also handle on input for better responsiveness
+                input.on('input', function() {
+                    if (this.value === '') {
+                        table.search('').draw();
+                    }
+                });
+            }
+            
+            // Move length selector and info to left container
+            const lengthContainer = $('#datatableLengthContainer');
+            const lengthSelect = $('.dataTables_length');
+            const info = $('.dataTables_info');
+            if (lengthContainer.length) {
+                if (lengthSelect.length) {
+                    lengthSelect.appendTo(lengthContainer);
+                    lengthSelect.css('margin', '0');
+                    // Increase font size for label text
+                    lengthSelect.find('label').css({
+                        'font-size': '0.875rem',
+                        'font-weight': '500',
+                        'color': '#374151'
+                    });
+                }
+                if (info.length) {
+                    info.appendTo(lengthContainer);
+                    info.css({
+                        'margin': '0',
+                        'font-size': '0.875rem',
+                        'font-weight': '500'
+                    });
+                }
+            }
+            
+            // Move pagination to center container
+            const paginationContainer = $('#datatablePaginationContainer');
+            const pagination = $('.dataTables_paginate');
+            if (paginationContainer.length && pagination.length) {
+                pagination.appendTo(paginationContainer);
+                pagination.css({
+                    'margin': '0',
+                    'display': 'flex',
+                    'align-items': 'center',
+                    'gap': '0.25rem'
+                });
+                // Ensure pagination buttons have proper sizing
+                pagination.find('.paginate_button').css({
+                    'font-size': '0.875rem',
+                    'font-weight': '500',
+                    'padding': '0.5rem 0.875rem',
+                    'min-height': '2.25rem'
+                });
+            }
+            
+            // Hide the default top section
+            $('.dataTables_wrapper .top').hide();
+        },
+        drawCallback: function() {
+            // Ensure pagination is properly styled and positioned after each draw
+            const pagination = $('.dataTables_paginate');
+            if (pagination.length) {
+                const paginationContainer = $('#datatablePaginationContainer');
+                if (paginationContainer.length && pagination.parent()[0] !== paginationContainer[0]) {
+                    pagination.appendTo(paginationContainer);
+                }
+                
+                // Re-apply pagination button styles
+                pagination.find('.paginate_button').css({
+                    'font-size': '0.875rem',
+                    'font-weight': '500',
+                    'padding': '0.5rem 0.875rem',
+                    'min-height': '2.25rem'
+                });
+            }
+            
+            // Ensure length selector and info stay in the left container
+            const lengthContainer = $('#datatableLengthContainer');
+            const lengthSelect = $('.dataTables_length');
+            const info = $('.dataTables_info');
+            if (lengthContainer.length) {
+                if (lengthSelect.length && lengthSelect.parent()[0] !== lengthContainer[0]) {
+                    lengthSelect.appendTo(lengthContainer);
+                    lengthSelect.css('margin', '0');
+                    lengthSelect.find('label').css({
+                        'font-size': '0.875rem',
+                        'font-weight': '500',
+                        'color': '#374151'
+                    });
+                }
+                if (info.length && info.parent()[0] !== lengthContainer[0]) {
+                    info.appendTo(lengthContainer);
+                    info.css({
+                        'margin': '0',
+                        'font-size': '0.875rem',
+                        'font-weight': '500'
+                    });
+                }
+            }
+        }
+    });
+
+    // Function to show notification modal
+    function showNotification(message, type = 'success') {
+        const alpineData = getAlpineData();
+        if (alpineData && alpineData.__x) {
+            const data = alpineData.__x.$data;
+            data.notificationMessage = message;
+            data.notificationType = type;
+            data.showNotification = true;
+        }
+        // Directly show the modal as fallback
+        const notificationModal = $('[x-show="showNotification"]');
+        if (notificationModal.length) {
+            notificationModal[0].style.display = 'flex';
+        }
+        
+        // Auto-hide after 5 seconds
+        setTimeout(function() {
+            if (alpineData && alpineData.__x) {
+                alpineData.__x.$data.showNotification = false;
+            }
+            if (notificationModal.length) {
+                notificationModal[0].style.display = 'none';
+            }
+        }, 5000);
+    }
+
+    // Function to get Alpine.js instance
+    function getAlpineData() {
+        return document.querySelector('[x-data]');
+    }
+
+    // Store current contact ID for edit/delete
+    let currentContactId = null;
+
+    // Handle edit button clicks using event delegation
+    $(document).on('click', '.edit-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const btn = $(this);
+        currentContactId = btn.data('id');
+        
+        if (!currentContactId) {
+            showNotification('Contact ID not found.', 'error');
+            return;
+        }
+        
+        // Update form fields directly via jQuery
+        $('#editName').val(btn.data('name') || '');
+        $('#editCompany').val(btn.data('company') || '');
+        $('#editEmail').val(btn.data('email') || '');
+        $('#editPhone').val(btn.data('phone') || '');
+        $('#editAssigned').val(btn.data('assigned') || '');
+        $('#editStatus').val(btn.data('status') || 'active');
+        $('#editTags').val(btn.data('tags') || '');
+        $('#editNotes').val(btn.data('notes') || '');
+        
+        // Update Alpine.js data
+        const alpineData = getAlpineData();
+        if (alpineData && alpineData.__x) {
+            const data = alpineData.__x.$data;
+            data.editId = currentContactId;
+            data.editName = btn.data('name') || '';
+            data.editCompany = btn.data('company') || '';
+            data.editEmail = btn.data('email') || '';
+            data.editPhone = btn.data('phone') || '';
+            data.editAssigned = btn.data('assigned') || '';
+            data.editStatus = btn.data('status') || 'active';
+            data.editTags = btn.data('tags') || '';
+            data.editNotes = btn.data('notes') || '';
+            data.showEdit = true;
+        }
+        
+        // Directly show the modal as fallback
+        const editModal = $('[x-show="showEdit"]');
+        if (editModal.length) {
+            editModal[0].style.display = 'flex';
+        }
+    });
+    
+    // Handle delete button clicks using event delegation
+    $(document).on('click', '.delete-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const btn = $(this);
+        currentContactId = btn.data('id');
+        
+        if (!currentContactId) {
+            showNotification('Contact ID not found.', 'error');
+            return;
+        }
+        
+        // Update Alpine.js data
+        const alpineData = getAlpineData();
+        if (alpineData && alpineData.__x) {
+            const data = alpineData.__x.$data;
+            data.editId = currentContactId;
+            data.showDelete = true;
+        }
+        
+        // Directly show the modal as fallback
+        const deleteModal = $('[x-show="showDelete"]');
+        if (deleteModal.length) {
+            deleteModal[0].style.display = 'flex';
+        }
+    });
+
+    // Create form submission
+    $('#createForm').on('submit', function(e) {
+        e.preventDefault();
+        const formData = {
+            _token: '{{ csrf_token() }}',
+            name: $('#createName').val(),
+            company: $('#createCompany').val(),
+            email: $('#createEmail').val(),
+            phone: $('#createPhone').val(),
+            assigned_user_id: $('#createAssigned').val(),
+            status: $('#createStatus').val(),
+            tags: [$('#createTags').val()],
+            notes: $('#createNotes').val()
+        };
+        
+        $.ajax({
+            url: '{{ route('crm.contacts.store') }}',
+            method: 'POST',
+            data: formData,
+            success: function(response) {
+                table.ajax.reload();
+                $('#createForm')[0].reset();
+                const alpineData = getAlpineData();
+                if (alpineData && alpineData.__x) {
+                    alpineData.__x.$data.showCreate = false;
+                }
+                $('[x-show="showCreate"]')[0].style.display = 'none';
+                showNotification('Contact created successfully.', 'success');
+            },
+            error: function(xhr) {
+                if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    let errors = Object.values(xhr.responseJSON.errors).flat();
+                    showNotification('Validation errors:\n' + errors.join('\n'), 'error');
+                } else {
+                    showNotification('Error creating contact.', 'error');
+                }
+            }
+        });
+    });
+
+    // Edit form submission
+    $('#editForm').on('submit', function(e) {
+        e.preventDefault();
+        const alpineData = getAlpineData();
+        if (alpineData && alpineData.__x) {
+            currentContactId = alpineData.__x.$data.editId || currentContactId;
+        }
+        if (!currentContactId) {
+            showNotification('Contact ID not found.', 'error');
+            return;
+        }
+        
+        const formData = {
+            _token: '{{ csrf_token() }}',
+            _method: 'PUT',
+            name: $('#editName').val(),
+            company: $('#editCompany').val(),
+            email: $('#editEmail').val(),
+            phone: $('#editPhone').val(),
+            assigned_user_id: $('#editAssigned').val(),
+            status: $('#editStatus').val(),
+            tags: [$('#editTags').val()],
+            notes: $('#editNotes').val()
+        };
+        
+        $.ajax({
+            url: '{{ route('crm.contacts.update', '__ID__') }}'.replace('__ID__', currentContactId),
+            method: 'POST',
+            data: formData,
+            success: function(response) {
+                table.ajax.reload();
+                if (alpineData && alpineData.__x) {
+                    alpineData.__x.$data.showEdit = false;
+                }
+                $('[x-show="showEdit"]')[0].style.display = 'none';
+                showNotification('Contact updated successfully.', 'success');
+            },
+            error: function(xhr) {
+                if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    let errors = Object.values(xhr.responseJSON.errors).flat();
+                    showNotification('Validation errors:\n' + errors.join('\n'), 'error');
+                } else {
+                    showNotification('Error updating contact.', 'error');
+                }
+            }
+        });
+    });
+
+    // Delete confirmation
+    $('#confirmDelete').on('click', function() {
+        const alpineData = getAlpineData();
+        if (alpineData && alpineData.__x) {
+            currentContactId = alpineData.__x.$data.editId || currentContactId;
+        }
+        if (!currentContactId) {
+            showNotification('Contact ID not found.', 'error');
+            return;
+        }
+        
+        $.ajax({
+            url: '{{ route('crm.contacts.destroy', '__ID__') }}'.replace('__ID__', currentContactId),
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                _method: 'DELETE'
+            },
+            success: function(response) {
+                table.ajax.reload();
+                if (alpineData && alpineData.__x) {
+                    alpineData.__x.$data.showDelete = false;
+                }
+                $('[x-show="showDelete"]')[0].style.display = 'none';
+                currentContactId = null;
+                showNotification('Contact deleted successfully.', 'success');
+            },
+            error: function() {
+                showNotification('Error deleting contact.', 'error');
+            }
+        });
+    });
+
+    // Bulk delete
+    let currentBulkDeleteIds = [];
+    $('#bulkDeleteBtn').on('click', function() {
+        const selectedIds = $('.row-check:checked').map(function() {
+            return $(this).val();
+        }).get();
+        
+        if (selectedIds.length === 0) {
+            showNotification('Please select at least one contact to delete.', 'error');
+            return;
+        }
+        
+        currentBulkDeleteIds = selectedIds;
+        const alpineData = getAlpineData();
+        if (alpineData && alpineData.__x) {
+            alpineData.__x.$data.showBulkDelete = true;
+        }
+        $('[x-show="showBulkDelete"]')[0].style.display = 'flex';
+    });
+
+    $('#confirmBulkDelete').on('click', function() {
+        $.ajax({
+            url: '{{ route('crm.contacts.bulk-delete') }}',
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                ids: currentBulkDeleteIds
+            },
+            success: function(response) {
+                table.ajax.reload();
+                const alpineData = getAlpineData();
+                if (alpineData && alpineData.__x) {
+                    alpineData.__x.$data.showBulkDelete = false;
+                }
+                $('[x-show="showBulkDelete"]')[0].style.display = 'none';
+                showNotification('Selected contacts deleted successfully.', 'success');
+            },
+            error: function() {
+                showNotification('Error deleting contacts.', 'error');
+            }
+        });
+    });
+
+    // Select all checkbox
+    $('#selectAll').on('click', function() {
+        $('.row-check').prop('checked', $(this).prop('checked'));
+    });
+
+    // Apply filters - reload table with current filter values
+    $('#applyFilters').on('click', function() {
+        // Force reload with current filter values
+        table.ajax.reload(function() {
+            // Callback after reload
+        }, false); // false = don't reset pagination
+    });
+
+    // Reset filters
+    $('#resetFilters').on('click', function() {
+        $('#filterCompany').val('');
+        $('#filterAssigned').val('');
+        $('#filterStatus').val('');
+        $('#filterCreatedFrom').val('');
+        $('#filterCreatedTo').val('');
+        // Clear DataTables search
+        table.search('').draw();
+        // Reload table
+        table.ajax.reload(null, false);
+    });
+    
+    // Allow Enter key to trigger filter
+    $('#filterCompany, #filterAssigned, #filterStatus, #filterCreatedFrom, #filterCreatedTo').on('keypress', function(e) {
+        if (e.which === 13) {
+            e.preventDefault();
+            $('#applyFilters').click();
+        }
+    });
+});
+</script>
 </body>
 </html>
 

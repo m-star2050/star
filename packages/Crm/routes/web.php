@@ -15,6 +15,7 @@ Route::prefix('crm')->group(function () {
     Route::middleware(['web'])->group(function () {
         Route::name('crm.')->group(function () {
             Route::resource('contacts', ContactController::class)->only(['index','store','update','destroy']);
+            Route::get('contacts/datatable', [ContactController::class, 'datatable'])->name('contacts.datatable');
             Route::post('contacts/{contact}/inline', [ContactController::class, 'inline'])->name('contacts.inline');
             Route::post('contacts/{id}/restore', [ContactController::class, 'restore'])->name('contacts.restore');
             Route::post('contacts/bulk-delete', [ContactController::class, 'bulkDelete'])->name('contacts.bulk-delete');
