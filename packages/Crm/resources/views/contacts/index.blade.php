@@ -632,10 +632,10 @@ $(document).ready(function() {
             data.showEdit = true;
         }
         
-        // Directly show the modal as fallback
+        // Remove inline style to let Alpine.js control visibility
         const editModal = $('[x-show="showEdit"]');
         if (editModal.length) {
-            editModal[0].style.display = 'flex';
+            editModal[0].style.display = '';
         }
     });
     
@@ -659,10 +659,10 @@ $(document).ready(function() {
             data.showDelete = true;
         }
         
-        // Directly show the modal as fallback
+        // Remove inline style to let Alpine.js control visibility
         const deleteModal = $('[x-show="showDelete"]');
         if (deleteModal.length) {
-            deleteModal[0].style.display = 'flex';
+            deleteModal[0].style.display = '';
         }
     });
 
@@ -692,7 +692,11 @@ $(document).ready(function() {
                 if (alpineData && alpineData.__x) {
                     alpineData.__x.$data.showCreate = false;
                 }
-                $('[x-show="showCreate"]')[0].style.display = 'none';
+                // Remove inline style to let Alpine.js control visibility
+                const createModal = $('[x-show="showCreate"]');
+                if (createModal.length) {
+                    createModal[0].style.display = '';
+                }
                 showNotification('Contact created successfully.', 'success');
             },
             error: function(xhr) {
@@ -740,7 +744,11 @@ $(document).ready(function() {
                 if (alpineData && alpineData.__x) {
                     alpineData.__x.$data.showEdit = false;
                 }
-                $('[x-show="showEdit"]')[0].style.display = 'none';
+                // Remove inline style to let Alpine.js control visibility
+                const editModal = $('[x-show="showEdit"]');
+                if (editModal.length) {
+                    editModal[0].style.display = '';
+                }
                 showNotification('Contact updated successfully.', 'success');
             },
             error: function(xhr) {
@@ -777,7 +785,11 @@ $(document).ready(function() {
                 if (alpineData && alpineData.__x) {
                     alpineData.__x.$data.showDelete = false;
                 }
-                $('[x-show="showDelete"]')[0].style.display = 'none';
+                // Remove inline style to let Alpine.js control visibility
+                const deleteModal = $('[x-show="showDelete"]');
+                if (deleteModal.length) {
+                    deleteModal[0].style.display = '';
+                }
                 currentContactId = null;
                 showNotification('Contact deleted successfully.', 'success');
             },
@@ -804,7 +816,12 @@ $(document).ready(function() {
         if (alpineData && alpineData.__x) {
             alpineData.__x.$data.showBulkDelete = true;
         }
-        $('[x-show="showBulkDelete"]')[0].style.display = 'flex';
+        
+        // Remove inline style to let Alpine.js control visibility
+        const bulkDeleteModal = $('[x-show="showBulkDelete"]');
+        if (bulkDeleteModal.length) {
+            bulkDeleteModal[0].style.display = '';
+        }
     });
 
     $('#confirmBulkDelete').on('click', function() {
@@ -821,7 +838,11 @@ $(document).ready(function() {
                 if (alpineData && alpineData.__x) {
                     alpineData.__x.$data.showBulkDelete = false;
                 }
-                $('[x-show="showBulkDelete"]')[0].style.display = 'none';
+                // Remove inline style to let Alpine.js control visibility
+                const bulkDeleteModal = $('[x-show="showBulkDelete"]');
+                if (bulkDeleteModal.length) {
+                    bulkDeleteModal[0].style.display = '';
+                }
                 showNotification('Selected contacts deleted successfully.', 'success');
             },
             error: function() {
