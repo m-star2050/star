@@ -442,7 +442,7 @@
             <div class="text-lg font-semibold mb-3">Delete Selected</div>
             <p class="text-sm text-gray-600 mb-4">Are you sure you want to delete the selected contacts?</p>
             <div class="flex justify-end gap-2">
-                <button type="button" class="px-4 py-2 rounded-lg border" @click="showBulkDelete=false">Cancel</button>
+                <button type="button" class="px-4 py-2 rounded-lg border cancel-bulk-delete-btn" @click="showBulkDelete=false">Cancel</button>
                 <button type="button" id="confirmBulkDelete" class="px-4 py-2 rounded-lg bg-red-600 text-white">Delete</button>
             </div>
         </div>
@@ -479,7 +479,7 @@
                 <input name="tags[]" id="createTags" class="border rounded-lg px-3 py-2 md:col-span-2" placeholder="Tags (comma separated)">
                 <textarea name="notes" id="createNotes" class="border rounded-lg px-3 py-2 md:col-span-2" rows="3" placeholder="Notes"></textarea>
                 <div class="md:col-span-2 flex justify-end gap-2 mt-2">
-                    <button type="button" class="px-4 py-2 rounded-lg border" @click.stop="showCreate=false">Cancel</button>
+                    <button type="button" class="px-4 py-2 rounded-lg border cancel-create-btn" @click="showCreate=false">Cancel</button>
                     <button type="submit" class="px-4 py-2 rounded-lg bg-blue-600 text-white">Create</button>
                 </div>
             </form>
@@ -505,7 +505,7 @@
                 <input name="tags[]" id="editTags" class="border rounded-lg px-3 py-2 md:col-span-2" placeholder="Tags (comma separated)" x-model="editTags">
                 <textarea name="notes" id="editNotes" class="border rounded-lg px-3 py-2 md:col-span-2" rows="3" placeholder="Notes" x-model="editNotes"></textarea>
                 <div class="md:col-span-2 flex justify-end gap-2 mt-2">
-                    <button type="button" class="px-4 py-2 rounded-lg border" @click="showEdit=false">Cancel</button>
+                    <button type="button" class="px-4 py-2 rounded-lg border cancel-edit-btn" @click="showEdit=false">Cancel</button>
                     <button type="submit" class="px-4 py-2 rounded-lg bg-blue-600 text-white">Save</button>
                 </div>
             </form>
@@ -518,7 +518,7 @@
             <div class="text-lg font-semibold mb-3">Delete Contact</div>
             <p class="text-sm text-gray-600 mb-4">Are you sure you want to delete this contact?</p>
             <div class="flex justify-end gap-2">
-                <button type="button" class="px-4 py-2 rounded-lg border" @click="showDelete=false">Cancel</button>
+                <button type="button" class="px-4 py-2 rounded-lg border cancel-delete-btn" @click="showDelete=false">Cancel</button>
                 <button type="button" id="confirmDelete" class="px-4 py-2 rounded-lg bg-red-600 text-white">Delete</button>
             </div>
         </div>
@@ -763,33 +763,32 @@ $(document).ready(function() {
         return document.querySelector('[x-data]');
     }
     
-    // Helper function to close modals reliably
+    // Helper function to close modals reliably - hide immediately
     function closeModal(modalName) {
-        const alpineData = getAlpineData();
-        
-        // Directly hide the modal using jQuery
+        // Directly hide the modal using jQuery FIRST (immediate visual feedback)
         const modal = $('[x-show="' + modalName + '"]');
         if (modal.length) {
             modal.hide();
             modal.css('display', 'none');
         }
         
-        // Set Alpine.js data
+        // Then update Alpine.js data
+        const alpineData = getAlpineData();
         if (alpineData && alpineData.__x) {
             alpineData.__x.$data[modalName] = false;
         }
         
-        // Force update after a short delay
+        // Force update after a short delay to ensure it sticks
         setTimeout(() => {
             if (alpineData && alpineData.__x) {
                 alpineData.__x.$data[modalName] = false;
             }
             const modalEl = $('[x-show="' + modalName + '"]');
-            if (modalEl.length) {
+            if (modalEl.length && modalEl.is(':visible')) {
                 modalEl.hide();
                 modalEl.css('display', 'none');
             }
-        }, 10);
+        }, 50);
     }
 
     let currentContactId = null;
@@ -1010,6 +1009,71 @@ $(document).ready(function() {
 
     $('#selectAll').on('click', function() {
         $('.row-check').prop('checked', $(this).prop('checked'));
+    });
+    
+    // Cancel button handlers - attach handlers after DOM is ready and use multiple approaches
+    // First, try direct attachment
+    setTimeout(function() {
+        $('.cancel-create-btn').off('click').on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            closeModal('showCreate');
+            return false;
+        });
+        
+        $('.cancel-edit-btn').off('click').on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            closeModal('showEdit');
+            return false;
+        });
+        
+        $('.cancel-delete-btn').off('click').on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            closeModal('showDelete');
+            return false;
+        });
+        
+        $('.cancel-bulk-delete-btn').off('click').on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            closeModal('showBulkDelete');
+            return false;
+        });
+    }, 100);
+    
+    // Also use event delegation as backup - this works for dynamically added elements
+    $(document).off('click', '.cancel-create-btn').on('click', '.cancel-create-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeModal('showCreate');
+        return false;
+    });
+    
+    $(document).off('click', '.cancel-edit-btn').on('click', '.cancel-edit-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeModal('showEdit');
+        return false;
+    });
+    
+    $(document).off('click', '.cancel-delete-btn').on('click', '.cancel-delete-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeModal('showDelete');
+        return false;
+    });
+    
+    $(document).off('click', '.cancel-bulk-delete-btn').on('click', '.cancel-bulk-delete-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeModal('showBulkDelete');
+        return false;
     });
 
     $('#applyFilters').on('click', function() {
