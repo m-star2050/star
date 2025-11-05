@@ -31,6 +31,7 @@ Route::prefix('crm')->group(function () {
             Route::get('leads-export', [LeadController::class, 'export'])->name('leads.export');
 
             Route::resource('tasks', TaskController::class)->only(['index','store','update','destroy']);
+            Route::get('tasks/datatable', [TaskController::class, 'datatable'])->name('tasks.datatable');
             Route::post('tasks/{task}/toggle-status', [TaskController::class, 'toggleStatus'])->name('tasks.toggle-status');
             Route::post('tasks/{id}/restore', [TaskController::class, 'restore'])->name('tasks.restore');
             Route::post('tasks/bulk-delete', [TaskController::class, 'bulkDelete'])->name('tasks.bulk-delete');
