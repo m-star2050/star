@@ -27,7 +27,20 @@
             min-height: 100vh;
             font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
         }
-        .glass { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.35); box-shadow: inset 0 0 0 1px rgba(255,255,255,.15); }
+        .glass { 
+            backdrop-filter: blur(16px); 
+            -webkit-backdrop-filter: blur(16px); 
+            background: rgba(255,255,255,0.2); 
+            border: 1px solid rgba(255,255,255,0.2); 
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1), inset 0 1px 0 0 rgba(255,255,255,0.2); 
+        }
+        .glass-card {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            background: rgba(255,255,255,0.25);
+            border: 1px solid rgba(255,255,255,0.25);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.05);
+        }
         .sidebar-link{ display:flex; align-items:center; gap:.75rem; color:#0f172a; text-decoration:none; padding:.6rem .9rem; border-radius:.6rem; line-height:1; }
         .sidebar-link:hover{ background: rgba(0,0,0,.06); }
         .sidebar-link svg{ width:20px; height:20px; min-width:20px; min-height:20px; flex-shrink:0; display:block; }
@@ -89,14 +102,31 @@
             cursor: not-allowed;
             opacity: 0.5;
         }
-        /* Professional table styling with reduced spacing between columns */
+        /* Professional table styling */
         #contactsTable td { 
-            padding: 0.5rem 0.375rem !important; 
-            text-align: center; 
+            padding: 0.875rem 0.75rem !important; 
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+            color: #1f2937;
+            font-size: 0.875rem;
+            background-color: rgba(255,255,255,0.05);
         }
         #contactsTable th { 
-            padding: 0.75rem 0.375rem !important; 
-            text-align: center; 
+            padding: 1rem 0.75rem !important; 
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: #374151;
+        }
+        
+        #contactsTable tbody tr:hover {
+            background-color: rgba(255,255,255,0.15);
+        }
+        
+        #contactsTable tbody tr {
+            transition: background-color 0.15s ease;
         }
         
         #contactsTable th:nth-child(3),
@@ -314,13 +344,14 @@
     <div class="lg:transition-all lg:duration-300 pt-16 lg:pt-0" :class="{'lg:pl-[280px]': open, 'lg:pl-[88px]': !open}">
         <div class="min-h-screen flex flex-col justify-center items-center px-2 py-8">
             <div class="w-full max-w-[95%] mx-auto px-3 md:px-4 py-3">
-                <div class="glass w-full rounded-xl px-6 py-3 mb-4 flex items-center justify-between text-white">
-                    <div class="text-lg md:text-xl font-semibold tracking-wide">CONTACTS</div>
+                <div class="glass-card w-full rounded-2xl px-6 py-4 mb-6 flex items-center justify-between">
+                    <div class="text-2xl md:text-3xl font-bold text-gray-800 tracking-tight">Contacts</div>
+                    <div class="text-sm text-gray-500 font-medium">Manage your contact database</div>
                 </div>
                 <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
                     <div class="flex items-end gap-6 w-full md:max-w-xl">
-                        <button type="button" id="newContactBtn" @click="showCreate=true" class="flex-shrink-0 flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 20 20" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"/></svg>
+                        <button type="button" id="newContactBtn" @click="showCreate=true" class="flex-shrink-0 flex items-center gap-2.5 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 20 20" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"/></svg>
                             New Contact
                         </button>
                     </div>
@@ -328,40 +359,54 @@
                         <!-- DataTables search will be inserted here -->
                     </div>
                 </div>
-                <div class="mb-4">
+                <div class="mb-6 glass-card rounded-2xl p-5">
                     <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
-                        <div class="md:col-span-5 flex items-center justify-between">
-                            <div class="font-semibold text-xl text-gray-700 ml-1 tracking-wide">Filter</div>
-                            <button type="button" id="applyFilters" class="px-5 py-2 rounded-xl bg-blue-600 text-white shadow hover:bg-blue-700">Apply Filters</button>
+                        <div class="md:col-span-5 flex items-center justify-between mb-2">
+                            <div class="font-bold text-lg text-gray-800 tracking-tight flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
+                                Filters
+                            </div>
+                            <button type="button" id="applyFilters" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold shadow-md hover:shadow-lg transition-all duration-200 hover:scale-[1.02]">Apply Filters</button>
                         </div>
                         <div>
-                            <input type="text" id="filterCompany" class="w-full border rounded-xl px-3 py-2 bg-transparent text-gray-800 focus:ring-2 focus:ring-blue-400 placeholder-gray-500" autocomplete="off" placeholder="Company">
+                            <label class="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Company</label>
+                            <input type="text" id="filterCompany" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" autocomplete="off" placeholder="Filter by company">
                         </div>
                         <div>
-                            <input type="number" id="filterAssigned" class="w-full border rounded-xl px-3 py-2 bg-transparent text-gray-800 focus:ring-2 focus:ring-blue-400 placeholder-gray-500" autocomplete="off" placeholder="Assigned User">
+                            <label class="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Assigned User</label>
+                            <input type="number" id="filterAssigned" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" autocomplete="off" placeholder="User ID">
                         </div>
                         <div>
-                            <select id="filterStatus" class="w-full border rounded-xl px-3 py-2 bg-transparent text-gray-800 focus:ring-2 focus:ring-blue-400">
+                            <label class="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Status</label>
+                            <select id="filterStatus" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
                                 <option value="">All Status</option>
                                 <option value="active">Active</option>
                                 <option value="archived">Archived</option>
                             </select>
                         </div>
                         <div>
-                            <input type="date" id="filterCreatedFrom" class="w-full border rounded-xl px-3 py-2 bg-transparent text-gray-800 focus:ring-2 focus:ring-blue-400" autocomplete="off">
+                            <label class="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Created From</label>
+                            <input type="date" id="filterCreatedFrom" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" autocomplete="off">
                         </div>
                         <div>
-                            <input type="date" id="filterCreatedTo" class="w-full border rounded-xl px-3 py-2 bg-transparent text-gray-800 focus:ring-2 focus:ring-blue-400" autocomplete="off">
+                            <label class="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Created To</label>
+                            <input type="date" id="filterCreatedTo" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" autocomplete="off">
                         </div>
                     </div>
                 </div>
-                <div class="mb-2 flex flex-col sm:flex-row sm:items-end gap-2 px-2">
-                    <button type="button" id="bulkDeleteBtn" class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow text-sm">Delete Selected</button>
-                    <span class="text-xs sm:text-sm text-gray-500 pb-1">Click the 'Export' button to download to Excel.</span>
+                <div class="mb-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                    <button type="button" id="bulkDeleteBtn" class="px-4 py-2.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 text-sm font-semibold flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        Delete Selected
+                    </button>
+                    <span class="text-sm text-gray-600 font-medium flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        Click 'Export' to download to Excel
+                    </span>
                 </div>
-                <div class="overflow-x-auto rounded-xl shadow-xl glass -mx-2 sm:mx-0" style="overflow-x: auto; overflow-y: visible;">
-                    <table id="contactsTable" class="w-full text-xs sm:text-sm bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl whitespace-nowrap" style="min-width: 1200px;">
-                        <thead class="uppercase bg-white/40 text-gray-800 rounded-xl">
+                <div class="overflow-x-auto rounded-2xl shadow-2xl glass-card -mx-2 sm:mx-0" style="overflow-x: auto; overflow-y: visible;">
+                    <table id="contactsTable" class="w-full text-sm bg-white/15 backdrop-blur-sm rounded-2xl whitespace-nowrap" style="min-width: 1200px;">
+                        <thead class="uppercase bg-white/25 backdrop-blur-sm text-gray-700 rounded-t-2xl border-b-2 border-white/20">
                             <tr>
                                 <th class="p-3 text-center"><input type="checkbox" id="selectAll"></th>
                                 <th class="p-3 font-semibold tracking-widest text-center">
@@ -425,29 +470,43 @@
                                 <th class="p-3 font-semibold tracking-widest text-center">Actions</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="bg-white/10 divide-y divide-white/20">
                         </tbody>
                     </table>
                 </div>
     <div x-show="showBulkDelete" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display: none;">
-        <div class="absolute inset-0 bg-black/50" @click="showBulkDelete=false"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-4 sm:p-6" @click.stop>
-            <div class="text-lg font-semibold mb-3">Delete Selected</div>
-            <p class="text-sm text-gray-600 mb-4">Are you sure you want to delete the selected contacts?</p>
-            <div class="flex justify-end gap-2">
-                <button type="button" class="px-4 py-2 rounded-lg border cancel-bulk-delete-btn" @click="showBulkDelete=false">Cancel</button>
-                <button type="button" id="confirmBulkDelete" class="px-4 py-2 rounded-lg bg-red-600 text-white">Delete</button>
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="showBulkDelete=false"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 sm:p-8" @click.stop>
+            <div class="flex items-center gap-4 mb-4">
+                <div class="flex-shrink-0 w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800">Delete Selected Contacts</h2>
+                    <p class="text-sm text-gray-600 mt-1">This action cannot be undone</p>
+                </div>
+            </div>
+            <p class="text-sm text-gray-700 mb-6 ml-16">Are you sure you want to delete the selected contacts? All associated data will be permanently removed.</p>
+            <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                <button type="button" class="px-6 py-3 rounded-xl border-2 border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-semibold transition-all duration-200 cancel-bulk-delete-btn" @click="showBulkDelete=false">Cancel</button>
+                <button type="button" id="confirmBulkDelete" class="px-6 py-3 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200">Delete Selected</button>
             </div>
         </div>
     </div>
-                <div class="flex flex-col md:flex-row items-center md:justify-between gap-3 p-3 text-xs sm:text-sm">
+                <div class="flex flex-col md:flex-row items-center md:justify-between gap-4 mt-6 p-5 glass-card rounded-2xl">
                     <div class="flex flex-wrap items-center gap-3" id="datatableLengthContainer">
                     </div>
                     <div class="flex flex-wrap items-center gap-2 justify-center" id="datatablePaginationContainer">
                     </div>
-                    <div class="flex flex-wrap items-center gap-2">
-                        <a href="{{ route('crm.contacts.export', request()->query()) }}" class="px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl border bg-green-100 hover:bg-green-200 text-green-700 text-xs sm:text-sm">Export</a>
-                        <button type="button" id="resetFilters" class="px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl border bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs sm:text-sm">Reset</button>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <a href="{{ route('crm.contacts.export', request()->query()) }}" class="px-4 py-2.5 rounded-xl border-2 border-green-200 bg-gradient-to-r from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 text-green-700 font-semibold text-sm shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                            Export
+                        </a>
+                        <button type="button" id="resetFilters" class="px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-semibold text-sm shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                            Reset
+                        </button>
                     </div>
                 </div>
             </div>
@@ -455,64 +514,136 @@
     </div>
 
     <div x-show="showCreate" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display: none;">
-        <div class="absolute inset-0 bg-black/50" @click="showCreate=false"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto" @click.stop>
-            <div class="text-lg font-semibold mb-4">Create Contact</div>
-            <form id="createForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="showCreate=false"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto" @click.stop>
+            <div class="flex items-center justify-between mb-6 pb-4 border-b-2 border-gray-100">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">Create New Contact</h2>
+                    <p class="text-sm text-gray-500 mt-1">Add a new contact to your database</p>
+                </div>
+                <button type="button" @click="showCreate=false" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <form id="createForm" class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 @csrf
-                <input name="name" id="createName" class="border rounded-lg px-3 py-2" placeholder="Name" required>
-                <input name="company" id="createCompany" class="border rounded-lg px-3 py-2" placeholder="Company">
-                <input name="email" id="createEmail" type="email" class="border rounded-lg px-3 py-2" placeholder="Email">
-                <input name="phone" id="createPhone" class="border rounded-lg px-3 py-2" placeholder="Phone">
-                <input name="assigned_user_id" id="createAssigned" type="number" class="border rounded-lg px-3 py-2" placeholder="Assigned User ID">
-                <select name="status" id="createStatus" class="border rounded-lg px-3 py-2">
-                    <option value="active">Active</option>
-                    <option value="archived">Archived</option>
-                </select>
-                <input name="tags[]" id="createTags" class="border rounded-lg px-3 py-2 md:col-span-2" placeholder="Tags (comma separated)">
-                <textarea name="notes" id="createNotes" class="border rounded-lg px-3 py-2 md:col-span-2" rows="3" placeholder="Notes"></textarea>
-                <div class="md:col-span-2 flex justify-end gap-2 mt-2">
-                    <button type="button" class="px-4 py-2 rounded-lg border cancel-create-btn" @click="showCreate=false">Cancel</button>
-                    <button type="submit" id="createSubmitBtn" class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Create</button>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Full Name <span class="text-red-500">*</span></label>
+                    <input name="name" id="createName" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="Enter full name" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Company</label>
+                    <input name="company" id="createCompany" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="Company name">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+                    <input name="email" id="createEmail" type="email" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="email@example.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Phone</label>
+                    <input name="phone" id="createPhone" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="+1 (555) 000-0000">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Assigned User ID</label>
+                    <input name="assigned_user_id" id="createAssigned" type="number" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="User ID">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Status</label>
+                    <select name="status" id="createStatus" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                        <option value="active">Active</option>
+                        <option value="archived">Archived</option>
+                    </select>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Tags</label>
+                    <input name="tags[]" id="createTags" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="Tags (comma separated)">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Notes</label>
+                    <textarea name="notes" id="createNotes" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" rows="4" placeholder="Additional notes..."></textarea>
+                </div>
+                <div class="md:col-span-2 flex justify-end gap-3 mt-4 pt-4 border-t border-gray-100">
+                    <button type="button" class="px-6 py-3 rounded-xl border-2 border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-semibold transition-all duration-200 cancel-create-btn" @click="showCreate=false">Cancel</button>
+                    <button type="submit" id="createSubmitBtn" class="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200">Create Contact</button>
                 </div>
             </form>
         </div>
     </div>
 
     <div x-show="showEdit" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display: none;">
-        <div class="absolute inset-0 bg-black/50" @click="showEdit=false"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto" @click.stop>
-            <div class="text-lg font-semibold mb-4">Edit Contact</div>
-            <form id="editForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="showEdit=false"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto" @click.stop>
+            <div class="flex items-center justify-between mb-6 pb-4 border-b-2 border-gray-100">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">Edit Contact</h2>
+                    <p class="text-sm text-gray-500 mt-1">Update contact information</p>
+                </div>
+                <button type="button" @click="showEdit=false" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <form id="editForm" class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 @csrf
                 @method('PUT')
-                <input name="name" id="editName" class="border rounded-lg px-3 py-2" placeholder="Name" x-model="editName" required>
-                <input name="company" id="editCompany" class="border rounded-lg px-3 py-2" placeholder="Company" x-model="editCompany">
-                <input name="email" id="editEmail" type="email" class="border rounded-lg px-3 py-2" placeholder="Email" x-model="editEmail">
-                <input name="phone" id="editPhone" class="border rounded-lg px-3 py-2" placeholder="Phone" x-model="editPhone">
-                <input name="assigned_user_id" id="editAssigned" type="number" class="border rounded-lg px-3 py-2" placeholder="Assigned User ID" x-model="editAssigned">
-                <select name="status" id="editStatus" class="border rounded-lg px-3 py-2" x-model="editStatus">
-                    <option value="active">Active</option>
-                    <option value="archived">Archived</option>
-                </select>
-                <input name="tags[]" id="editTags" class="border rounded-lg px-3 py-2 md:col-span-2" placeholder="Tags (comma separated)" x-model="editTags">
-                <textarea name="notes" id="editNotes" class="border rounded-lg px-3 py-2 md:col-span-2" rows="3" placeholder="Notes" x-model="editNotes"></textarea>
-                <div class="md:col-span-2 flex justify-end gap-2 mt-2">
-                    <button type="button" class="px-4 py-2 rounded-lg border cancel-edit-btn" @click="showEdit=false">Cancel</button>
-                    <button type="submit" class="px-4 py-2 rounded-lg bg-blue-600 text-white">Save</button>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Full Name <span class="text-red-500">*</span></label>
+                    <input name="name" id="editName" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="Enter full name" x-model="editName" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Company</label>
+                    <input name="company" id="editCompany" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="Company name" x-model="editCompany">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+                    <input name="email" id="editEmail" type="email" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="email@example.com" x-model="editEmail">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Phone</label>
+                    <input name="phone" id="editPhone" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="+1 (555) 000-0000" x-model="editPhone">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Assigned User ID</label>
+                    <input name="assigned_user_id" id="editAssigned" type="number" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="User ID" x-model="editAssigned">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Status</label>
+                    <select name="status" id="editStatus" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" x-model="editStatus">
+                        <option value="active">Active</option>
+                        <option value="archived">Archived</option>
+                    </select>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Tags</label>
+                    <input name="tags[]" id="editTags" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="Tags (comma separated)" x-model="editTags">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Notes</label>
+                    <textarea name="notes" id="editNotes" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" rows="4" placeholder="Additional notes..." x-model="editNotes"></textarea>
+                </div>
+                <div class="md:col-span-2 flex justify-end gap-3 mt-4 pt-4 border-t border-gray-100">
+                    <button type="button" class="px-6 py-3 rounded-xl border-2 border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-semibold transition-all duration-200 cancel-edit-btn" @click="showEdit=false">Cancel</button>
+                    <button type="submit" class="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200">Save Changes</button>
                 </div>
             </form>
         </div>
     </div>
 
     <div x-show="showDelete" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display: none;">
-        <div class="absolute inset-0 bg-black/50" @click="showDelete=false"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-4 sm:p-6" @click.stop>
-            <div class="text-lg font-semibold mb-3">Delete Contact</div>
-            <p class="text-sm text-gray-600 mb-4">Are you sure you want to delete this contact?</p>
-            <div class="flex justify-end gap-2">
-                <button type="button" class="px-4 py-2 rounded-lg border cancel-delete-btn" @click="showDelete=false">Cancel</button>
-                <button type="button" id="confirmDelete" class="px-4 py-2 rounded-lg bg-red-600 text-white">Delete</button>
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="showDelete=false"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 sm:p-8" @click.stop>
+            <div class="flex items-center gap-4 mb-4">
+                <div class="flex-shrink-0 w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800">Delete Contact</h2>
+                    <p class="text-sm text-gray-600 mt-1">This action cannot be undone</p>
+                </div>
+            </div>
+            <p class="text-sm text-gray-700 mb-6 ml-16">Are you sure you want to delete this contact? All associated data will be permanently removed.</p>
+            <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                <button type="button" class="px-6 py-3 rounded-xl border-2 border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-semibold transition-all duration-200 cancel-delete-btn" @click="showDelete=false">Cancel</button>
+                <button type="button" id="confirmDelete" class="px-6 py-3 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200">Delete Contact</button>
             </div>
         </div>
     </div>
@@ -617,11 +748,11 @@ $(document).ready(function() {
             if (searchContainer.length && searchInput.length) {
                 const input = searchInput.find('input').first();
                 
-                const wrapper = $('<div class="flex items-center gap-2 bg-white/30 backdrop-blur-sm rounded-xl px-3 py-2 shadow-inner w-full md:w-80"></div>');
-                wrapper.append('<label class="text-gray-600 px-2 text-base font-medium">Search</label>');
-                wrapper.append('<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 103 10.5a7.5 7.5 0 0013.15 6.15z" /></svg>');
+                const wrapper = $('<div class="flex items-center gap-3 bg-white/15 backdrop-blur-sm border-2 border-white/30 rounded-xl px-4 py-2.5 shadow-sm w-full md:w-96 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 transition-all duration-200"></div>');
+                wrapper.append('<label class="text-gray-600 px-1 text-sm font-semibold">Search</label>');
+                wrapper.append('<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 103 10.5a7.5 7.5 0 0013.15 6.15z" /></svg>');
                 
-                input.addClass('bg-transparent border-0 outline-none ring-0 focus:ring-0 w-full text-gray-900 placeholder-gray-400 text-base px-2 py-1');
+                input.addClass('bg-transparent border-0 outline-none ring-0 focus:ring-0 w-full text-gray-800 placeholder-gray-400 text-sm px-2 py-1');
                 input.attr('placeholder', '');
                 
                 searchInput.find('label').remove();
