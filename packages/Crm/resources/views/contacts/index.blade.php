@@ -90,14 +90,46 @@
             cursor: not-allowed;
             opacity: 0.5;
         }
-        #contactsTable td { padding: 0.5rem; text-align: center; }
-        #contactsTable th { padding: 0.75rem; text-align: center; }
+        /* Professional table styling with reduced spacing between columns */
+        #contactsTable td { 
+            padding: 0.5rem 0.375rem !important; 
+            text-align: center; 
+        }
+        #contactsTable th { 
+            padding: 0.75rem 0.375rem !important; 
+            text-align: center; 
+        }
+        
+        /* Reduce spacing between specific columns */
+        #contactsTable th:nth-child(3),
+        #contactsTable td:nth-child(3),
+        #contactsTable th:nth-child(4),
+        #contactsTable td:nth-child(4),
+        #contactsTable th:nth-child(5),
+        #contactsTable td:nth-child(5),
+        #contactsTable th:nth-child(6),
+        #contactsTable td:nth-child(6),
+        #contactsTable th:nth-child(7),
+        #contactsTable td:nth-child(7),
+        #contactsTable th:nth-child(8),
+        #contactsTable td:nth-child(8) {
+            padding-left: 0.25rem !important;
+            padding-right: 0.25rem !important;
+        }
         
         /* Ensure table container allows full width */
         #contactsTable {
             width: 100% !important;
             table-layout: auto;
             min-width: 1200px !important;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        
+        /* Reduce white-space between columns */
+        #contactsTable th,
+        #contactsTable td {
+            white-space: nowrap;
         }
         
         /* Ensure table wrapper doesn't cut off content */
@@ -417,10 +449,8 @@
     </div>
                 <div class="flex flex-col md:flex-row items-center md:justify-between gap-3 p-3 text-xs sm:text-sm">
                     <div class="flex flex-wrap items-center gap-3" id="datatableLengthContainer">
-                        <!-- DataTables length selector and info will be inserted here -->
                     </div>
                     <div class="flex flex-wrap items-center gap-2 justify-center" id="datatablePaginationContainer">
-                        <!-- DataTables pagination will be inserted here -->
                     </div>
                     <div class="flex flex-wrap items-center gap-2">
                         <a href="{{ route('crm.contacts.export', request()->query()) }}" class="px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl border bg-green-100 hover:bg-green-200 text-green-700 text-xs sm:text-sm">Export</a>
@@ -525,7 +555,7 @@
 </div>
 
 <script>
-// Setup CSRF token for all AJAX requests
+
 $.ajaxSetup({
     headers: {
         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -533,14 +563,12 @@ $.ajaxSetup({
 });
 
 $(document).ready(function() {
-    // Initialize DataTables
     let table = $('#contactsTable').DataTable({
         processing: true,
         serverSide: true,
         ajax: {
             url: '{{ route('crm.contacts.datatable') }}',
             data: function(d) {
-                // Always send filter values (even if empty) so clearing filters works
                 d.company = $('#filterCompany').val() || '';
                 d.assigned_user_id = $('#filterAssigned').val() || '';
                 d.status = $('#filterStatus').val() || '';
@@ -591,40 +619,32 @@ $(document).ready(function() {
             }
         },
         initComplete: function() {
-            // Move search to top right container and style it
             const searchContainer = $('#datatableSearchContainer');
             const searchInput = $('.dataTables_filter');
             if (searchContainer.length && searchInput.length) {
-                // Get the input element before moving
                 const input = searchInput.find('input').first();
                 
-                // Create wrapper with styling
                 const wrapper = $('<div class="flex items-center gap-2 bg-white/30 backdrop-blur-sm rounded-xl px-3 py-2 shadow-inner w-full md:w-80"></div>');
                 wrapper.append('<label class="text-gray-600 px-2 text-base font-medium">Search</label>');
                 wrapper.append('<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 103 10.5a7.5 7.5 0 0013.15 6.15z" /></svg>');
                 
-                // Style the search input
                 input.addClass('bg-transparent border-0 outline-none ring-0 focus:ring-0 w-full text-gray-900 placeholder-gray-400 text-base px-2 py-1');
                 input.attr('placeholder', '');
                 
-                // Remove the label and move input into wrapper
                 searchInput.find('label').remove();
                 wrapper.append(input);
                 searchInput.html(wrapper);
                 searchInput.appendTo(searchContainer);
                 
-                // Ensure DataTables search still works after moving
-                // We need to manually trigger search since moving the DOM breaks DataTables handlers
                 let searchTimeout;
                 input.off('keyup.search input.search').on('keyup.search input.search', function() {
                     clearTimeout(searchTimeout);
                     const self = this;
                     searchTimeout = setTimeout(function() {
                         table.search(self.value).draw();
-                    }, 300); // Debounce for 300ms
+                    }, 300); 
                 });
                 
-                // Also handle on input for better responsiveness
                 input.on('input', function() {
                     if (this.value === '') {
                         table.search('').draw();
@@ -632,7 +652,6 @@ $(document).ready(function() {
                 });
             }
             
-            // Move length selector and info to left container
             const lengthContainer = $('#datatableLengthContainer');
             const lengthSelect = $('.dataTables_length');
             const info = $('.dataTables_info');
@@ -640,7 +659,6 @@ $(document).ready(function() {
                 if (lengthSelect.length) {
                     lengthSelect.appendTo(lengthContainer);
                     lengthSelect.css('margin', '0');
-                    // Increase font size for label text
                     lengthSelect.find('label').css({
                         'font-size': '0.875rem',
                         'font-weight': '500',
@@ -657,7 +675,6 @@ $(document).ready(function() {
                 }
             }
             
-            // Move pagination to center container
             const paginationContainer = $('#datatablePaginationContainer');
             const pagination = $('.dataTables_paginate');
             if (paginationContainer.length && pagination.length) {
@@ -668,7 +685,6 @@ $(document).ready(function() {
                     'align-items': 'center',
                     'gap': '0.25rem'
                 });
-                // Ensure pagination buttons have proper sizing
                 pagination.find('.paginate_button').css({
                     'font-size': '0.875rem',
                     'font-weight': '500',
@@ -677,11 +693,9 @@ $(document).ready(function() {
                 });
             }
             
-            // Hide the default top section
             $('.dataTables_wrapper .top').hide();
         },
         drawCallback: function() {
-            // Ensure pagination is properly styled and positioned after each draw
             const pagination = $('.dataTables_paginate');
             if (pagination.length) {
                 const paginationContainer = $('#datatablePaginationContainer');
@@ -689,7 +703,6 @@ $(document).ready(function() {
                     pagination.appendTo(paginationContainer);
                 }
                 
-                // Re-apply pagination button styles
                 pagination.find('.paginate_button').css({
                     'font-size': '0.875rem',
                     'font-weight': '500',
@@ -698,7 +711,6 @@ $(document).ready(function() {
                 });
             }
             
-            // Ensure length selector and info stay in the left container
             const lengthContainer = $('#datatableLengthContainer');
             const lengthSelect = $('.dataTables_length');
             const info = $('.dataTables_info');
@@ -724,7 +736,6 @@ $(document).ready(function() {
         }
     });
 
-    // Function to show notification modal
     function showNotification(message, type = 'success') {
         const alpineData = getAlpineData();
         if (alpineData && alpineData.__x) {
@@ -733,13 +744,11 @@ $(document).ready(function() {
             data.notificationType = type;
             data.showNotification = true;
         }
-        // Directly show the modal as fallback
         const notificationModal = $('[x-show="showNotification"]');
         if (notificationModal.length) {
             notificationModal[0].style.display = 'flex';
         }
         
-        // Auto-hide after 5 seconds
         setTimeout(function() {
             if (alpineData && alpineData.__x) {
                 alpineData.__x.$data.showNotification = false;
@@ -750,15 +759,12 @@ $(document).ready(function() {
         }, 5000);
     }
 
-    // Function to get Alpine.js instance
     function getAlpineData() {
         return document.querySelector('[x-data]');
     }
 
-    // Store current contact ID for edit/delete
     let currentContactId = null;
 
-    // Handle edit button clicks using event delegation
     $(document).on('click', '.edit-btn', function(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -770,7 +776,6 @@ $(document).ready(function() {
             return;
         }
         
-        // Update form fields directly via jQuery
         $('#editName').val(btn.data('name') || '');
         $('#editCompany').val(btn.data('company') || '');
         $('#editEmail').val(btn.data('email') || '');
@@ -780,7 +785,6 @@ $(document).ready(function() {
         $('#editTags').val(btn.data('tags') || '');
         $('#editNotes').val(btn.data('notes') || '');
         
-        // Update Alpine.js data
         const alpineData = getAlpineData();
         if (alpineData && alpineData.__x) {
             const data = alpineData.__x.$data;
@@ -796,14 +800,12 @@ $(document).ready(function() {
             data.showEdit = true;
         }
         
-        // Remove inline style to let Alpine.js control visibility
         const editModal = $('[x-show="showEdit"]');
         if (editModal.length) {
             editModal[0].style.display = '';
         }
     });
     
-    // Handle delete button clicks using event delegation
     $(document).on('click', '.delete-btn', function(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -815,7 +817,6 @@ $(document).ready(function() {
             return;
         }
         
-        // Update Alpine.js data
         const alpineData = getAlpineData();
         if (alpineData && alpineData.__x) {
             const data = alpineData.__x.$data;
@@ -823,14 +824,12 @@ $(document).ready(function() {
             data.showDelete = true;
         }
         
-        // Remove inline style to let Alpine.js control visibility
         const deleteModal = $('[x-show="showDelete"]');
         if (deleteModal.length) {
             deleteModal[0].style.display = '';
         }
     });
 
-    // Create form submission
     $('#createForm').on('submit', function(e) {
         e.preventDefault();
         const formData = {
@@ -852,14 +851,22 @@ $(document).ready(function() {
             success: function(response) {
                 table.ajax.reload();
                 $('#createForm')[0].reset();
+                
+                // Close the modal by setting Alpine.js data to false
                 const alpineData = getAlpineData();
                 if (alpineData && alpineData.__x) {
                     alpineData.__x.$data.showCreate = false;
                 }
-                // Remove inline style to let Alpine.js control visibility
-                const createModal = $('[x-show="showCreate"]');
-                if (createModal.length) {
-                    createModal[0].style.display = '';
+                
+                // Also trigger click on backdrop to ensure modal closes (backdrop has @click="showCreate=false")
+                const backdrop = $('[x-show="showCreate"] .bg-black\\/50');
+                if (backdrop.length) {
+                    backdrop[0].click();
+                } else {
+                    // Fallback: directly set Alpine data
+                    if (alpineData && alpineData.__x) {
+                        alpineData.__x.$data.showCreate = false;
+                    }
                 }
             },
             error: function(xhr) {
@@ -873,7 +880,6 @@ $(document).ready(function() {
         });
     });
 
-    // Edit form submission
     $('#editForm').on('submit', function(e) {
         e.preventDefault();
         const alpineData = getAlpineData();
@@ -907,7 +913,6 @@ $(document).ready(function() {
                 if (alpineData && alpineData.__x) {
                     alpineData.__x.$data.showEdit = false;
                 }
-                // Remove inline style to let Alpine.js control visibility
                 const editModal = $('[x-show="showEdit"]');
                 if (editModal.length) {
                     editModal[0].style.display = '';
@@ -924,7 +929,6 @@ $(document).ready(function() {
         });
     });
 
-    // Delete confirmation
     $('#confirmDelete').on('click', function() {
         const alpineData = getAlpineData();
         if (alpineData && alpineData.__x) {
@@ -960,7 +964,6 @@ $(document).ready(function() {
         });
     });
 
-    // Bulk delete
     let currentBulkDeleteIds = [];
     $('#bulkDeleteBtn').on('click', function() {
         const selectedIds = $('.row-check:checked').map(function() {
@@ -978,7 +981,6 @@ $(document).ready(function() {
             alpineData.__x.$data.showBulkDelete = true;
         }
         
-        // Remove inline style to let Alpine.js control visibility
         const bulkDeleteModal = $('[x-show="showBulkDelete"]');
         if (bulkDeleteModal.length) {
             bulkDeleteModal[0].style.display = '';
@@ -999,7 +1001,6 @@ $(document).ready(function() {
                 if (alpineData && alpineData.__x) {
                     alpineData.__x.$data.showBulkDelete = false;
                 }
-                // Remove inline style to let Alpine.js control visibility
                 const bulkDeleteModal = $('[x-show="showBulkDelete"]');
                 if (bulkDeleteModal.length) {
                     bulkDeleteModal[0].style.display = '';
@@ -1011,33 +1012,25 @@ $(document).ready(function() {
         });
     });
 
-    // Select all checkbox
     $('#selectAll').on('click', function() {
         $('.row-check').prop('checked', $(this).prop('checked'));
     });
 
-    // Apply filters - reload table with current filter values
     $('#applyFilters').on('click', function() {
-        // Force reload with current filter values
         table.ajax.reload(function() {
-            // Callback after reload
-        }, false); // false = don't reset pagination
+        }, false); 
     });
 
-    // Reset filters
     $('#resetFilters').on('click', function() {
         $('#filterCompany').val('');
         $('#filterAssigned').val('');
         $('#filterStatus').val('');
         $('#filterCreatedFrom').val('');
         $('#filterCreatedTo').val('');
-        // Clear DataTables search
         table.search('').draw();
-        // Reload table
         table.ajax.reload(null, false);
     });
     
-    // Allow Enter key to trigger filter
     $('#filterCompany, #filterAssigned, #filterStatus, #filterCreatedFrom, #filterCreatedTo').on('keypress', function(e) {
         if (e.which === 13) {
             e.preventDefault();
