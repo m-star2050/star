@@ -180,6 +180,19 @@ class ContactController extends Controller
     public function bulkDelete(Request $request)
     {
         $ids = (array) $request->input('ids', []);
+        
+        // Return error if no IDs provided
+        if (empty($ids)) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No contacts selected for deletion'
+                ], 400);
+            }
+            
+            return redirect()->route('crm.contacts.index')->with('error', 'No contacts selected for deletion');
+        }
+        
         Contact::whereIn('id', $ids)->delete();
         
         if ($request->ajax()) {

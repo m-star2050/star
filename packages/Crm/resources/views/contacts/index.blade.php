@@ -972,7 +972,7 @@ $(document).ready(function() {
         }).get();
         
         if (selectedIds.length === 0) {
-            showNotification('Please select at least one contact to delete.', 'error');
+            // Do nothing if no contacts are selected - just return silently
             return;
         }
         
@@ -990,6 +990,12 @@ $(document).ready(function() {
     });
 
     $('#confirmBulkDelete').on('click', function() {
+        // Double-check that we have IDs to delete
+        if (!currentBulkDeleteIds || currentBulkDeleteIds.length === 0) {
+            closeModal('showBulkDelete');
+            return;
+        }
+        
         $.ajax({
             url: '{{ route('crm.contacts.bulk-delete') }}',
             method: 'POST',
