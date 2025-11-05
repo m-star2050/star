@@ -436,9 +436,9 @@
                         </tbody>
                     </table>
                 </div>
-    <div x-show="showBulkDelete" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div x-show="showBulkDelete" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display: none;">
         <div class="absolute inset-0 bg-black/50" @click="showBulkDelete=false"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-4 sm:p-6">
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-4 sm:p-6" @click.stop>
             <div class="text-lg font-semibold mb-3">Delete Selected</div>
             <p class="text-sm text-gray-600 mb-4">Are you sure you want to delete the selected contacts?</p>
             <div class="flex justify-end gap-2">
@@ -461,9 +461,9 @@
         </div>
     </div>
 
-    <div x-show="showCreate" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div x-show="showCreate" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display: none;">
         <div class="absolute inset-0 bg-black/50" @click="showCreate=false"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto" @click.stop>
             <div class="text-lg font-semibold mb-4">Create Contact</div>
             <form id="createForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 @csrf
@@ -479,16 +479,16 @@
                 <input name="tags[]" id="createTags" class="border rounded-lg px-3 py-2 md:col-span-2" placeholder="Tags (comma separated)">
                 <textarea name="notes" id="createNotes" class="border rounded-lg px-3 py-2 md:col-span-2" rows="3" placeholder="Notes"></textarea>
                 <div class="md:col-span-2 flex justify-end gap-2 mt-2">
-                    <button type="button" class="px-4 py-2 rounded-lg border" @click="showCreate=false">Cancel</button>
+                    <button type="button" class="px-4 py-2 rounded-lg border" @click.stop="showCreate=false">Cancel</button>
                     <button type="submit" class="px-4 py-2 rounded-lg bg-blue-600 text-white">Create</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div x-show="showEdit" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div x-show="showEdit" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display: none;">
         <div class="absolute inset-0 bg-black/50" @click="showEdit=false"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto" @click.stop>
             <div class="text-lg font-semibold mb-4">Edit Contact</div>
             <form id="editForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 @csrf
@@ -512,9 +512,9 @@
         </div>
     </div>
 
-    <div x-show="showDelete" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div x-show="showDelete" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display: none;">
         <div class="absolute inset-0 bg-black/50" @click="showDelete=false"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-4 sm:p-6">
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-4 sm:p-6" @click.stop>
             <div class="text-lg font-semibold mb-3">Delete Contact</div>
             <p class="text-sm text-gray-600 mb-4">Are you sure you want to delete this contact?</p>
             <div class="flex justify-end gap-2">
@@ -762,6 +762,35 @@ $(document).ready(function() {
     function getAlpineData() {
         return document.querySelector('[x-data]');
     }
+    
+    // Helper function to close modals reliably
+    function closeModal(modalName) {
+        const alpineData = getAlpineData();
+        
+        // Directly hide the modal using jQuery
+        const modal = $('[x-show="' + modalName + '"]');
+        if (modal.length) {
+            modal.hide();
+            modal.css('display', 'none');
+        }
+        
+        // Set Alpine.js data
+        if (alpineData && alpineData.__x) {
+            alpineData.__x.$data[modalName] = false;
+        }
+        
+        // Force update after a short delay
+        setTimeout(() => {
+            if (alpineData && alpineData.__x) {
+                alpineData.__x.$data[modalName] = false;
+            }
+            const modalEl = $('[x-show="' + modalName + '"]');
+            if (modalEl.length) {
+                modalEl.hide();
+                modalEl.css('display', 'none');
+            }
+        }, 10);
+    }
 
     let currentContactId = null;
 
@@ -802,7 +831,8 @@ $(document).ready(function() {
         
         const editModal = $('[x-show="showEdit"]');
         if (editModal.length) {
-            editModal[0].style.display = '';
+            editModal.show();
+            editModal.css('display', 'flex');
         }
     });
     
@@ -826,7 +856,8 @@ $(document).ready(function() {
         
         const deleteModal = $('[x-show="showDelete"]');
         if (deleteModal.length) {
-            deleteModal[0].style.display = '';
+            deleteModal.show();
+            deleteModal.css('display', 'flex');
         }
     });
 
@@ -851,23 +882,7 @@ $(document).ready(function() {
             success: function(response) {
                 table.ajax.reload();
                 $('#createForm')[0].reset();
-                
-                // Close the modal by setting Alpine.js data to false
-                const alpineData = getAlpineData();
-                if (alpineData && alpineData.__x) {
-                    alpineData.__x.$data.showCreate = false;
-                }
-                
-                // Also trigger click on backdrop to ensure modal closes (backdrop has @click="showCreate=false")
-                const backdrop = $('[x-show="showCreate"] .bg-black\\/50');
-                if (backdrop.length) {
-                    backdrop[0].click();
-                } else {
-                    // Fallback: directly set Alpine data
-                    if (alpineData && alpineData.__x) {
-                        alpineData.__x.$data.showCreate = false;
-                    }
-                }
+                closeModal('showCreate');
             },
             error: function(xhr) {
                 if (xhr.responseJSON && xhr.responseJSON.errors) {
@@ -910,13 +925,7 @@ $(document).ready(function() {
             data: formData,
             success: function(response) {
                 table.ajax.reload();
-                if (alpineData && alpineData.__x) {
-                    alpineData.__x.$data.showEdit = false;
-                }
-                const editModal = $('[x-show="showEdit"]');
-                if (editModal.length) {
-                    editModal[0].style.display = '';
-                }
+                closeModal('showEdit');
             },
             error: function(xhr) {
                 if (xhr.responseJSON && xhr.responseJSON.errors) {
@@ -948,14 +957,7 @@ $(document).ready(function() {
             },
             success: function(response) {
                 table.ajax.reload();
-                if (alpineData && alpineData.__x) {
-                    alpineData.__x.$data.showDelete = false;
-                }
-                // Remove inline style to let Alpine.js control visibility
-                const deleteModal = $('[x-show="showDelete"]');
-                if (deleteModal.length) {
-                    deleteModal[0].style.display = '';
-                }
+                closeModal('showDelete');
                 currentContactId = null;
             },
             error: function() {
@@ -983,7 +985,8 @@ $(document).ready(function() {
         
         const bulkDeleteModal = $('[x-show="showBulkDelete"]');
         if (bulkDeleteModal.length) {
-            bulkDeleteModal[0].style.display = '';
+            bulkDeleteModal.show();
+            bulkDeleteModal.css('display', 'flex');
         }
     });
 
@@ -997,14 +1000,7 @@ $(document).ready(function() {
             },
             success: function(response) {
                 table.ajax.reload();
-                const alpineData = getAlpineData();
-                if (alpineData && alpineData.__x) {
-                    alpineData.__x.$data.showBulkDelete = false;
-                }
-                const bulkDeleteModal = $('[x-show="showBulkDelete"]');
-                if (bulkDeleteModal.length) {
-                    bulkDeleteModal[0].style.display = '';
-                }
+                closeModal('showBulkDelete');
             },
             error: function() {
                 showNotification('Error deleting contacts.', 'error');
