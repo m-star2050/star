@@ -174,7 +174,6 @@
             cursor: not-allowed;
             opacity: 0.5;
         }
-        /* Professional table styling */
         #contactsTable td { 
             padding: 0.875rem 0.75rem !important; 
             text-align: center;
@@ -285,7 +284,6 @@
             opacity: 0.5;
         }
         
-        /* Ascending sort - show only up arrow (active, blue) */
         #contactsTable th.sorting_asc::after {
             content: '';
             position: absolute;
@@ -305,7 +303,6 @@
             display: none;
         }
         
-        /* Descending sort - show only down arrow (active, blue) */
         #contactsTable th.sorting_desc::before {
             content: '';
             position: absolute;
@@ -325,7 +322,6 @@
             display: none;
         }
         
-        /* Ensure header text doesn't overlap with sorting icons */
         #contactsTable th.sorting,
         #contactsTable th.sorting_asc,
         #contactsTable th.sorting_desc {
@@ -449,7 +445,6 @@
                         </button>
                     </div>
                     <div class="flex items-end gap-3 md:ml-auto w-full md:w-auto" id="datatableSearchContainer">
-                        <!-- DataTables search will be inserted here -->
                     </div>
                 </div>
                 <div class="mb-6 glass-card rounded-2xl p-5">
@@ -741,7 +736,6 @@
         </div>
     </div>
 
-    <!-- Notification Modal -->
     <div x-show="showNotification" x-transition.opacity class="fixed inset-0 z-[60] flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/50" @click="showNotification=false"></div>
         <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
@@ -980,22 +974,18 @@ $(document).ready(function() {
         return document.querySelector('[x-data]');
     }
     
-    // Helper function to close modals reliably - properly reset Alpine.js state and hide modal
     function closeModal(modalName) {
-        // Update Alpine.js data to close modal
         const alpineData = getAlpineData();
         if (alpineData && alpineData.__x) {
             alpineData.__x.$data[modalName] = false;
         }
         
-        // Also hide modal using jQuery to ensure it's hidden immediately
         const modal = $('[x-show="' + modalName + '"]');
         if (modal.length) {
             modal.hide();
             modal.css('display', 'none');
         }
         
-        // Force update after a small delay to ensure it sticks
         setTimeout(function() {
             const alpineDataAfter = getAlpineData();
             if (alpineDataAfter && alpineDataAfter.__x) {
@@ -1009,15 +999,13 @@ $(document).ready(function() {
         }, 50);
     }
     
-    // Function to reset create form
     function resetCreateForm() {
         $('#createForm')[0].reset();
-        $('#createStatus').val('active'); // Reset status to default
+        $('#createStatus').val('active'); 
         const submitBtn = $('#createSubmitBtn');
         submitBtn.prop('disabled', false).text('Create');
     }
     
-    // Function to open create modal and reset form
     function openCreateModal() {
         const alpineData = getAlpineData();
         if (alpineData && alpineData.__x) {
@@ -1025,7 +1013,6 @@ $(document).ready(function() {
         }
         resetCreateForm();
         
-        // Ensure modal is visible
         const modal = $('[x-show="showCreate"]');
         if (modal.length) {
             modal.show();
@@ -1071,7 +1058,7 @@ $(document).ready(function() {
         
         const editModal = $('[x-show="showEdit"]');
         if (editModal.length) {
-            editModal.removeAttr('style'); // Remove inline styles so Alpine.js can control visibility
+            editModal.removeAttr('style'); 
             editModal.show();
             editModal.css('display', 'flex');
         }
@@ -1097,7 +1084,7 @@ $(document).ready(function() {
         
         const deleteModal = $('[x-show="showDelete"]');
         if (deleteModal.length) {
-            deleteModal.removeAttr('style'); // Remove inline styles so Alpine.js can control visibility
+            deleteModal.removeAttr('style'); 
             deleteModal.show();
             deleteModal.css('display', 'flex');
         }
@@ -1135,23 +1122,19 @@ $(document).ready(function() {
                 submitBtn.prop('disabled', false).text(originalText);
                 table.ajax.reload();
                 
-                // Reset form first
                 resetCreateForm();
                 
-                // Close modal - ensure Alpine.js state is properly reset
                 const alpineData = getAlpineData();
                 if (alpineData && alpineData.__x) {
                     alpineData.__x.$data.showCreate = false;
                 }
                 
-                // Also hide modal using jQuery to ensure it's hidden immediately
                 const modal = $('[x-show="showCreate"]');
                 if (modal.length) {
                     modal.hide();
                     modal.css('display', 'none');
                 }
                 
-                // Force Alpine.js update after a small delay
                 setTimeout(function() {
                     const alpineDataAfter = getAlpineData();
                     if (alpineDataAfter && alpineDataAfter.__x) {
@@ -1213,7 +1196,6 @@ $(document).ready(function() {
                 table.ajax.reload();
                 closeModal('showEdit');
                 
-                // Also ensure modal is hidden
                 const editModal = $('[x-show="showEdit"]');
                 if (editModal.length) {
                     editModal.hide();
@@ -1273,7 +1255,6 @@ $(document).ready(function() {
         }).get();
         
         if (selectedIds.length === 0) {
-            // Do nothing if no contacts are selected - just return silently
             return;
         }
         
@@ -1292,7 +1273,6 @@ $(document).ready(function() {
     });
 
     $('#confirmBulkDelete').on('click', function() {
-        // Double-check that we have IDs to delete
         if (!currentBulkDeleteIds || currentBulkDeleteIds.length === 0) {
             closeModal('showBulkDelete');
             return;
@@ -1309,7 +1289,6 @@ $(document).ready(function() {
                 table.ajax.reload();
                 closeModal('showBulkDelete');
                 
-                // Also ensure modal is hidden
                 const bulkDeleteModal = $('[x-show="showBulkDelete"]');
                 if (bulkDeleteModal.length) {
                     bulkDeleteModal.hide();
@@ -1326,8 +1305,6 @@ $(document).ready(function() {
         $('.row-check').prop('checked', $(this).prop('checked'));
     });
     
-    // Cancel button handlers - attach handlers after DOM is ready and use multiple approaches
-    // First, try direct attachment
     setTimeout(function() {
         $('.cancel-create-btn').off('click').on('click', function(e) {
             e.preventDefault();
@@ -1362,7 +1339,6 @@ $(document).ready(function() {
         });
     }, 100);
     
-    // Also use event delegation as backup - this works for dynamically added elements
     $(document).off('click', '.cancel-create-btn').on('click', '.cancel-create-btn', function(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -1417,17 +1393,12 @@ $(document).ready(function() {
         }
     });
     
-    // Handle "New Contact" button click - ensure form is reset
-    // Note: Alpine.js @click="showCreate=true" handles opening the modal
-    // This handler just ensures form is reset when button is clicked
     $(document).on('click', '#newContactBtn', function(e) {
-        // Ensure modal can be shown by removing any inline display styles
         const modal = $('[x-show="showCreate"]');
         if (modal.length) {
             modal.removeAttr('style');
         }
         
-        // Small delay to let Alpine.js open the modal first, then reset form
         setTimeout(function() {
             resetCreateForm();
         }, 150);

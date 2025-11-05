@@ -22,6 +22,7 @@ Route::prefix('crm')->group(function () {
             Route::get('contacts-export', [ContactController::class, 'export'])->name('contacts.export');
 
             Route::resource('leads', LeadController::class)->only(['index','store','update','destroy']);
+            Route::get('leads/datatable', [LeadController::class, 'datatable'])->name('leads.datatable');
             Route::post('leads/{lead}/stage', [LeadController::class, 'inlineStage'])->name('leads.stage');
             Route::post('leads/{lead}/convert-to-contact', [LeadController::class, 'convertToContact'])->name('leads.convert-to-contact');
             Route::post('leads/{lead}/convert-to-deal', [LeadController::class, 'convertToDeal'])->name('leads.convert-to-deal');
