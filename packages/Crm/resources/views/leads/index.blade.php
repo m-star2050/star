@@ -620,103 +620,909 @@
         </div>
     </div>
 
-    <div x-show="showCreate" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center">
-        <div class="absolute inset-0 bg-black/50" @click="showCreate=false"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl p-6">
-            <div class="text-lg font-semibold mb-4">Create Lead</div>
-            <form method="POST" action="{{ route('crm.leads.store') }}" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div x-show="showCreate" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display: none;">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="showCreate=false"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto" @click.stop>
+            <div class="flex items-center justify-between mb-6 pb-4 border-b-2 border-gray-100">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">Create New Lead</h2>
+                    <p class="text-sm text-gray-500 mt-1">Add a new lead to your pipeline</p>
+                </div>
+                <button type="button" @click="showCreate=false" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <form id="createForm" class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 @csrf
-                <input name="name" class="border rounded-lg px-3 py-2" placeholder="Name" required>
-                <input name="email" type="email" class="border rounded-lg px-3 py-2" placeholder="Email">
-                <input name="company" class="border rounded-lg px-3 py-2" placeholder="Company">
-                <input name="source" class="border rounded-lg px-3 py-2" placeholder="Source (e.g., Website, Referral)">
-                <select name="stage" class="border rounded-lg px-3 py-2">
-                    <option value="new">New</option>
-                    <option value="contacted">Contacted</option>
-                    <option value="qualified">Qualified</option>
-                    <option value="won">Won</option>
-                    <option value="lost">Lost</option>
-                </select>
-                <input name="assigned_user_id" type="number" class="border rounded-lg px-3 py-2" placeholder="Assigned User ID">
-                <input name="lead_score" type="number" class="border rounded-lg px-3 py-2" placeholder="Lead Score (0-100)">
-                <input name="tags[]" class="border rounded-lg px-3 py-2" placeholder="Tags (comma separated)">
-                <textarea name="notes" class="border rounded-lg px-3 py-2 md:col-span-2" rows="3" placeholder="Notes"></textarea>
-                <div class="md:col-span-2 flex justify-end gap-2 mt-2">
-                    <button type="button" class="px-4 py-2 rounded-lg border" @click="showCreate=false">Cancel</button>
-                    <button class="px-4 py-2 rounded-lg bg-blue-600 text-white">Create</button>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Full Name <span class="text-red-500">*</span></label>
+                    <input name="name" id="createName" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="Enter full name" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+                    <input name="email" id="createEmail" type="email" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="email@example.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Company</label>
+                    <input name="company" id="createCompany" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="Company name">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Source</label>
+                    <input name="source" id="createSource" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="e.g., Website, Referral">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Stage <span class="text-red-500">*</span></label>
+                    <select name="stage" id="createStage" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                        <option value="new">New</option>
+                        <option value="contacted">Contacted</option>
+                        <option value="qualified">Qualified</option>
+                        <option value="won">Won</option>
+                        <option value="lost">Lost</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Assigned User ID</label>
+                    <input name="assigned_user_id" id="createAssigned" type="number" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="User ID">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Lead Score</label>
+                    <input name="lead_score" id="createScore" type="number" min="0" max="100" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="0-100">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Tags</label>
+                    <input name="tags[]" id="createTags" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="Tags (comma separated)">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Notes</label>
+                    <textarea name="notes" id="createNotes" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" rows="4" placeholder="Additional notes..."></textarea>
+                </div>
+                <div class="md:col-span-2 flex justify-end gap-3 mt-4 pt-4 border-t border-gray-100">
+                    <button type="button" class="px-6 py-3 rounded-xl border-2 border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-semibold transition-all duration-200 cancel-create-btn" @click="showCreate=false">Cancel</button>
+                    <button type="submit" id="createSubmitBtn" class="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200">Create Lead</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div x-show="showEdit" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center">
-        <div class="absolute inset-0 bg-black/50" @click="showEdit=false"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl p-6">
-            <div class="text-lg font-semibold mb-4">Edit Lead</div>
-            <form :action="'{{ route('crm.leads.update','__ID__') }}'.replace('__ID__', editId)" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div x-show="showEdit" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display: none;">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="showEdit=false"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto" @click.stop>
+            <div class="flex items-center justify-between mb-6 pb-4 border-b-2 border-gray-100">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">Edit Lead</h2>
+                    <p class="text-sm text-gray-500 mt-1">Update lead information</p>
+                </div>
+                <button type="button" @click="showEdit=false" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <form id="editForm" class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 @csrf
                 @method('PUT')
-                <input name="name" class="border rounded-lg px-3 py-2" placeholder="Name" x-model="editName" required>
-                <input name="email" type="email" class="border rounded-lg px-3 py-2" placeholder="Email" x-model="editEmail">
-                <input name="company" class="border rounded-lg px-3 py-2" placeholder="Company" x-model="editCompany">
-                <input name="source" class="border rounded-lg px-3 py-2" placeholder="Source" x-model="editSource">
-                <select name="stage" class="border rounded-lg px-3 py-2" x-model="editStage">
-                    <option value="new">New</option>
-                    <option value="contacted">Contacted</option>
-                    <option value="qualified">Qualified</option>
-                    <option value="won">Won</option>
-                    <option value="lost">Lost</option>
-                </select>
-                <input name="assigned_user_id" type="number" class="border rounded-lg px-3 py-2" placeholder="Assigned User ID" x-model="editAssigned">
-                <input name="lead_score" type="number" class="border rounded-lg px-3 py-2" placeholder="Lead Score" x-model="editScore">
-                <input name="tags[]" class="border rounded-lg px-3 py-2" placeholder="Tags (comma separated)" x-model="editTags">
-                <textarea name="notes" class="border rounded-lg px-3 py-2 md:col-span-2" rows="3" placeholder="Notes" x-model="editNotes"></textarea>
-                <div class="md:col-span-2 flex justify-end gap-2 mt-2">
-                    <button type="button" class="px-4 py-2 rounded-lg border" @click="showEdit=false">Cancel</button>
-                    <button class="px-4 py-2 rounded-lg bg-blue-600 text-white">Save</button>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Full Name <span class="text-red-500">*</span></label>
+                    <input name="name" id="editName" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="Enter full name" x-model="editName" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+                    <input name="email" id="editEmail" type="email" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="email@example.com" x-model="editEmail">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Company</label>
+                    <input name="company" id="editCompany" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="Company name" x-model="editCompany">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Source</label>
+                    <input name="source" id="editSource" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="Source" x-model="editSource">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Stage <span class="text-red-500">*</span></label>
+                    <select name="stage" id="editStage" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" x-model="editStage">
+                        <option value="new">New</option>
+                        <option value="contacted">Contacted</option>
+                        <option value="qualified">Qualified</option>
+                        <option value="won">Won</option>
+                        <option value="lost">Lost</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Assigned User ID</label>
+                    <input name="assigned_user_id" id="editAssigned" type="number" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="User ID" x-model="editAssigned">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Lead Score</label>
+                    <input name="lead_score" id="editScore" type="number" min="0" max="100" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="Lead Score" x-model="editScore">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Tags</label>
+                    <input name="tags[]" id="editTags" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="Tags (comma separated)" x-model="editTags">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Notes</label>
+                    <textarea name="notes" id="editNotes" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" rows="4" placeholder="Additional notes..." x-model="editNotes"></textarea>
+                </div>
+                <div class="md:col-span-2 flex justify-end gap-3 mt-4 pt-4 border-t border-gray-100">
+                    <button type="button" class="px-6 py-3 rounded-xl border-2 border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-semibold transition-all duration-200 cancel-edit-btn" @click="showEdit=false">Cancel</button>
+                    <button type="submit" class="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200">Save Changes</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div x-show="showDelete" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center">
-        <div class="absolute inset-0 bg-black/50" @click="showDelete=false"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-            <div class="text-lg font-semibold mb-3">Delete Lead</div>
-            <p class="text-sm text-gray-600 mb-4">Are you sure you want to delete this lead?</p>
-            <form :action="'{{ route('crm.leads.destroy','__ID__') }}'.replace('__ID__', editId)" method="POST" class="flex justify-end gap-2">
-                @csrf
-                @method('DELETE')
-                <button type="button" class="px-4 py-2 rounded-lg border" @click="showDelete=false">Cancel</button>
-                <button class="px-4 py-2 rounded-lg bg-red-600 text-white">Delete</button>
-            </form>
+    <div x-show="showDelete" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display: none;">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="showDelete=false"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 sm:p-8" @click.stop>
+            <div class="flex items-center gap-4 mb-4">
+                <div class="flex-shrink-0 w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800">Delete Lead</h2>
+                    <p class="text-sm text-gray-600 mt-1">This action cannot be undone</p>
+                </div>
+            </div>
+            <p class="text-sm text-gray-700 mb-6 ml-16">Are you sure you want to delete this lead? All associated data will be permanently removed.</p>
+            <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                <button type="button" class="px-6 py-3 rounded-xl border-2 border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-semibold transition-all duration-200 cancel-delete-btn" @click="showDelete=false">Cancel</button>
+                <button type="button" id="confirmDelete" class="px-6 py-3 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200">Delete Lead</button>
+            </div>
         </div>
     </div>
 
-    <div x-show="showConvert" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center">
-        <div class="absolute inset-0 bg-black/50" @click="showConvert=false"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-            <div class="text-lg font-semibold mb-3">Convert Lead</div>
-            <p class="text-sm text-gray-600 mb-4">Convert "<span x-text="editName"></span>" to Contact or Deal?</p>
-            <div class="flex flex-col gap-2">
-                <form :action="'{{ route('crm.leads.convert-to-contact','__ID__') }}'.replace('__ID__', editId)" method="POST">
+    <div x-show="showConvert" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display: none;">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="showConvert=false"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 sm:p-8" @click.stop>
+            <div class="flex items-center gap-4 mb-6">
+                <div class="flex-shrink-0 w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800">Convert Lead</h2>
+                    <p class="text-sm text-gray-600 mt-1">Convert lead to contact or deal</p>
+                </div>
+            </div>
+            <p class="text-sm text-gray-700 mb-6 ml-16">Convert "<span x-text="editName"></span>" to Contact or Deal?</p>
+            <div class="flex flex-col gap-3 pt-4 border-t border-gray-100">
+                <form id="convertToContactForm" method="POST">
                     @csrf
-                    <button type="submit" class="w-full px-4 py-3 rounded-lg bg-blue-600 text-white hover:bg-blue-700 font-medium">
+                    <button type="submit" class="w-full px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200">
                         Convert to Contact
                     </button>
                 </form>
-                <form :action="'{{ route('crm.leads.convert-to-deal','__ID__') }}'.replace('__ID__', editId)" method="POST">
+                <form id="convertToDealForm" method="POST">
                     @csrf
-                    <button type="submit" class="w-full px-4 py-3 rounded-lg bg-green-600 text-white hover:bg-green-700 font-medium">
+                    <button type="submit" class="w-full px-6 py-3 rounded-xl bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200">
                         Convert to Deal
                     </button>
                 </form>
-                <button type="button" class="px-4 py-2 rounded-lg border hover:bg-gray-50" @click="showConvert=false">Cancel</button>
+                <button type="button" class="px-6 py-3 rounded-xl border-2 border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-semibold transition-all duration-200 cancel-convert-btn" @click="showConvert=false">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="showNotification" x-transition.opacity class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/50" @click="showNotification=false"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <div class="flex items-start gap-4">
+                <div :class="notificationType === 'success' ? 'bg-green-100 text-green-600' : notificationType === 'error' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'" class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center">
+                    <svg x-show="notificationType === 'success'" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg x-show="notificationType === 'error'" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg x-show="notificationType !== 'success' && notificationType !== 'error'" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-1" x-text="notificationType === 'success' ? 'Success' : notificationType === 'error' ? 'Error' : 'Notice'"></h3>
+                    <p class="text-sm text-gray-600 mb-4 whitespace-pre-line" x-text="notificationMessage"></p>
+                    <div class="flex justify-end">
+                        <button type="button" @click="showNotification=false" class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors">OK</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
     
+
 </div>
+
+<script>
+
+$.ajaxSetup({
+    headers: {
+        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+    }
+});
+
+$(document).ready(function() {
+    let table = $('#leadsTable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: '{{ route('crm.leads.datatable') }}',
+            data: function(d) {
+                d.company = $('#filterCompany').val() || '';
+                d.source = $('#filterSource').val() || '';
+                d.stage = $('#filterStage').val() || '';
+                d.assigned_user_id = $('#filterAssigned').val() || '';
+                d.lead_score = $('#filterScore').val() || '';
+                d.created_from = $('#filterCreatedFrom').val() || '';
+                d.created_to = $('#filterCreatedTo').val() || '';
+            }
+        },
+        columns: [
+            { data: 'id', name: 'id', orderable: false, searchable: false, render: function(data) {
+                return '<input type="checkbox" class="row-check rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" value="' + data + '">';
+            }},
+            { data: 'name', name: 'name', render: function(data) {
+                return '<span class="font-medium text-gray-900">' + (data || '-') + '</span>';
+            }},
+            { data: 'email', name: 'email', render: function(data) {
+                return '<span class="text-gray-700">' + (data || '-') + '</span>';
+            }},
+            { data: 'company', name: 'company', render: function(data) {
+                return '<span class="text-gray-700">' + (data || '-') + '</span>';
+            }},
+            { data: 'source', name: 'source', render: function(data) {
+                return '<span class="text-gray-700">' + (data || '-') + '</span>';
+            }},
+            { data: 'stage_html', name: 'stage', orderable: false, searchable: false },
+            { data: 'lead_score', name: 'lead_score', render: function(data) {
+                return '<span class="text-gray-700">' + (data || '-') + '</span>';
+            }},
+            { data: 'assigned', name: 'assigned_user_id', render: function(data) {
+                return '<span class="text-gray-700">' + (data || '-') + '</span>';
+            }},
+            { data: 'created_at', name: 'created_at', render: function(data) {
+                return '<span class="text-gray-700">' + (data || '-') + '</span>';
+            }},
+            { data: 'status_html', name: 'status', orderable: false, searchable: false },
+            { data: 'actions_html', name: 'actions', orderable: false, searchable: false }
+        ],
+        order: [[8, 'desc']],
+        pageLength: 10,
+        dom: '<"top"f>rt<"bottom"lip><"clear">',
+        pagingType: 'simple_numbers',
+        language: {
+            search: "",
+            searchPlaceholder: "Search...",
+            paginate: {
+                first: "First",
+                last: "Last",
+                next: "Next",
+                previous: "Previous"
+            }
+        },
+        initComplete: function() {
+            const searchContainer = $('#datatableSearchContainer');
+            const searchInput = $('.dataTables_filter');
+            if (searchContainer.length && searchInput.length) {
+                const input = searchInput.find('input').first();
+                
+                const wrapper = $('<div class="flex items-center gap-3 bg-white/15 backdrop-blur-sm border-2 border-white/30 rounded-xl px-4 py-2.5 shadow-sm w-full md:w-96 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 transition-all duration-200"></div>');
+                wrapper.append('<label class="text-gray-600 px-1 text-sm font-semibold">Search</label>');
+                wrapper.append('<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 103 10.5a7.5 7.5 0 0013.15 6.15z" /></svg>');
+                
+                input.addClass('bg-transparent border-0 outline-none ring-0 focus:ring-0 w-full text-gray-800 placeholder-gray-400 text-sm px-2 py-1');
+                input.attr('placeholder', '');
+                
+                searchInput.find('label').remove();
+                wrapper.append(input);
+                searchInput.html(wrapper);
+                searchInput.appendTo(searchContainer);
+                
+                let searchTimeout;
+                input.off('keyup.search input.search').on('keyup.search input.search', function() {
+                    clearTimeout(searchTimeout);
+                    const self = this;
+                    searchTimeout = setTimeout(function() {
+                        table.search(self.value).draw();
+                    }, 300);
+                });
+                
+                input.on('input', function() {
+                    if (this.value === '') {
+                        table.search('').draw();
+                    }
+                });
+            }
+            
+            const lengthContainer = $('#datatableLengthContainer');
+            const lengthSelect = $('.dataTables_length');
+            const info = $('.dataTables_info');
+            if (lengthContainer.length) {
+                if (lengthSelect.length) {
+                    lengthSelect.appendTo(lengthContainer);
+                    lengthSelect.css('margin', '0');
+                    lengthSelect.find('label').css({
+                        'font-size': '0.875rem',
+                        'font-weight': '500',
+                        'color': '#374151'
+                    });
+                }
+                if (info.length) {
+                    info.appendTo(lengthContainer);
+                    info.css({
+                        'margin': '0',
+                        'font-size': '0.875rem',
+                        'font-weight': '500'
+                    });
+                }
+            }
+            
+            const paginationContainer = $('#datatablePaginationContainer');
+            const pagination = $('.dataTables_paginate');
+            if (paginationContainer.length && pagination.length) {
+                pagination.appendTo(paginationContainer);
+                pagination.css({
+                    'margin': '0',
+                    'display': 'flex',
+                    'align-items': 'center',
+                    'gap': '0.25rem'
+                });
+                pagination.find('.paginate_button').css({
+                    'font-size': '0.875rem',
+                    'font-weight': '500',
+                    'padding': '0.5rem 0.875rem',
+                    'min-height': '2.25rem'
+                });
+            }
+            
+            $('.dataTables_wrapper .top').hide();
+        },
+        drawCallback: function() {
+            const pagination = $('.dataTables_paginate');
+            if (pagination.length) {
+                const paginationContainer = $('#datatablePaginationContainer');
+                if (paginationContainer.length && pagination.parent()[0] !== paginationContainer[0]) {
+                    pagination.appendTo(paginationContainer);
+                }
+                
+                pagination.find('.paginate_button').css({
+                    'font-size': '0.875rem',
+                    'font-weight': '500',
+                    'padding': '0.5rem 0.875rem',
+                    'min-height': '2.25rem'
+                });
+            }
+            
+            const lengthContainer = $('#datatableLengthContainer');
+            const lengthSelect = $('.dataTables_length');
+            const info = $('.dataTables_info');
+            if (lengthContainer.length) {
+                if (lengthSelect.length && lengthSelect.parent()[0] !== lengthContainer[0]) {
+                    lengthSelect.appendTo(lengthContainer);
+                    lengthSelect.css('margin', '0');
+                    lengthSelect.find('label').css({
+                        'font-size': '0.875rem',
+                        'font-weight': '500',
+                        'color': '#374151'
+                    });
+                }
+                if (info.length && info.parent()[0] !== lengthContainer[0]) {
+                    info.appendTo(lengthContainer);
+                    info.css({
+                        'margin': '0',
+                        'font-size': '0.875rem',
+                        'font-weight': '500'
+                    });
+                }
+            }
+        }
+    });
+
+    function showNotification(message, type = 'success') {
+        const alpineData = getAlpineData();
+        if (alpineData && alpineData.__x) {
+            const data = alpineData.__x.$data;
+            data.notificationMessage = message;
+            data.notificationType = type;
+            data.showNotification = true;
+        }
+        const notificationModal = $('[x-show="showNotification"]');
+        if (notificationModal.length) {
+            notificationModal[0].style.display = 'flex';
+        }
+        
+        setTimeout(function() {
+            if (alpineData && alpineData.__x) {
+                alpineData.__x.$data.showNotification = false;
+            }
+            if (notificationModal.length) {
+                notificationModal[0].style.display = 'none';
+            }
+        }, 5000);
+    }
+
+    function getAlpineData() {
+        return document.querySelector('[x-data]');
+    }
+    
+    function closeModal(modalName) {
+        const alpineData = getAlpineData();
+        if (alpineData && alpineData.__x) {
+            alpineData.__x.$data[modalName] = false;
+        }
+        
+        const modal = $('[x-show="' + modalName + '"]');
+        if (modal.length) {
+            modal.hide();
+            modal.css('display', 'none');
+        }
+        
+        setTimeout(function() {
+            const alpineDataAfter = getAlpineData();
+            if (alpineDataAfter && alpineDataAfter.__x) {
+                alpineDataAfter.__x.$data[modalName] = false;
+            }
+            const modalAfter = $('[x-show="' + modalName + '"]');
+            if (modalAfter.length && modalAfter.is(':visible')) {
+                modalAfter.hide();
+                modalAfter.css('display', 'none');
+            }
+        }, 50);
+    }
+    
+    function resetCreateForm() {
+        $('#createForm')[0].reset();
+        $('#createStage').val('new');
+        const submitBtn = $('#createSubmitBtn');
+        submitBtn.prop('disabled', false).text('Create Lead');
+    }
+    
+    function openCreateModal() {
+        const alpineData = getAlpineData();
+        if (alpineData && alpineData.__x) {
+            alpineData.__x.$data.showCreate = true;
+        }
+        resetCreateForm();
+        
+        const modal = $('[x-show="showCreate"]');
+        if (modal.length) {
+            modal.show();
+        }
+    }
+
+    let currentLeadId = null;
+
+    $(document).on('click', '.edit-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const btn = $(this);
+        currentLeadId = btn.data('id');
+        
+        if (!currentLeadId) {
+            showNotification('Lead ID not found.', 'error');
+            return;
+        }
+        
+        $('#editName').val(btn.data('name') || '');
+        $('#editCompany').val(btn.data('company') || '');
+        $('#editEmail').val(btn.data('email') || '');
+        $('#editSource').val(btn.data('source') || '');
+        $('#editStage').val(btn.data('stage') || 'new');
+        $('#editAssigned').val(btn.data('assigned') || '');
+        $('#editScore').val(btn.data('score') || '');
+        $('#editTags').val(btn.data('tags') || '');
+        $('#editNotes').val(btn.data('notes') || '');
+        
+        const alpineData = getAlpineData();
+        if (alpineData && alpineData.__x) {
+            const data = alpineData.__x.$data;
+            data.editId = currentLeadId;
+            data.editName = btn.data('name') || '';
+            data.editCompany = btn.data('company') || '';
+            data.editEmail = btn.data('email') || '';
+            data.editSource = btn.data('source') || '';
+            data.editStage = btn.data('stage') || 'new';
+            data.editAssigned = btn.data('assigned') || '';
+            data.editScore = btn.data('score') || '';
+            data.editTags = btn.data('tags') || '';
+            data.editNotes = btn.data('notes') || '';
+            data.showEdit = true;
+        }
+        
+        const editModal = $('[x-show="showEdit"]');
+        if (editModal.length) {
+            editModal.removeAttr('style');
+            editModal.show();
+            editModal.css('display', 'flex');
+        }
+    });
+    
+    $(document).on('click', '.delete-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const btn = $(this);
+        currentLeadId = btn.data('id');
+        
+        if (!currentLeadId) {
+            showNotification('Lead ID not found.', 'error');
+            return;
+        }
+        
+        const alpineData = getAlpineData();
+        if (alpineData && alpineData.__x) {
+            const data = alpineData.__x.$data;
+            data.editId = currentLeadId;
+            data.showDelete = true;
+        }
+        
+        const deleteModal = $('[x-show="showDelete"]');
+        if (deleteModal.length) {
+            deleteModal.removeAttr('style');
+            deleteModal.show();
+            deleteModal.css('display', 'flex');
+        }
+    });
+
+    $(document).on('click', '.convert-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const btn = $(this);
+        currentLeadId = btn.data('id');
+        
+        if (!currentLeadId) {
+            showNotification('Lead ID not found.', 'error');
+            return;
+        }
+        
+        const alpineData = getAlpineData();
+        if (alpineData && alpineData.__x) {
+            const data = alpineData.__x.$data;
+            data.editId = currentLeadId;
+            data.editName = btn.data('name') || '';
+            data.showConvert = true;
+        }
+        
+        const convertModal = $('[x-show="showConvert"]');
+        if (convertModal.length) {
+            convertModal.removeAttr('style');
+            convertModal.show();
+            convertModal.css('display', 'flex');
+        }
+        
+        $('#convertToContactForm').attr('action', '{{ route('crm.leads.convert-to-contact','__ID__') }}'.replace('__ID__', currentLeadId));
+        $('#convertToDealForm').attr('action', '{{ route('crm.leads.convert-to-deal','__ID__') }}'.replace('__ID__', currentLeadId));
+    });
+
+    $('#createForm').on('submit', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const submitBtn = $('#createSubmitBtn');
+        const originalText = submitBtn.text();
+        submitBtn.prop('disabled', true).text('Creating...');
+        
+        const formData = {
+            _token: '{{ csrf_token() }}',
+            name: $('#createName').val(),
+            email: $('#createEmail').val() || null,
+            company: $('#createCompany').val() || null,
+            source: $('#createSource').val() || null,
+            stage: $('#createStage').val() || 'new',
+            assigned_user_id: $('#createAssigned').val() || null,
+            lead_score: $('#createScore').val() || null,
+            tags: $('#createTags').val() ? [$('#createTags').val()] : [],
+            notes: $('#createNotes').val() || null
+        };
+        
+        $.ajax({
+            url: '{{ route('crm.leads.store') }}',
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            data: formData,
+            success: function(response) {
+                submitBtn.prop('disabled', false).text(originalText);
+                table.ajax.reload();
+                
+                resetCreateForm();
+                
+                const alpineData = getAlpineData();
+                if (alpineData && alpineData.__x) {
+                    alpineData.__x.$data.showCreate = false;
+                }
+                
+                const modal = $('[x-show="showCreate"]');
+                if (modal.length) {
+                    modal.hide();
+                    modal.css('display', 'none');
+                }
+                
+                setTimeout(function() {
+                    const alpineDataAfter = getAlpineData();
+                    if (alpineDataAfter && alpineDataAfter.__x) {
+                        alpineDataAfter.__x.$data.showCreate = false;
+                    }
+                    const modalAfter = $('[x-show="showCreate"]');
+                    if (modalAfter.length && modalAfter.is(':visible')) {
+                        modalAfter.hide();
+                        modalAfter.css('display', 'none');
+                    }
+                }, 50);
+            },
+            error: function(xhr) {
+                submitBtn.prop('disabled', false).text(originalText);
+                console.error('Error creating lead:', xhr);
+                if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    let errors = Object.values(xhr.responseJSON.errors).flat();
+                    showNotification('Validation errors:\n' + errors.join('\n'), 'error');
+                } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                    showNotification('Error: ' + xhr.responseJSON.message, 'error');
+                } else {
+                    showNotification('Error creating lead. Please try again.', 'error');
+                }
+            }
+        });
+        
+        return false;
+    });
+
+    $('#editForm').on('submit', function(e) {
+        e.preventDefault();
+        const alpineData = getAlpineData();
+        if (alpineData && alpineData.__x) {
+            currentLeadId = alpineData.__x.$data.editId || currentLeadId;
+        }
+        if (!currentLeadId) {
+            showNotification('Lead ID not found.', 'error');
+            return;
+        }
+        
+        const formData = {
+            _token: '{{ csrf_token() }}',
+            _method: 'PUT',
+            name: $('#editName').val(),
+            email: $('#editEmail').val(),
+            company: $('#editCompany').val(),
+            source: $('#editSource').val(),
+            stage: $('#editStage').val(),
+            assigned_user_id: $('#editAssigned').val(),
+            lead_score: $('#editScore').val(),
+            tags: [$('#editTags').val()],
+            notes: $('#editNotes').val()
+        };
+        
+        $.ajax({
+            url: '{{ route('crm.leads.update', '__ID__') }}'.replace('__ID__', currentLeadId),
+            method: 'POST',
+            data: formData,
+            success: function(response) {
+                table.ajax.reload();
+                closeModal('showEdit');
+                
+                const editModal = $('[x-show="showEdit"]');
+                if (editModal.length) {
+                    editModal.hide();
+                    editModal.css('display', 'none');
+                }
+            },
+            error: function(xhr) {
+                if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    let errors = Object.values(xhr.responseJSON.errors).flat();
+                    showNotification('Validation errors:\n' + errors.join('\n'), 'error');
+                } else {
+                    showNotification('Error updating lead.', 'error');
+                }
+            }
+        });
+    });
+
+    $('#confirmDelete').on('click', function() {
+        const alpineData = getAlpineData();
+        if (alpineData && alpineData.__x) {
+            currentLeadId = alpineData.__x.$data.editId || currentLeadId;
+        }
+        if (!currentLeadId) {
+            showNotification('Lead ID not found.', 'error');
+            return;
+        }
+        
+        $.ajax({
+            url: '{{ route('crm.leads.destroy', '__ID__') }}'.replace('__ID__', currentLeadId),
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                _method: 'DELETE'
+            },
+            success: function(response) {
+                table.ajax.reload();
+                closeModal('showDelete');
+                currentLeadId = null;
+                
+                const deleteModal = $('[x-show="showDelete"]');
+                if (deleteModal.length) {
+                    deleteModal.hide();
+                    deleteModal.css('display', 'none');
+                }
+            },
+            error: function() {
+                showNotification('Error deleting lead.', 'error');
+            }
+        });
+    });
+
+    let currentBulkDeleteIds = [];
+    $('#bulkDeleteBtn').on('click', function() {
+        const selectedIds = $('.row-check:checked').map(function() {
+            return $(this).val();
+        }).get();
+        
+        if (selectedIds.length === 0) {
+            return;
+        }
+        
+        currentBulkDeleteIds = selectedIds;
+        const alpineData = getAlpineData();
+        if (alpineData && alpineData.__x) {
+            alpineData.__x.$data.showBulkDelete = true;
+        }
+        
+        const bulkDeleteModal = $('[x-show="showBulkDelete"]');
+        if (bulkDeleteModal.length) {
+            bulkDeleteModal.removeAttr('style');
+            bulkDeleteModal.show();
+            bulkDeleteModal.css('display', 'flex');
+        }
+    });
+
+    $('#confirmBulkDelete').on('click', function() {
+        if (!currentBulkDeleteIds || currentBulkDeleteIds.length === 0) {
+            closeModal('showBulkDelete');
+            return;
+        }
+        
+        $.ajax({
+            url: '{{ route('crm.leads.bulk-delete') }}',
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                ids: currentBulkDeleteIds
+            },
+            success: function(response) {
+                table.ajax.reload();
+                closeModal('showBulkDelete');
+                
+                const bulkDeleteModal = $('[x-show="showBulkDelete"]');
+                if (bulkDeleteModal.length) {
+                    bulkDeleteModal.hide();
+                    bulkDeleteModal.css('display', 'none');
+                }
+            },
+            error: function() {
+                showNotification('Error deleting leads.', 'error');
+            }
+        });
+    });
+
+    $('#selectAll').on('click', function() {
+        $('.row-check').prop('checked', $(this).prop('checked'));
+    });
+    
+    setTimeout(function() {
+        $('.cancel-create-btn').off('click').on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            closeModal('showCreate');
+            return false;
+        });
+        
+        $('.cancel-edit-btn').off('click').on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            closeModal('showEdit');
+            return false;
+        });
+        
+        $('.cancel-delete-btn').off('click').on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            closeModal('showDelete');
+            return false;
+        });
+        
+        $('.cancel-bulk-delete-btn').off('click').on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            closeModal('showBulkDelete');
+            return false;
+        });
+        
+        $('.cancel-convert-btn').off('click').on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            closeModal('showConvert');
+            return false;
+        });
+    }, 100);
+    
+    $(document).off('click', '.cancel-create-btn').on('click', '.cancel-create-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        closeModal('showCreate');
+        return false;
+    });
+    
+    $(document).off('click', '.cancel-edit-btn').on('click', '.cancel-edit-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        closeModal('showEdit');
+        return false;
+    });
+    
+    $(document).off('click', '.cancel-delete-btn').on('click', '.cancel-delete-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        closeModal('showDelete');
+        return false;
+    });
+    
+    $(document).off('click', '.cancel-bulk-delete-btn').on('click', '.cancel-bulk-delete-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        closeModal('showBulkDelete');
+        return false;
+    });
+    
+    $(document).off('click', '.cancel-convert-btn').on('click', '.cancel-convert-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        closeModal('showConvert');
+        return false;
+    });
+
+    $('#applyFilters').on('click', function() {
+        table.ajax.reload(function() {
+        }, false);
+    });
+
+    $('#resetFilters').on('click', function() {
+        $('#filterCompany').val('');
+        $('#filterSource').val('');
+        $('#filterStage').val('');
+        $('#filterAssigned').val('');
+        $('#filterScore').val('');
+        $('#filterCreatedFrom').val('');
+        $('#filterCreatedTo').val('');
+        table.search('').draw();
+        table.ajax.reload(null, false);
+    });
+    
+    $('#filterCompany, #filterSource, #filterStage, #filterAssigned, #filterScore, #filterCreatedFrom, #filterCreatedTo').on('keypress', function(e) {
+        if (e.which === 13) {
+            e.preventDefault();
+            $('#applyFilters').click();
+        }
+    });
+    
+    $(document).on('click', '#newLeadBtn', function(e) {
+        const modal = $('[x-show="showCreate"]');
+        if (modal.length) {
+            modal.removeAttr('style');
+        }
+        
+        setTimeout(function() {
+            resetCreateForm();
+        }, 150);
+    });
+});
+</script>
 </body>
 </html>
 
