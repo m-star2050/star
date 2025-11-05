@@ -34,7 +34,6 @@
         .sidebar-link span{ line-height:1.2; display:flex; align-items:center; }
         .hdr-wrap{max-width:1120px}
         
-        /* DataTables styling */
         .dataTables_wrapper { font-family: inherit; }
         .dataTables_filter { margin: 0; }
         .dataTables_length { margin: 0; }
@@ -100,7 +99,6 @@
             text-align: center; 
         }
         
-        /* Reduce spacing between specific columns */
         #contactsTable th:nth-child(3),
         #contactsTable td:nth-child(3),
         #contactsTable th:nth-child(4),
@@ -117,7 +115,6 @@
             padding-right: 0.25rem !important;
         }
         
-        /* Ensure table container allows full width */
         #contactsTable {
             width: 100% !important;
             table-layout: auto;
@@ -126,24 +123,20 @@
             border-spacing: 0;
         }
         
-        /* Reduce white-space between columns */
         #contactsTable th,
         #contactsTable td {
             white-space: nowrap;
         }
         
-        /* Ensure table wrapper doesn't cut off content */
         .overflow-x-auto {
             overflow-x: auto !important;
             overflow-y: visible !important;
         }
         
-        /* Icon alignment in headers - center everything */
         #contactsTable th .flex.items-center {
             justify-content: center;
         }
         
-        /* DataTables sorting indicators - professional SVG icons */
         #contactsTable th.sorting,
         #contactsTable th.sorting_asc,
         #contactsTable th.sorting_desc {
@@ -151,7 +144,6 @@
             padding-right: 2rem !important;
         }
         
-        /* Hide default DataTables sorting icons */
         #contactsTable th.sorting:before,
         #contactsTable th.sorting:after,
         #contactsTable th.sorting_asc:before,
@@ -161,7 +153,6 @@
             display: none !important;
         }
         
-        /* Custom sorting icons - neutral state (both arrows visible, gray) */
         #contactsTable th.sorting::after {
             content: '';
             position: absolute;
@@ -242,7 +233,9 @@
 </head>
 <body>
 
-<div x-data="{mobileMenu:false, open:true, showCreate:false, showEdit:false, showDelete:false, showBulkDelete:false, editId:null, editName:'', editCompany:'', editEmail:'', editPhone:'', editAssigned:'', editStatus:'active', editTags:'', editNotes:'', showNotification:false, notificationMessage:'', notificationType:'success'}" class="relative">
+<div x-data="{mobileMenu:false, open:true, showCreate:false, showEdit:false, showDelete:false, showBulkDelete:false, editId:null, editName:'', editCompany:'', editEmail:'', editPhone:'', editAssigned:'', editStatus:'active', editTags:'', editNotes:'', showNotification:false, notificationMessage:'', notificationType:'success', wasCreateOpen:false}" 
+     x-init="$watch('showCreate', value => { if (value && !wasCreateOpen) { setTimeout(() => { const form = document.getElementById('createForm'); if (form) form.reset(); const status = document.getElementById('createStatus'); if (status) status.value = 'active'; const btn = document.getElementById('createSubmitBtn'); if (btn) { btn.disabled = false; btn.textContent = 'Create'; } } }, 100); } wasCreateOpen = value; })" 
+     class="relative">
     <div class="lg:hidden fixed top-0 left-0 right-0 z-50 glass rounded-b-2xl p-3 shadow-lg">
         <div class="flex items-center justify-between pt-40">
             <div class="text-gray-900 font-extrabold tracking-wide text-sm">WELCOME USER</div>
@@ -326,7 +319,7 @@
                 </div>
                 <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
                     <div class="flex items-end gap-6 w-full md:max-w-xl">
-                        <button type="button" @click="showCreate=true" class="flex-shrink-0 flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md">
+                        <button type="button" id="newContactBtn" @click="showCreate=true" class="flex-shrink-0 flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 20 20" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"/></svg>
                             New Contact
                         </button>
@@ -480,7 +473,7 @@
                 <textarea name="notes" id="createNotes" class="border rounded-lg px-3 py-2 md:col-span-2" rows="3" placeholder="Notes"></textarea>
                 <div class="md:col-span-2 flex justify-end gap-2 mt-2">
                     <button type="button" class="px-4 py-2 rounded-lg border cancel-create-btn" @click="showCreate=false">Cancel</button>
-                    <button type="submit" class="px-4 py-2 rounded-lg bg-blue-600 text-white">Create</button>
+                    <button type="submit" id="createSubmitBtn" class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Create</button>
                 </div>
             </form>
         </div>
@@ -763,32 +756,56 @@ $(document).ready(function() {
         return document.querySelector('[x-data]');
     }
     
-    // Helper function to close modals reliably - hide immediately
+    // Helper function to close modals reliably - properly reset Alpine.js state and hide modal
     function closeModal(modalName) {
-        // Directly hide the modal using jQuery FIRST (immediate visual feedback)
+        // Update Alpine.js data to close modal
+        const alpineData = getAlpineData();
+        if (alpineData && alpineData.__x) {
+            alpineData.__x.$data[modalName] = false;
+        }
+        
+        // Also hide modal using jQuery to ensure it's hidden immediately
         const modal = $('[x-show="' + modalName + '"]');
         if (modal.length) {
             modal.hide();
             modal.css('display', 'none');
         }
         
-        // Then update Alpine.js data
-        const alpineData = getAlpineData();
-        if (alpineData && alpineData.__x) {
-            alpineData.__x.$data[modalName] = false;
-        }
-        
-        // Force update after a short delay to ensure it sticks
-        setTimeout(() => {
-            if (alpineData && alpineData.__x) {
-                alpineData.__x.$data[modalName] = false;
+        // Force update after a small delay to ensure it sticks
+        setTimeout(function() {
+            const alpineDataAfter = getAlpineData();
+            if (alpineDataAfter && alpineDataAfter.__x) {
+                alpineDataAfter.__x.$data[modalName] = false;
             }
-            const modalEl = $('[x-show="' + modalName + '"]');
-            if (modalEl.length && modalEl.is(':visible')) {
-                modalEl.hide();
-                modalEl.css('display', 'none');
+            const modalAfter = $('[x-show="' + modalName + '"]');
+            if (modalAfter.length && modalAfter.is(':visible')) {
+                modalAfter.hide();
+                modalAfter.css('display', 'none');
             }
         }, 50);
+    }
+    
+    // Function to reset create form
+    function resetCreateForm() {
+        $('#createForm')[0].reset();
+        $('#createStatus').val('active'); // Reset status to default
+        const submitBtn = $('#createSubmitBtn');
+        submitBtn.prop('disabled', false).text('Create');
+    }
+    
+    // Function to open create modal and reset form
+    function openCreateModal() {
+        const alpineData = getAlpineData();
+        if (alpineData && alpineData.__x) {
+            alpineData.__x.$data.showCreate = true;
+        }
+        resetCreateForm();
+        
+        // Ensure modal is visible
+        const modal = $('[x-show="showCreate"]');
+        if (modal.length) {
+            modal.show();
+        }
     }
 
     let currentContactId = null;
@@ -830,6 +847,7 @@ $(document).ready(function() {
         
         const editModal = $('[x-show="showEdit"]');
         if (editModal.length) {
+            editModal.removeAttr('style'); // Remove inline styles so Alpine.js can control visibility
             editModal.show();
             editModal.css('display', 'flex');
         }
@@ -855,6 +873,7 @@ $(document).ready(function() {
         
         const deleteModal = $('[x-show="showDelete"]');
         if (deleteModal.length) {
+            deleteModal.removeAttr('style'); // Remove inline styles so Alpine.js can control visibility
             deleteModal.show();
             deleteModal.css('display', 'flex');
         }
@@ -862,36 +881,80 @@ $(document).ready(function() {
 
     $('#createForm').on('submit', function(e) {
         e.preventDefault();
+        e.stopPropagation();
+        
+        const submitBtn = $('#createSubmitBtn');
+        const originalText = submitBtn.text();
+        submitBtn.prop('disabled', true).text('Creating...');
+        
         const formData = {
             _token: '{{ csrf_token() }}',
             name: $('#createName').val(),
-            company: $('#createCompany').val(),
-            email: $('#createEmail').val(),
-            phone: $('#createPhone').val(),
-            assigned_user_id: $('#createAssigned').val(),
-            status: $('#createStatus').val(),
-            tags: [$('#createTags').val()],
-            notes: $('#createNotes').val()
+            company: $('#createCompany').val() || null,
+            email: $('#createEmail').val() || null,
+            phone: $('#createPhone').val() || null,
+            assigned_user_id: $('#createAssigned').val() || null,
+            status: $('#createStatus').val() || 'active',
+            tags: $('#createTags').val() ? [$('#createTags').val()] : [],
+            notes: $('#createNotes').val() || null
         };
         
         $.ajax({
             url: '{{ route('crm.contacts.store') }}',
             method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
             data: formData,
             success: function(response) {
+                submitBtn.prop('disabled', false).text(originalText);
                 table.ajax.reload();
-                $('#createForm')[0].reset();
-                closeModal('showCreate');
+                
+                // Reset form first
+                resetCreateForm();
+                
+                // Close modal - ensure Alpine.js state is properly reset
+                const alpineData = getAlpineData();
+                if (alpineData && alpineData.__x) {
+                    alpineData.__x.$data.showCreate = false;
+                }
+                
+                // Also hide modal using jQuery to ensure it's hidden immediately
+                const modal = $('[x-show="showCreate"]');
+                if (modal.length) {
+                    modal.hide();
+                    modal.css('display', 'none');
+                }
+                
+                // Force Alpine.js update after a small delay
+                setTimeout(function() {
+                    const alpineDataAfter = getAlpineData();
+                    if (alpineDataAfter && alpineDataAfter.__x) {
+                        alpineDataAfter.__x.$data.showCreate = false;
+                    }
+                    const modalAfter = $('[x-show="showCreate"]');
+                    if (modalAfter.length && modalAfter.is(':visible')) {
+                        modalAfter.hide();
+                        modalAfter.css('display', 'none');
+                    }
+                }, 50);
             },
             error: function(xhr) {
+                submitBtn.prop('disabled', false).text(originalText);
+                console.error('Error creating contact:', xhr);
                 if (xhr.responseJSON && xhr.responseJSON.errors) {
                     let errors = Object.values(xhr.responseJSON.errors).flat();
                     showNotification('Validation errors:\n' + errors.join('\n'), 'error');
+                } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                    showNotification('Error: ' + xhr.responseJSON.message, 'error');
                 } else {
-                    showNotification('Error creating contact.', 'error');
+                    showNotification('Error creating contact. Please try again.', 'error');
                 }
             }
         });
+        
+        return false;
     });
 
     $('#editForm').on('submit', function(e) {
@@ -925,6 +988,13 @@ $(document).ready(function() {
             success: function(response) {
                 table.ajax.reload();
                 closeModal('showEdit');
+                
+                // Also ensure modal is hidden
+                const editModal = $('[x-show="showEdit"]');
+                if (editModal.length) {
+                    editModal.hide();
+                    editModal.css('display', 'none');
+                }
             },
             error: function(xhr) {
                 if (xhr.responseJSON && xhr.responseJSON.errors) {
@@ -958,6 +1028,13 @@ $(document).ready(function() {
                 table.ajax.reload();
                 closeModal('showDelete');
                 currentContactId = null;
+                
+                // Also ensure modal is hidden
+                const deleteModal = $('[x-show="showDelete"]');
+                if (deleteModal.length) {
+                    deleteModal.hide();
+                    deleteModal.css('display', 'none');
+                }
             },
             error: function() {
                 showNotification('Error deleting contact.', 'error');
@@ -984,6 +1061,7 @@ $(document).ready(function() {
         
         const bulkDeleteModal = $('[x-show="showBulkDelete"]');
         if (bulkDeleteModal.length) {
+            bulkDeleteModal.removeAttr('style'); // Remove inline styles so Alpine.js can control visibility
             bulkDeleteModal.show();
             bulkDeleteModal.css('display', 'flex');
         }
@@ -1006,6 +1084,13 @@ $(document).ready(function() {
             success: function(response) {
                 table.ajax.reload();
                 closeModal('showBulkDelete');
+                
+                // Also ensure modal is hidden
+                const bulkDeleteModal = $('[x-show="showBulkDelete"]');
+                if (bulkDeleteModal.length) {
+                    bulkDeleteModal.hide();
+                    bulkDeleteModal.css('display', 'none');
+                }
             },
             error: function() {
                 showNotification('Error deleting contacts.', 'error');
@@ -1057,6 +1142,7 @@ $(document).ready(function() {
     $(document).off('click', '.cancel-create-btn').on('click', '.cancel-create-btn', function(e) {
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation();
         closeModal('showCreate');
         return false;
     });
@@ -1064,6 +1150,7 @@ $(document).ready(function() {
     $(document).off('click', '.cancel-edit-btn').on('click', '.cancel-edit-btn', function(e) {
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation();
         closeModal('showEdit');
         return false;
     });
@@ -1071,6 +1158,7 @@ $(document).ready(function() {
     $(document).off('click', '.cancel-delete-btn').on('click', '.cancel-delete-btn', function(e) {
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation();
         closeModal('showDelete');
         return false;
     });
@@ -1078,6 +1166,7 @@ $(document).ready(function() {
     $(document).off('click', '.cancel-bulk-delete-btn').on('click', '.cancel-bulk-delete-btn', function(e) {
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation();
         closeModal('showBulkDelete');
         return false;
     });
@@ -1102,6 +1191,22 @@ $(document).ready(function() {
             e.preventDefault();
             $('#applyFilters').click();
         }
+    });
+    
+    // Handle "New Contact" button click - ensure form is reset
+    // Note: Alpine.js @click="showCreate=true" handles opening the modal
+    // This handler just ensures form is reset when button is clicked
+    $(document).on('click', '#newContactBtn', function(e) {
+        // Ensure modal can be shown by removing any inline display styles
+        const modal = $('[x-show="showCreate"]');
+        if (modal.length) {
+            modal.removeAttr('style');
+        }
+        
+        // Small delay to let Alpine.js open the modal first, then reset form
+        setTimeout(function() {
+            resetCreateForm();
+        }, 150);
     });
 });
 </script>
