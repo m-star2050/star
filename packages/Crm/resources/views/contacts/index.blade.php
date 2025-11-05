@@ -134,6 +134,16 @@
             font-weight: 500;
             margin-left: 1rem;
         }
+        @media (max-width: 485px) {
+            #datatableLengthContainer {
+                justify-content: center !important;
+                width: 100%;
+            }
+            #datatableLengthContainer .dataTables_length,
+            #datatableLengthContainer .dataTables_info {
+                margin-left: 0 !important;
+            }
+        }
         .dataTables_paginate { margin: 0; }
         .dataTables_paginate .paginate_button {
             padding: 0.5rem 0.875rem;
@@ -329,7 +339,7 @@
      x-init="$watch('showCreate', value => { if (value && !wasCreateOpen) { setTimeout(() => { const form = document.getElementById('createForm'); if (form) form.reset(); const status = document.getElementById('createStatus'); if (status) status.value = 'active'; const btn = document.getElementById('createSubmitBtn'); if (btn) { btn.disabled = false; btn.textContent = 'Create'; } } }, 100); } wasCreateOpen = value; })" 
      class="relative">
     <div class="lg:hidden fixed top-0 left-0 right-0 z-50 glass-card rounded-b-2xl p-4 shadow-xl">
-        <div class="flex items-center justify-between pt-40">
+        <div class="flex items-center justify-between pt-4">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
