@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Packages\Crm\Models\Contact;
+use App\Models\User;
 
 class ContactController extends Controller
 {
@@ -53,11 +54,14 @@ class ContactController extends Controller
 
         $contacts = $query->orderBy($sort, $direction)->paginate($perPage)->withQueryString();
 
+        $users = User::select('id', 'name', 'email')->orderBy('name')->get();
+
         return view('crm::contacts.index', [
             'contacts' => $contacts,
             'sort' => $sort,
             'direction' => $direction,
             'perPage' => $perPage,
+            'users' => $users,
         ]);
     }
 
@@ -207,7 +211,7 @@ class ContactController extends Controller
 
     public function datatable(Request $request)
     {
-        $query = Contact::query();
+        $query = Contact::with('assignedUser');
 
         // Search from DataTables
         if ($search = trim((string) $request->input('search.value'))) {
@@ -266,7 +270,7 @@ class ContactController extends Controller
         $data = $contacts->map(function ($contact) {
             $isArchived = (($contact->status ?? null) === 'archived' || !is_null($contact->deleted_at ?? null));
             $tagsText = implode(',', (array) $contact->tags);
-            $assigned = $contact->assigned_user_id ? ('User '.$contact->assigned_user_id) : '-';
+            $assigned = $contact->assignedUser ? $contact->assignedUser->name : ($contact->assigned_user_id ? 'User '.$contact->assigned_user_id : '-');
             
             return [
                 'id' => $contact->id,

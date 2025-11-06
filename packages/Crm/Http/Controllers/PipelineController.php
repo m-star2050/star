@@ -8,17 +8,20 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Log;
 use Packages\Crm\Models\Pipeline;
 use Packages\Crm\Models\Contact;
+use App\Models\User;
 
 class PipelineController extends Controller
 {
     public function index(Request $request)
     {
-        return view('crm::pipeline.index');
+        $users = User::select('id', 'name', 'email')->orderBy('name')->get();
+        return view('crm::pipeline.index', ['users' => $users]);
     }
 
     public function kanban(Request $request)
     {
-        return view('crm::pipeline.index', ['view' => 'kanban']);
+        $users = User::select('id', 'name', 'email')->orderBy('name')->get();
+        return view('crm::pipeline.index', ['view' => 'kanban', 'users' => $users]);
     }
 
     public function store(Request $request)
@@ -221,7 +224,7 @@ class PipelineController extends Controller
 
     public function datatable(Request $request)
     {
-        $query = Pipeline::query()->with(['contact']);
+        $query = Pipeline::query()->with(['contact', 'ownerUser']);
 
         if ($search = trim((string) $request->input('search.value'))) {
             $query->where(function ($q) use ($search) {
@@ -292,7 +295,7 @@ class PipelineController extends Controller
                 'stage' => $pipeline->stage,
                 'stage_html' => '<button type="button" class="inline-flex items-center gap-1 '.$stageColor.' font-semibold toggle-stage-btn" data-id="'.$pipeline->id.'" data-stage="'.$pipeline->stage.'">'.$pipeline->getStageLabel().'</button>',
                 'value' => '$' . number_format($pipeline->value, 2),
-                'owner_user_id' => $pipeline->owner_user_id ? ('User ' . $pipeline->owner_user_id) : '-',
+                'owner_user_id' => $pipeline->ownerUser ? $pipeline->ownerUser->name : ($pipeline->owner_user_id ? 'User ' . $pipeline->owner_user_id : '-'),
                 'close_date' => $pipeline->close_date?->format('Y-m-d') ?? '-',
                 'probability' => ($pipeline->probability ?? '-') . '%',
                 'company' => $pipeline->company ?? '-',

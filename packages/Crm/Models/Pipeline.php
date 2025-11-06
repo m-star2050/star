@@ -36,6 +36,11 @@ class Pipeline extends Model
         return $this->belongsTo(Contact::class, 'contact_id');
     }
 
+    public function ownerUser()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'owner_user_id');
+    }
+
     // Helper methods
     public function getStageColorClass()
     {

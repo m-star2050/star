@@ -632,8 +632,13 @@
                     <input name="phone" id="createPhone" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="+1 (555) 000-0000">
                 </div>
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Assigned User ID</label>
-                    <input name="assigned_user_id" id="createAssigned" type="number" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="User ID">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Assigned To</label>
+                    <select name="assigned_user_id" id="createAssigned" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                        <option value="">-- Select User --</option>
+                        @foreach($users ?? [] as $user)
+                            <option value="{{ $user->id }}">{{ $user->name }} ({{ $user->email }})</option>
+                        @endforeach
+                    </select>
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Status</label>
@@ -690,8 +695,13 @@
                     <input name="phone" id="editPhone" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="+1 (555) 000-0000" x-model="editPhone">
                 </div>
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Assigned User ID</label>
-                    <input name="assigned_user_id" id="editAssigned" type="number" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="User ID" x-model="editAssigned">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Assigned To</label>
+                    <select name="assigned_user_id" id="editAssigned" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" x-model="editAssigned">
+                        <option value="">-- Select User --</option>
+                        @foreach($users ?? [] as $user)
+                            <option value="{{ $user->id }}">{{ $user->name }} ({{ $user->email }})</option>
+                        @endforeach
+                    </select>
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Status</label>

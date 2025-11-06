@@ -10,12 +10,14 @@ use Illuminate\Support\Facades\Schema;
 use Packages\Crm\Models\Lead;
 use Packages\Crm\Models\Contact;
 use Packages\Crm\Models\Pipeline;
+use App\Models\User;
 
 class LeadController extends Controller
 {
     public function index(Request $request)
     {
-        return view('crm::leads.index');
+        $users = User::select('id', 'name', 'email')->orderBy('name')->get();
+        return view('crm::leads.index', ['users' => $users]);
     }
 
     public function store(Request $request)
@@ -324,7 +326,7 @@ class LeadController extends Controller
 
     public function datatable(Request $request)
     {
-        $query = Lead::query();
+        $query = Lead::with('assignedUser');
 
         if ($search = trim((string) $request->input('search.value'))) {
             $query->where(function ($q) use ($search) {
@@ -401,7 +403,7 @@ class LeadController extends Controller
                 'source' => $lead->source ?? '-',
                 'stage' => ucfirst($lead->stage),
                 'stage_html' => '<button type="button" class="inline-flex items-center gap-1 '.$stageColor.' font-semibold toggle-stage-btn" data-id="'.$lead->id.'" data-stage="'.$lead->stage.'">'.ucfirst($lead->stage).'</button>',
-                'assigned' => $lead->assigned_user_id ? ('User ' . $lead->assigned_user_id) : '-',
+                'assigned' => $lead->assignedUser ? $lead->assignedUser->name : ($lead->assigned_user_id ? 'User ' . $lead->assigned_user_id : '-'),
                 'created_at' => $lead->created_at?->format('Y-m-d') ?? '-',
                 'actions_html' => '<div class="flex flex-col sm:flex-row gap-1 justify-center">
                     <button type="button" class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 rounded-lg border border-blue-400 text-blue-600 hover:bg-blue-50 shadow-sm text-xs edit-btn" data-id="'.$lead->id.'" data-name="'.htmlspecialchars($lead->name, ENT_QUOTES).'" data-email="'.htmlspecialchars($lead->email ?? '', ENT_QUOTES).'" data-company="'.htmlspecialchars($lead->company ?? '', ENT_QUOTES).'" data-source="'.htmlspecialchars($lead->source ?? '', ENT_QUOTES).'" data-stage="'.($lead->stage ?? 'new').'" data-assigned="'.($lead->assigned_user_id ?? '').'" data-lead-score="'.($lead->lead_score ?? '').'" data-tags="'.htmlspecialchars($tagsValue, ENT_QUOTES).'" data-notes="'.htmlspecialchars($lead->notes ?? '', ENT_QUOTES).'"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-8.5 8.5a2 2 0 01-.878.515l-3.3.943a.5.5 0 01-.62-.62l.943-3.3a2 2 0 01.515-.878l8.5-8.5z"/></svg><span class="hidden sm:inline">Edit</span></button>

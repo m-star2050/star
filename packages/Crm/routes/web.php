@@ -62,6 +62,31 @@ Route::prefix('crm')->group(function () {
             Route::get('files/{file}/preview', [FilesController::class, 'preview'])->name('files.preview');
             Route::delete('files/{file}', [FilesController::class, 'destroy'])->name('files.destroy');
             Route::post('files/bulk-delete', [FilesController::class, 'bulkDelete'])->name('files.bulk-delete');
+
+            // API endpoints for dropdowns
+            Route::get('api/users', function() {
+                $users = \App\Models\User::select('id', 'name', 'email')->orderBy('name')->get();
+                return response()->json([
+                    'success' => true,
+                    'data' => $users
+                ]);
+            })->name('api.users');
+            
+            Route::get('api/contacts', function() {
+                $contacts = \Packages\Crm\Models\Contact::select('id', 'name', 'email', 'company')->orderBy('name')->get();
+                return response()->json([
+                    'success' => true,
+                    'data' => $contacts
+                ]);
+            })->name('api.contacts');
+            
+            Route::get('api/leads', function() {
+                $leads = \Packages\Crm\Models\Lead::select('id', 'name', 'email', 'company')->orderBy('name')->get();
+                return response()->json([
+                    'success' => true,
+                    'data' => $leads
+                ]);
+            })->name('api.leads');
         });
     });
 

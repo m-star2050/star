@@ -336,20 +336,25 @@
         
         .chart-type-btn {
             color: #6b7280;
-            background: transparent;
-            border: none;
+            background: rgba(255, 255, 255, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.3);
             cursor: pointer;
+            transition: all 0.2s ease;
         }
         
         .chart-type-btn:hover {
             color: #2563eb;
-            background: rgba(37, 99, 235, 0.1);
+            background: rgba(37, 99, 235, 0.15);
+            border-color: rgba(37, 99, 235, 0.3);
+            transform: scale(1.05);
         }
         
         .chart-type-btn.active {
             color: #2563eb;
-            background: rgba(37, 99, 235, 0.2);
+            background: rgba(37, 99, 235, 0.25);
+            border-color: rgba(37, 99, 235, 0.5);
             font-weight: 600;
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
         }
         
         .chart-type-btn svg {

@@ -40,5 +40,10 @@ class Task extends Model
     {
         return $this->belongsTo(Lead::class, 'lead_id');
     }
+
+    public function assignedUser()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'assigned_user_id');
+    }
 }
 

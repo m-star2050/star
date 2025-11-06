@@ -27,4 +27,10 @@ class Lead extends Model
     protected $casts = [
         'tags' => 'array',
     ];
+
+    // Relationships
+    public function assignedUser()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'assigned_user_id');
+    }
 }

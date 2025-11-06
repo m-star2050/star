@@ -6,12 +6,23 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Packages\Crm\Models\Task;
+use App\Models\User;
+use Packages\Crm\Models\Contact;
+use Packages\Crm\Models\Lead;
 
 class TaskController extends Controller
 {
     public function index(Request $request)
     {
-        return view('crm::tasks.index');
+        $users = User::select('id', 'name', 'email')->orderBy('name')->get();
+        $contacts = Contact::select('id', 'name', 'email', 'company')->orderBy('name')->get();
+        $leads = Lead::select('id', 'name', 'email', 'company')->orderBy('name')->get();
+        
+        return view('crm::tasks.index', [
+            'users' => $users,
+            'contacts' => $contacts,
+            'leads' => $leads,
+        ]);
     }
 
     public function store(Request $request)
@@ -192,7 +203,7 @@ class TaskController extends Controller
 
     public function datatable(Request $request)
     {
-        $query = Task::query()->with(['contact', 'lead']);
+        $query = Task::query()->with(['contact', 'lead', 'assignedUser']);
 
         if ($search = trim((string) $request->input('search.value'))) {
             $query->where(function ($q) use ($search) {
@@ -276,7 +287,7 @@ class TaskController extends Controller
                 'due_date' => $task->due_date?->format('Y-m-d') ?? '-',
                 'status' => ucfirst(str_replace('_', ' ', $task->status)),
                 'status_html' => '<span class="inline-flex items-center gap-1 '.$statusColor.' font-semibold">'.ucfirst(str_replace('_', ' ', $task->status)).'</span>',
-                'assigned' => $task->assigned_user_id ? ('User ' . $task->assigned_user_id) : '-',
+                'assigned' => $task->assignedUser ? $task->assignedUser->name : ($task->assigned_user_id ? 'User ' . $task->assigned_user_id : '-'),
                 'lead' => $task->lead?->name ?? '-',
                 'created_at' => $task->created_at?->format('Y-m-d') ?? '-',
                 'archive_html' => $isArchived 

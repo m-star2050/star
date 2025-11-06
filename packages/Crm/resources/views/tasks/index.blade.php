@@ -481,7 +481,12 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Assigned User</label>
-                                <input type="number" id="filterAssigned" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" autocomplete="off" placeholder="User ID" onkeydown="if(event.key==='Enter'){event.preventDefault();return false;}">
+                                <select id="filterAssigned" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                                    <option value="">All Users</option>
+                                    @foreach($users ?? [] as $user)
+                                        <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                    @endforeach
+                                </select>
                             </div>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
@@ -664,16 +669,31 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Assigned User ID</label>
-                    <input name="assigned_user_id" id="createAssigned" type="number" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="User ID">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Assigned To</label>
+                    <select name="assigned_user_id" id="createAssigned" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                        <option value="">-- Select User --</option>
+                        @foreach($users ?? [] as $user)
+                            <option value="{{ $user->id }}">{{ $user->name }} ({{ $user->email }})</option>
+                        @endforeach
+                    </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Contact ID</label>
-                    <input name="contact_id" id="createContact" type="number" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="Contact ID">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Linked To Contact</label>
+                    <select name="contact_id" id="createContact" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                        <option value="">-- Select Contact --</option>
+                        @foreach($contacts ?? [] as $contact)
+                            <option value="{{ $contact->id }}">{{ $contact->name }}@if($contact->company) - {{ $contact->company }}@endif</option>
+                        @endforeach
+                    </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Lead ID</label>
-                    <input name="lead_id" id="createLead" type="number" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="Lead ID">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Linked To Lead</label>
+                    <select name="lead_id" id="createLead" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                        <option value="">-- Select Lead --</option>
+                        @foreach($leads ?? [] as $lead)
+                            <option value="{{ $lead->id }}">{{ $lead->name }}@if($lead->company) - {{ $lead->company }}@endif</option>
+                        @endforeach
+                    </select>
                 </div>
                 <div class="md:col-span-2">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Notes</label>
@@ -731,16 +751,31 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Assigned User ID</label>
-                    <input name="assigned_user_id" id="editAssigned" type="number" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="User ID" x-model="editAssigned">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Assigned To</label>
+                    <select name="assigned_user_id" id="editAssigned" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" x-model="editAssigned">
+                        <option value="">-- Select User --</option>
+                        @foreach($users ?? [] as $user)
+                            <option value="{{ $user->id }}">{{ $user->name }} ({{ $user->email }})</option>
+                        @endforeach
+                    </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Contact ID</label>
-                    <input name="contact_id" id="editContact" type="number" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="Contact ID" x-model="editContact">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Linked To Contact</label>
+                    <select name="contact_id" id="editContact" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" x-model="editContact">
+                        <option value="">-- Select Contact --</option>
+                        @foreach($contacts ?? [] as $contact)
+                            <option value="{{ $contact->id }}">{{ $contact->name }}@if($contact->company) - {{ $contact->company }}@endif</option>
+                        @endforeach
+                    </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Lead ID</label>
-                    <input name="lead_id" id="editLead" type="number" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="Lead ID" x-model="editLead">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Linked To Lead</label>
+                    <select name="lead_id" id="editLead" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" x-model="editLead">
+                        <option value="">-- Select Lead --</option>
+                        @foreach($leads ?? [] as $lead)
+                            <option value="{{ $lead->id }}">{{ $lead->name }}@if($lead->company) - {{ $lead->company }}@endif</option>
+                        @endforeach
+                    </select>
                 </div>
                 <div class="md:col-span-2">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Notes</label>
