@@ -333,6 +333,29 @@
         #reportsTable th.sorting_desc {
             white-space: nowrap;
         }
+        
+        .chart-type-btn {
+            color: #6b7280;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .chart-type-btn:hover {
+            color: #2563eb;
+            background: rgba(37, 99, 235, 0.1);
+        }
+        
+        .chart-type-btn.active {
+            color: #2563eb;
+            background: rgba(37, 99, 235, 0.2);
+            font-weight: 600;
+        }
+        
+        .chart-type-btn svg {
+            display: inline-block;
+            vertical-align: middle;
+        }
     </style>
 </head>
 <body>
@@ -484,13 +507,39 @@
                 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                     <div class="glass-card rounded-2xl p-6">
-                        <h3 class="text-lg font-bold text-gray-800 mb-4">Deals Won vs Lost</h3>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-bold text-gray-800">Deals Won vs Lost</h3>
+                            <div class="flex items-center gap-2 bg-white/30 rounded-lg p-1">
+                                <button type="button" class="chart-type-btn px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-200" data-chart="dealsChart" data-type="pie" title="Pie Chart">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" d="M20.488 9H11V3.512A9.025 9.025 0 019.512 20.488z"/></svg>
+                                </button>
+                                <button type="button" class="chart-type-btn px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-200" data-chart="dealsChart" data-type="bar" title="Bar Chart">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                                </button>
+                                <button type="button" class="chart-type-btn px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-200" data-chart="dealsChart" data-type="line" title="Line Chart">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
+                                </button>
+                            </div>
+                        </div>
                         <div class="h-64">
                             <canvas id="dealsChart"></canvas>
                         </div>
                     </div>
                     <div class="glass-card rounded-2xl p-6">
-                        <h3 class="text-lg font-bold text-gray-800 mb-4">Revenue by Stage</h3>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-bold text-gray-800">Revenue by Stage</h3>
+                            <div class="flex items-center gap-2 bg-white/30 rounded-lg p-1">
+                                <button type="button" class="chart-type-btn px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-200" data-chart="revenueChart" data-type="pie" title="Pie Chart">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" d="M20.488 9H11V3.512A9.025 9.025 0 019.512 20.488z"/></svg>
+                                </button>
+                                <button type="button" class="chart-type-btn px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-200" data-chart="revenueChart" data-type="bar" title="Bar Chart">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                                </button>
+                                <button type="button" class="chart-type-btn px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-200" data-chart="revenueChart" data-type="line" title="Line Chart">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
+                                </button>
+                            </div>
+                        </div>
                         <div class="h-64">
                             <canvas id="revenueChart"></canvas>
                         </div>
@@ -639,6 +688,14 @@ $.ajaxSetup({
 let dealsChart = null;
 let revenueChart = null;
 let chartsLoaded = false;
+let dealsChartType = 'pie';
+let revenueChartType = 'pie';
+
+// Initialize chart type button active states
+function updateChartTypeButtons(chartName, activeType) {
+    $('.chart-type-btn[data-chart="' + chartName + '"]').removeClass('active');
+    $('.chart-type-btn[data-chart="' + chartName + '"][data-type="' + activeType + '"]').addClass('active');
+}
 
 function loadDashboardData() {
     const filterData = {
@@ -667,11 +724,91 @@ function loadDashboardData() {
     });
 }
 
-function loadCharts() {
-    if (chartsLoaded && dealsChart && revenueChart) {
-        return;
+// Function to create chart based on type
+function createChart(ctx, type, labels, data, colors, isRevenue = false) {
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: {
+            duration: 1000
+        },
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        },
+        interaction: {
+            intersect: false
+        }
+    };
+
+    // Pie chart specific options
+    if (type === 'pie') {
+        baseOptions.animation.animateRotate = true;
+        baseOptions.animation.animateScale = false;
     }
 
+    // Bar and Line chart specific options
+    if (type === 'bar' || type === 'line') {
+        baseOptions.scales = {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        if (isRevenue) {
+                            return '$' + parseFloat(value).toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+                        }
+                        return value;
+                    }
+                }
+            }
+        };
+    }
+
+    // Tooltip customization for revenue charts
+    if (isRevenue) {
+        baseOptions.plugins.tooltip = {
+            callbacks: {
+                label: function(context) {
+                    const label = context.label || '';
+                    let value;
+                    if (type === 'pie') {
+                        value = '$' + parseFloat(context.parsed).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    } else {
+                        value = '$' + parseFloat(context.parsed.y || context.parsed).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    }
+                    return label + ': ' + value;
+                }
+            }
+        };
+    }
+
+    const chartData = {
+        labels: labels,
+        datasets: [{
+            data: data,
+            backgroundColor: colors,
+            borderWidth: 2,
+            borderColor: type === 'pie' ? '#fff' : colors.map(c => c.replace('0.6', '1')),
+            ...(type === 'line' && {
+                borderWidth: 3,
+                fill: false,
+                tension: 0.4
+            }),
+            ...(type === 'bar' && {
+                borderRadius: 4
+            })
+        }]
+    };
+
+    return new Chart(ctx, {
+        type: type,
+        data: chartData,
+        options: baseOptions
+    });
+}
+
+function loadCharts() {
     const filterData = {
         date_from: $('#filterDateFrom').val() || '',
         date_to: $('#filterDateTo').val() || '',
@@ -686,6 +823,7 @@ function loadCharts() {
         return;
     }
 
+    // Destroy existing charts
     if (dealsChart) {
         dealsChart.destroy();
         dealsChart = null;
@@ -698,9 +836,9 @@ function loadCharts() {
 
     let dealsChartCreated = false;
     let revenueChartCreated = false;
-
     const currentScrollY = window.scrollY;
 
+    // Load Deals Chart
     $.ajax({
         url: '{{ route('crm.reports.chart-data') }}',
         method: 'GET',
@@ -708,36 +846,14 @@ function loadCharts() {
         success: function(response) {
             if (response.success && response.data && dealsCtx) {
                 try {
-                    dealsChart = new Chart(dealsCtx, {
-                        type: 'pie',
-                        data: {
-                            labels: response.data.labels,
-                            datasets: [{
-                                data: response.data.values,
-                                backgroundColor: response.data.colors,
-                                borderWidth: 2,
-                                borderColor: '#fff'
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            animation: {
-                                animateRotate: true,
-                                animateScale: false,
-                                duration: 1000
-                            },
-                            plugins: {
-                                legend: {
-                                    position: 'bottom'
-                                }
-                            },
-                            onResize: null,
-                            interaction: {
-                                intersect: false
-                            }
-                        }
-                    });
+                    dealsChart = createChart(
+                        dealsCtx,
+                        dealsChartType,
+                        response.data.labels,
+                        response.data.values,
+                        response.data.colors,
+                        false
+                    );
                     dealsChartCreated = true;
                     window.scrollTo(0, currentScrollY);
                     if (dealsChartCreated && revenueChartCreated) {
@@ -756,6 +872,7 @@ function loadCharts() {
         }
     });
 
+    // Load Revenue Chart
     $.ajax({
         url: '{{ route('crm.reports.chart-data') }}',
         method: 'GET',
@@ -764,45 +881,14 @@ function loadCharts() {
             if (response.success && response.data && revenueCtx) {
                 try {
                     const colors = ['rgba(37, 99, 235, 0.6)', 'rgba(59, 130, 246, 0.6)', 'rgba(251, 191, 36, 0.6)', 'rgba(16, 185, 129, 0.6)', 'rgba(239, 68, 68, 0.6)'];
-                    revenueChart = new Chart(revenueCtx, {
-                        type: 'pie',
-                        data: {
-                            labels: response.data.map(item => item.stage),
-                            datasets: [{
-                                data: response.data.map(item => item.revenue),
-                                backgroundColor: colors.slice(0, response.data.length),
-                                borderWidth: 2,
-                                borderColor: '#fff'
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            animation: {
-                                animateRotate: true,
-                                animateScale: false,
-                                duration: 1000
-                            },
-                            plugins: {
-                                legend: {
-                                    position: 'bottom'
-                                },
-                                tooltip: {
-                                    callbacks: {
-                                        label: function(context) {
-                                            const label = context.label || '';
-                                            const value = '$' + parseFloat(context.parsed).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                                            return label + ': ' + value;
-                                        }
-                                    }
-                                }
-                            },
-                            onResize: null,
-                            interaction: {
-                                intersect: false
-                            }
-                        }
-                    });
+                    revenueChart = createChart(
+                        revenueCtx,
+                        revenueChartType,
+                        response.data.map(item => item.stage),
+                        response.data.map(item => item.revenue),
+                        colors.slice(0, response.data.length),
+                        true
+                    );
                     revenueChartCreated = true;
                     window.scrollTo(0, currentScrollY);
                     if (dealsChartCreated && revenueChartCreated) {
@@ -824,7 +910,6 @@ function loadCharts() {
 
 function reloadCharts() {
     const currentScrollY = window.scrollY;
-    chartsLoaded = false;
     if (dealsChart) {
         dealsChart.destroy();
         dealsChart = null;
@@ -833,6 +918,7 @@ function reloadCharts() {
         revenueChart.destroy();
         revenueChart = null;
     }
+    chartsLoaded = false;
     loadCharts();
     setTimeout(function() {
         window.scrollTo(0, currentScrollY);
@@ -853,6 +939,11 @@ function initCharts() {
         const currentScrollY = window.scrollY;
         loadCharts();
         setTimeout(function() {
+            // Initialize button states after charts load
+            if (typeof updateChartTypeButtons === 'function') {
+                updateChartTypeButtons('dealsChart', dealsChartType);
+                updateChartTypeButtons('revenueChart', revenueChartType);
+            }
             window.scrollTo(0, currentScrollY);
         }, 50);
     }
@@ -1126,6 +1217,30 @@ $(document).ready(function() {
             e.stopPropagation();
             $('#applyFilters').click();
         }
+    });
+
+    // Set initial active states (will be updated after charts load)
+    setTimeout(function() {
+        updateChartTypeButtons('dealsChart', dealsChartType);
+        updateChartTypeButtons('revenueChart', revenueChartType);
+    }, 2000);
+
+    // Chart type button click handlers
+    $(document).on('click', '.chart-type-btn', function() {
+        const btn = $(this);
+        const chartName = btn.data('chart');
+        const chartType = btn.data('type');
+
+        if (chartName === 'dealsChart') {
+            dealsChartType = chartType;
+            updateChartTypeButtons('dealsChart', chartType);
+        } else if (chartName === 'revenueChart') {
+            revenueChartType = chartType;
+            updateChartTypeButtons('revenueChart', chartType);
+        }
+
+        // Reload charts with new type
+        reloadCharts();
     });
 
     $('#exportBtn').on('click', function() {
