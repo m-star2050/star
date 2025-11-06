@@ -1503,11 +1503,16 @@ $(document).ready(function() {
         const originalHtml = btn.html();
         btn.prop('disabled', true).html('<span>Converting...</span>');
         
+        const csrfToken = $('meta[name="csrf-token"]').attr('content');
+        
         $.ajax({
             url: '/crm/leads/' + currentConvertLeadId + '/convert-to-contact',
             method: 'POST',
+            data: {
+                _token: csrfToken
+            },
             headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'X-CSRF-TOKEN': csrfToken,
                 'X-Requested-With': 'XMLHttpRequest',
                 'Accept': 'application/json'
             },
@@ -1526,7 +1531,12 @@ $(document).ready(function() {
             },
             error: function(xhr) {
                 btn.prop('disabled', false).html(originalHtml);
-                const errorMsg = xhr.responseJSON?.message || 'Error converting lead to contact.';
+                let errorMsg = 'Error converting lead to contact.';
+                if (xhr.status === 419) {
+                    errorMsg = 'Session expired. Please refresh the page and try again.';
+                } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMsg = xhr.responseJSON.message;
+                }
                 showNotification(errorMsg, 'error');
             }
         });
@@ -1545,11 +1555,16 @@ $(document).ready(function() {
         const originalHtml = btn.html();
         btn.prop('disabled', true).html('<span>Converting...</span>');
         
+        const csrfToken = $('meta[name="csrf-token"]').attr('content');
+        
         $.ajax({
             url: '/crm/leads/' + currentConvertLeadId + '/convert-to-deal',
             method: 'POST',
+            data: {
+                _token: csrfToken
+            },
             headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'X-CSRF-TOKEN': csrfToken,
                 'X-Requested-With': 'XMLHttpRequest',
                 'Accept': 'application/json'
             },
@@ -1568,7 +1583,12 @@ $(document).ready(function() {
             },
             error: function(xhr) {
                 btn.prop('disabled', false).html(originalHtml);
-                const errorMsg = xhr.responseJSON?.message || 'Error converting lead to deal.';
+                let errorMsg = 'Error converting lead to deal.';
+                if (xhr.status === 419) {
+                    errorMsg = 'Session expired. Please refresh the page and try again.';
+                } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMsg = xhr.responseJSON.message;
+                }
                 showNotification(errorMsg, 'error');
             }
         });
