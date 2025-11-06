@@ -602,15 +602,6 @@
                                 </th>
                                 <th class="p-3 font-semibold tracking-widest text-center">
                                     <div class="flex items-center justify-center gap-2">
-                                        <span>Contact</span>
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                            <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
-                                            <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
-                                        </svg>
-                                    </div>
-                                </th>
-                                <th class="p-3 font-semibold tracking-widest text-center">
-                                    <div class="flex items-center justify-center gap-2">
                                         <span>Created</span>
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                             <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
@@ -641,7 +632,6 @@
                                         <div class="font-semibold text-gray-900 mb-2" x-text="card.deal_name"></div>
                                         <div class="text-sm text-gray-600 mb-1"><span class="font-medium">Value:</span> <span x-text="card.value"></span></div>
                                         <div class="text-sm text-gray-600 mb-1"><span class="font-medium">Company:</span> <span x-text="card.company"></span></div>
-                                        <div class="text-sm text-gray-600 mb-1"><span class="font-medium">Contact:</span> <span x-text="card.contact"></span></div>
                                         <div class="text-sm text-gray-600 mb-1"><span class="font-medium">Probability:</span> <span x-text="card.probability"></span></div>
                                         <div class="text-sm text-gray-600 mb-2"><span class="font-medium">Owner:</span> <span x-text="card.owner"></span></div>
                                         <div class="flex gap-2 mt-2">
@@ -928,15 +918,12 @@ $(document).ready(function() {
             { data: 'company', name: 'company', render: function(data) {
                 return '<span class="text-gray-700">' + (data || '-') + '</span>';
             }},
-            { data: 'contact', name: 'contact_id', render: function(data) {
-                return '<span class="text-gray-700">' + (data || '-') + '</span>';
-            }},
             { data: 'created_at', name: 'created_at', render: function(data) {
                 return '<span class="text-gray-700">' + (data || '-') + '</span>';
             }},
             { data: 'actions_html', name: 'actions', orderable: false, searchable: false }
         ],
-        order: [[9, 'desc']],
+        order: [[8, 'desc']],
         pageLength: 10,
         dom: '<"top"f>rt<"bottom"lip><"clear">',
         pagingType: 'simple_numbers',
