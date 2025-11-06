@@ -557,14 +557,6 @@
                                 </th>
                                 <th class="p-3 font-semibold tracking-widest text-center">
                                     <div class="flex items-center justify-center gap-2">
-                                        <span>Contact</span>
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                            <path d="M10.707 1.293a1 1 0 00-1.414 0l-7 7A1 1 0 003 10h1v7a1 1 0 001 1h4v-4h2v4h4a1 1 0 001-1v-7h1a1 1 0 00.707-1.707l-7-7z"/>
-                                        </svg>
-                                    </div>
-                                </th>
-                                <th class="p-3 font-semibold tracking-widest text-center">
-                                    <div class="flex items-center justify-center gap-2">
                                         <span>Lead</span>
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                             <path d="M3 3h2l.4 2M7 13h8l2-8H5.4M7 13L6 6m1 7l-1 4m8-4l1 4m-5-4v4"/>
@@ -848,9 +840,6 @@ $(document).ready(function() {
             { data: 'assigned', name: 'assigned_user_id', render: function(data) {
                 return '<span class="text-gray-700">' + (data || '-') + '</span>';
             }},
-            { data: 'contact', name: 'contact_id', render: function(data) {
-                return '<span class="text-gray-700">' + (data || '-') + '</span>';
-            }},
             { data: 'lead', name: 'lead_id', render: function(data) {
                 return '<span class="text-gray-700">' + (data || '-') + '</span>';
             }},
@@ -859,7 +848,7 @@ $(document).ready(function() {
             }},
             { data: 'actions_html', name: 'actions', orderable: false, searchable: false }
         ],
-        order: [[9, 'desc']],
+        order: [[8, 'desc']],
         pageLength: 10,
         dom: '<"top"f>rt<"bottom"lip><"clear">',
         pagingType: 'simple_numbers',
