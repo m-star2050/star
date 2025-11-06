@@ -666,7 +666,7 @@
                     <h2 class="text-2xl font-bold text-gray-800">Edit Contact</h2>
                     <p class="text-sm text-gray-500 mt-1">Update contact information</p>
                 </div>
-                <button type="button" @click="showEdit=false" class="text-gray-400 hover:text-gray-600 transition-colors">
+                <button type="button" class="close-edit-btn text-gray-400 hover:text-gray-600 transition-colors" @click="showEdit=false">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
             </div>
@@ -1322,6 +1322,14 @@ $(document).ready(function() {
             return false;
         });
         
+        $('.close-edit-btn').off('click').on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            closeModal('showEdit');
+            return false;
+        });
+        
         $('.cancel-delete-btn').off('click').on('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
@@ -1348,6 +1356,14 @@ $(document).ready(function() {
     });
     
     $(document).off('click', '.cancel-edit-btn').on('click', '.cancel-edit-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        closeModal('showEdit');
+        return false;
+    });
+    
+    $(document).off('click', '.close-edit-btn').on('click', '.close-edit-btn', function(e) {
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
