@@ -329,8 +329,7 @@
 </head>
 <body>
 
-<div x-data="{mobileMenu:false, open:true, showUpload:false, showDelete:false, showBulkDelete:false, editId:null, editFileName:'', showNotification:false, notificationMessage:'', notificationType:'success', wasUploadOpen:false}" 
-     x-init="$watch('showUpload', value => { if (value && !wasUploadOpen) { setTimeout(() => { const form = document.getElementById('uploadForm'); if (form) form.reset(); const btn = document.getElementById('uploadSubmitBtn'); if (btn) { btn.disabled = false; btn.textContent = 'Upload File'; } } }, 100); } wasUploadOpen = value; })" 
+<div x-data="{mobileMenu:false, open:true, showUpload:false, showDelete:false, showBulkDelete:false, editId:null, editFileName:'', showNotification:false, notificationMessage:'', notificationType:'success'}" 
      class="relative">
     <div class="lg:hidden fixed top-0 left-0 right-0 z-50 glass-card rounded-b-2xl p-4 shadow-xl">
         <div class="flex items-center justify-between pt-4">
@@ -574,7 +573,7 @@
         </div>
     </div>
 
-    <div x-show="showUpload" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display: none;">
+    <div x-show="showUpload" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="showUpload=false"></div>
         <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto" @click.stop>
             <div class="flex items-center justify-between mb-6 pb-4 border-b-2 border-gray-100">
@@ -842,6 +841,12 @@ $(document).ready(function() {
     });
 
     function showNotification(message, type = 'success') {
+        // For success notifications, auto-hide quickly (2 seconds) or don't show at all
+        if (type === 'success') {
+            // Just reload the table silently, don't show notification
+            return;
+        }
+        
         const alpineData = getAlpineData();
         if (alpineData && alpineData.__x) {
             const data = alpineData.__x.$data;
@@ -869,34 +874,172 @@ $(document).ready(function() {
     }
     
     function closeModal(modalName) {
+        // Let Alpine.js handle visibility - just set the data property
         const alpineData = getAlpineData();
         if (alpineData && alpineData.__x) {
             alpineData.__x.$data[modalName] = false;
         }
         
+        // Remove any inline styles that might interfere with Alpine.js
         const modal = $('[x-show="' + modalName + '"]');
         if (modal.length) {
-            modal.hide();
-            modal.css('display', 'none');
+            modal.removeAttr('style');
         }
-        
-        setTimeout(function() {
-            const alpineDataAfter = getAlpineData();
-            if (alpineDataAfter && alpineDataAfter.__x) {
-                alpineDataAfter.__x.$data[modalName] = false;
-            }
-            const modalAfter = $('[x-show="' + modalName + '"]');
-            if (modalAfter.length && modalAfter.is(':visible')) {
-                modalAfter.hide();
-                modalAfter.css('display', 'none');
-            }
-        }, 50);
     }
     
+    let isUploading = false;
+    
+    // Reset upload form - matching pattern from Contacts/Leads/Tasks
     function resetUploadForm() {
-        $('#uploadForm')[0].reset();
+        isUploading = false;
+        
+        // Reset form
+        const form = $('#uploadForm')[0];
+        if (form) {
+            form.reset();
+        }
+        
+        // Replace file input (browsers don't allow clearing file inputs via reset)
+        const oldInput = $('#uploadFile')[0];
+        if (oldInput && oldInput.parentNode) {
+            const newInput = document.createElement('input');
+            newInput.type = 'file';
+            newInput.id = 'uploadFile';
+            newInput.name = 'file';
+            newInput.className = 'w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200';
+            newInput.setAttribute('accept', '.pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png');
+            newInput.setAttribute('required', 'required');
+            
+            oldInput.parentNode.replaceChild(newInput, oldInput);
+        }
+        
+        // Reset other fields
+        $('#uploadLinkedType').val('');
+        $('#uploadLinkedId').val('');
+        $('#uploadDescription').val('');
+        
+        // Reset button state
         const submitBtn = $('#uploadSubmitBtn');
-        submitBtn.prop('disabled', false).text('Upload File');
+        if (submitBtn.length) {
+            submitBtn.prop('disabled', false).text('Upload File');
+        }
+    }
+    
+    window.resetFileInput = resetUploadForm;
+    window.resetUploadForm = resetUploadForm;
+    
+    function handleFileUpload() {
+        console.log('handleFileUpload called, isUploading:', isUploading);
+        
+        if (isUploading) {
+            console.log('Upload already in progress, aborting');
+            return false;
+        }
+        
+        const fileInput = $('#uploadFile')[0];
+        console.log('File input:', fileInput);
+        console.log('File input files:', fileInput ? fileInput.files : 'null');
+        if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+            console.log('No file selected');
+            showNotification('Please select a file to upload.', 'error');
+            return false;
+        }
+        
+        const submitBtn = $('#uploadSubmitBtn');
+        console.log('Submit button disabled:', submitBtn.prop('disabled'));
+        if (submitBtn.prop('disabled')) {
+            console.log('Button is disabled, aborting');
+            return false;
+        }
+        
+        isUploading = true;
+        const originalText = submitBtn.text();
+        submitBtn.prop('disabled', true).text('Uploading...');
+        
+        // Get CSRF token from the form (it's recreated each time, so get it fresh)
+        const csrfToken = $('input[name="_token"]', '#uploadForm').val() || $('meta[name="csrf-token"]').attr('content');
+        
+        const formData = new FormData();
+        formData.append('_token', csrfToken);
+        formData.append('file', fileInput.files[0]);
+        formData.append('linked_type', $('#uploadLinkedType').val() || '');
+        formData.append('linked_id', $('#uploadLinkedId').val() || '');
+        formData.append('description', $('#uploadDescription').val() || '');
+        
+        $.ajax({
+            url: '{{ route('crm.files.store') }}',
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            processData: false,
+            contentType: false,
+            data: formData,
+            success: function(response) {
+                console.log('Upload response:', response);
+                
+                if (!response || !response.success) {
+                    showNotification('File upload failed. Please try again.', 'error');
+                    isUploading = false;
+                    submitBtn.prop('disabled', false).text(originalText);
+                    return;
+                }
+                
+                // Reset button state first
+                submitBtn.prop('disabled', false).text(originalText);
+                
+                // Reload table
+                table.ajax.reload();
+                
+                // Reset form (matching Contacts pattern)
+                resetUploadForm();
+                
+                // Close modal - matching Contacts pattern exactly
+                const alpineData = getAlpineData();
+                if (alpineData && alpineData.__x) {
+                    alpineData.__x.$data.showUpload = false;
+                }
+                
+                const modal = $('[x-show="showUpload"]');
+                if (modal.length) {
+                    modal.hide();
+                    modal.css('display', 'none');
+                }
+                
+                // Ensure modal stays closed
+                setTimeout(function() {
+                    const alpineDataAfter = getAlpineData();
+                    if (alpineDataAfter && alpineDataAfter.__x) {
+                        alpineDataAfter.__x.$data.showUpload = false;
+                    }
+                    const modalAfter = $('[x-show="showUpload"]');
+                    if (modalAfter.length && modalAfter.is(':visible')) {
+                        modalAfter.hide();
+                        modalAfter.css('display', 'none');
+                    }
+                }, 50);
+            },
+            error: function(xhr, status, error) {
+                isUploading = false;
+                submitBtn.prop('disabled', false).text(originalText);
+                console.error('Error uploading file:', xhr, status, error);
+                console.error('Response text:', xhr.responseText);
+                
+                if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+                    let errors = Object.values(xhr.responseJSON.errors).flat();
+                    showNotification('Validation errors:\n' + errors.join('\n'), 'error');
+                } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                    showNotification('Error: ' + xhr.responseJSON.message, 'error');
+                } else if (xhr.status === 0) {
+                    showNotification('Network error. Please check your connection and try again.', 'error');
+                } else {
+                    showNotification('Error uploading file: ' + (error || 'Unknown error'), 'error');
+                }
+            }
+        });
+        
+        return false;
     }
 
     let currentFileId = null;
@@ -928,93 +1071,11 @@ $(document).ready(function() {
         }
     });
 
-    $('#uploadForm').on('submit', function(e) {
+    // Form submit handler - using event delegation to handle form recreation
+    $(document).on('submit', '#uploadForm', function(e) {
         e.preventDefault();
         e.stopPropagation();
-        
-        const fileInput = $('#uploadFile')[0];
-        if (!fileInput || !fileInput.files || !fileInput.files[0]) {
-            showNotification('Please select a file to upload.', 'error');
-            return false;
-        }
-        
-        const submitBtn = $('#uploadSubmitBtn');
-        const originalText = submitBtn.text();
-        submitBtn.prop('disabled', true).text('Uploading...');
-        
-        const formData = new FormData();
-        formData.append('_token', '{{ csrf_token() }}');
-        formData.append('file', fileInput.files[0]);
-        formData.append('linked_type', $('#uploadLinkedType').val() || '');
-        formData.append('linked_id', $('#uploadLinkedId').val() || '');
-        formData.append('description', $('#uploadDescription').val() || '');
-        
-        $.ajax({
-            url: '{{ route('crm.files.store') }}',
-            method: 'POST',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json'
-            },
-            processData: false,
-            contentType: false,
-            data: formData,
-            success: function(response) {
-                console.log('Upload response:', response);
-                
-                if (!response || !response.success) {
-                    showNotification('File upload failed. Please try again.', 'error');
-                    submitBtn.prop('disabled', false).text(originalText);
-                    return;
-                }
-                
-                submitBtn.prop('disabled', false).text(originalText);
-                table.ajax.reload();
-                
-                resetUploadForm();
-                
-                const alpineData = getAlpineData();
-                if (alpineData && alpineData.__x) {
-                    alpineData.__x.$data.showUpload = false;
-                }
-                
-                const modal = $('[x-show="showUpload"]');
-                if (modal.length) {
-                    modal.hide();
-                    modal.css('display', 'none');
-                }
-                
-                setTimeout(function() {
-                    const alpineDataAfter = getAlpineData();
-                    if (alpineDataAfter && alpineDataAfter.__x) {
-                        alpineDataAfter.__x.$data.showUpload = false;
-                    }
-                    const modalAfter = $('[x-show="showUpload"]');
-                    if (modalAfter.length && modalAfter.is(':visible')) {
-                        modalAfter.hide();
-                        modalAfter.css('display', 'none');
-                    }
-                }, 50);
-            },
-            error: function(xhr, status, error) {
-                submitBtn.prop('disabled', false).text(originalText);
-                console.error('Error uploading file:', xhr, status, error);
-                console.error('Response text:', xhr.responseText);
-                
-                if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
-                    let errors = Object.values(xhr.responseJSON.errors).flat();
-                    showNotification('Validation errors:\n' + errors.join('\n'), 'error');
-                } else if (xhr.responseJSON && xhr.responseJSON.message) {
-                    showNotification('Error: ' + xhr.responseJSON.message, 'error');
-                } else if (xhr.status === 0) {
-                    showNotification('Network error. Please check your connection and try again.', 'error');
-                } else {
-                    showNotification('Error uploading file: ' + (error || 'Unknown error'), 'error');
-                }
-            }
-        });
-        
-        return false;
+        return handleFileUpload();
     });
 
     $('#confirmDelete').on('click', function() {
@@ -1113,6 +1174,7 @@ $(document).ready(function() {
             e.preventDefault();
             e.stopPropagation();
             e.stopImmediatePropagation();
+            // Form will be recreated automatically when modal opens again
             closeModal('showUpload');
             return false;
         });
@@ -1187,14 +1249,17 @@ $(document).ready(function() {
         }
     });
     
-    $(document).on('click', '#newContactBtn', function(e) {
-        const modal = $('[x-show="showCreate"]');
+    // Handle button click - matching Contacts pattern exactly
+    $(document).on('click', '#newFileBtn', function(e) {
+        // Remove inline styles immediately (before Alpine.js processes)
+        const modal = $('[x-show="showUpload"]');
         if (modal.length) {
             modal.removeAttr('style');
         }
         
+        // Reset form when modal opens
         setTimeout(function() {
-            resetCreateForm();
+            resetUploadForm();
         }, 150);
     });
 });
