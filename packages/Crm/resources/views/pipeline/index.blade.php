@@ -1228,6 +1228,14 @@ $(document).ready(function() {
             },
             data: formData,
             success: function(response) {
+                console.log('Create deal response:', response);
+                
+                if (!response || !response.success) {
+                    showNotification('Deal creation failed. Please try again.', 'error');
+                    submitBtn.prop('disabled', false).text(originalText);
+                    return;
+                }
+                
                 submitBtn.prop('disabled', false).text(originalText);
                 table.ajax.reload();
                 if (typeof loadKanbanData === 'function') {

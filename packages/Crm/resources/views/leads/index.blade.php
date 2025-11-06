@@ -1107,17 +1107,24 @@ $(document).ready(function() {
         const originalText = submitBtn.text();
         submitBtn.prop('disabled', true).text('Creating...');
         
+        const nameValue = $('#createName').val();
+        if (!nameValue || nameValue.trim() === '') {
+            showNotification('Name is required.', 'error');
+            submitBtn.prop('disabled', false).text(originalText);
+            return false;
+        }
+        
         const formData = {
             _token: '{{ csrf_token() }}',
-            name: $('#createName').val(),
-            email: $('#createEmail').val() || null,
-            company: $('#createCompany').val() || null,
-            source: $('#createSource').val() || null,
+            name: nameValue.trim(),
+            email: $('#createEmail').val() ? $('#createEmail').val().trim() : null,
+            company: $('#createCompany').val() ? $('#createCompany').val().trim() : null,
+            source: $('#createSource').val() ? $('#createSource').val().trim() : null,
             stage: $('#createStage').val() || 'new',
-            assigned_user_id: $('#createAssigned').val() || null,
-            lead_score: $('#createLeadScore').val() || null,
-            tags: $('#createTags').val() ? [$('#createTags').val()] : [],
-            notes: $('#createNotes').val() || null
+            assigned_user_id: $('#createAssigned').val() ? parseInt($('#createAssigned').val()) : null,
+            lead_score: $('#createLeadScore').val() ? parseInt($('#createLeadScore').val()) : null,
+            tags: $('#createTags').val() && $('#createTags').val().trim() ? [$('#createTags').val().trim()] : null,
+            notes: $('#createNotes').val() ? $('#createNotes').val().trim() : null
         };
         
         $.ajax({
@@ -1129,6 +1136,14 @@ $(document).ready(function() {
             },
             data: formData,
             success: function(response) {
+                console.log('Create lead response:', response);
+                
+                if (!response || !response.success) {
+                    showNotification('Lead creation failed. Please try again.', 'error');
+                    submitBtn.prop('disabled', false).text(originalText);
+                    return;
+                }
+                
                 submitBtn.prop('disabled', false).text(originalText);
                 table.ajax.reload();
                 
@@ -1157,16 +1172,20 @@ $(document).ready(function() {
                     }
                 }, 50);
             },
-            error: function(xhr) {
+            error: function(xhr, status, error) {
                 submitBtn.prop('disabled', false).text(originalText);
-                console.error('Error creating lead:', xhr);
-                if (xhr.responseJSON && xhr.responseJSON.errors) {
+                console.error('Error creating lead:', xhr, status, error);
+                console.error('Response text:', xhr.responseText);
+                
+                if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
                     let errors = Object.values(xhr.responseJSON.errors).flat();
                     showNotification('Validation errors:\n' + errors.join('\n'), 'error');
                 } else if (xhr.responseJSON && xhr.responseJSON.message) {
                     showNotification('Error: ' + xhr.responseJSON.message, 'error');
+                } else if (xhr.status === 0) {
+                    showNotification('Network error. Please check your connection and try again.', 'error');
                 } else {
-                    showNotification('Error creating lead. Please try again.', 'error');
+                    showNotification('Error creating lead: ' + (error || 'Unknown error'), 'error');
                 }
             }
         });

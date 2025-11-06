@@ -5,6 +5,7 @@ namespace Packages\Crm\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Log;
 use Packages\Crm\Models\Pipeline;
 use Packages\Crm\Models\Contact;
 
@@ -22,29 +23,51 @@ class PipelineController extends Controller
 
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'deal_name' => ['required', 'string', 'max:255'],
-            'stage' => ['required', Rule::in(['prospect', 'negotiation', 'proposal', 'closed_won', 'closed_lost'])],
-            'value' => ['required', 'numeric', 'min:0'],
-            'owner_user_id' => ['nullable', 'integer'],
-            'close_date' => ['nullable', 'date'],
-            'probability' => ['nullable', 'integer', 'min:0', 'max:100'],
-            'contact_id' => ['nullable', 'integer', 'exists:crm_contacts,id'],
-            'company' => ['nullable', 'string', 'max:255'],
-            'notes' => ['nullable', 'string'],
-        ]);
-
-        $pipeline = Pipeline::create($data);
-        
-        if ($request->ajax()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Deal created successfully',
-                'deal' => $pipeline
+        try {
+            $data = $request->validate([
+                'deal_name' => ['required', 'string', 'max:255'],
+                'stage' => ['required', Rule::in(['prospect', 'negotiation', 'proposal', 'closed_won', 'closed_lost'])],
+                'value' => ['required', 'numeric', 'min:0'],
+                'owner_user_id' => ['nullable', 'integer'],
+                'close_date' => ['nullable', 'date'],
+                'probability' => ['nullable', 'integer', 'min:0', 'max:100'],
+                'contact_id' => ['nullable', 'integer', 'exists:crm_contacts,id'],
+                'company' => ['nullable', 'string', 'max:255'],
+                'notes' => ['nullable', 'string'],
             ]);
+
+            $pipeline = Pipeline::create($data);
+            
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Deal created successfully',
+                    'deal' => $pipeline
+                ]);
+            }
+            
+            return redirect()->route('crm.pipeline.index')->with('status', 'Deal created');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            throw $e;
+        } catch (\Exception $e) {
+            Log::error('Deal creation error: ' . $e->getMessage());
+            
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Deal creation failed: ' . $e->getMessage()
+                ], 500);
+            }
+
+            return redirect()->route('crm.pipeline.index')->with('error', 'Deal creation failed: ' . $e->getMessage());
         }
-        
-        return redirect()->route('crm.pipeline.index')->with('status', 'Deal created');
     }
 
     public function update(Request $request, Pipeline $pipeline)
