@@ -358,7 +358,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 1.293a1 1 0 00-1.414 0l-7 7A1 1 0 003 10h1v7a1 1 0 001 1h4v-4h2v4h4a1 1 0 001-1v-7h1a1 1 0 00.707-1.707l-7-7z"/></svg>
                     <span>Contacts</span>
                 </a>
-                <a href="{{ route('crm.tasks.index') }}" class="sidebar-link {{ request()->routeIs('crm.leads.*') ? 'active' : '' }}">
+                <a href="{{ route('crm.leads.index') }}" class="sidebar-link {{ request()->routeIs('crm.leads.*') ? 'active' : '' }}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M3 3h2l.4 2M7 13h8l2-8H5.4M7 13L6 6m1 7l-1 4m8-4l1 4m-5-4v4"/></svg>
                     <span>Leads</span>
                 </a>
@@ -407,7 +407,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 1.293a1 1 0 00-1.414 0l-7 7A1 1 0 003 10h1v7a1 1 0 001 1h4v-4h2v4h4a1 1 0 001-1v-7h1a1 1 0 00.707-1.707l-7-7z"/></svg>
                 <span x-show="open" x-transition>Contacts</span>
             </a>
-            <a href="{{ route('crm.tasks.index') }}" class="sidebar-link {{ request()->routeIs('crm.leads.*') ? 'active' : '' }}" :class="!open ? 'justify-center px-0' : ''">
+            <a href="{{ route('crm.leads.index') }}" class="sidebar-link {{ request()->routeIs('crm.leads.*') ? 'active' : '' }}" :class="!open ? 'justify-center px-0' : ''">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M3 3h2l.4 2M7 13h8l2-8H5.4M7 13L6 6m1 7l-1 4m8-4l1 4m-5-4v4"/></svg>
                 <span x-show="open" x-transition>Leads</span>
             </a>
@@ -448,47 +448,51 @@
                     </div>
                 </div>
                 <div class="mb-6 glass-card rounded-2xl p-5">
-                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
-                        <div class="md:col-span-5 flex items-center justify-between mb-2">
-                            <div class="font-bold text-lg text-gray-800 tracking-tight flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
-                                Filters
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-3 md:gap-0">
+                        <div class="font-bold text-lg text-gray-800 tracking-tight flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
+                            Filters
+                        </div>
+                        <button type="button" id="applyFilters" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold shadow-md hover:shadow-lg transition-all duration-200 hover:scale-[1.02] w-full md:w-auto">Apply Filters</button>
+                    </div>
+                    <div class="flex flex-col gap-3">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Type</label>
+                                <input type="text" id="filterType" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" autocomplete="off" placeholder="Filter by type" onkeydown="if(event.key==='Enter'){event.preventDefault();return false;}">
                             </div>
-                            <button type="button" id="applyFilters" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold shadow-md hover:shadow-lg transition-all duration-200 hover:scale-[1.02]">Apply Filters</button>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Priority</label>
+                                <select id="filterPriority" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" onkeydown="if(event.key==='Enter'){event.preventDefault();return false;}">
+                                    <option value="">All Priorities</option>
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Status</label>
+                                <select id="filterStatus" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" onkeydown="if(event.key==='Enter'){event.preventDefault();return false;}">
+                                    <option value="">All Status</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="in_progress">In Progress</option>
+                                    <option value="completed">Completed</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Assigned User</label>
+                                <input type="number" id="filterAssigned" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" autocomplete="off" placeholder="User ID" onkeydown="if(event.key==='Enter'){event.preventDefault();return false;}">
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Type</label>
-                            <input type="text" id="filterType" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" autocomplete="off" placeholder="Filter by type">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Priority</label>
-                            <select id="filterPriority" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
-                                <option value="">All Priorities</option>
-                                <option value="low">Low</option>
-                                <option value="medium">Medium</option>
-                                <option value="high">High</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Status</label>
-                            <select id="filterStatus" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
-                                <option value="">All Status</option>
-                                <option value="pending">Pending</option>
-                                <option value="in_progress">In Progress</option>
-                                <option value="completed">Completed</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Assigned User</label>
-                            <input type="number" id="filterAssigned" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" autocomplete="off" placeholder="User ID">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Due Date From</label>
-                            <input type="date" id="filterDueDateFrom" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" autocomplete="off">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Due Date To</label>
-                            <input type="date" id="filterDueDateTo" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" autocomplete="off">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Due Date From</label>
+                                <input type="date" id="filterDueDateFrom" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();return false;}">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Due Date To</label>
+                                <input type="date" id="filterDueDateTo" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();return false;}">
+                            </div>
                         </div>
                     </div>
                 </div>
