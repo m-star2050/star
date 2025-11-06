@@ -446,34 +446,34 @@
                     </div>
                 </div>
                 <div class="mb-6 glass-card rounded-2xl p-5">
-                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
-                        <div class="md:col-span-5 flex items-center justify-between mb-2">
-                            <div class="font-bold text-lg text-gray-800 tracking-tight flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
-                                Filters
-                            </div>
-                            <button type="button" id="applyFilters" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold shadow-md hover:shadow-lg transition-all duration-200 hover:scale-[1.02]">Apply Filters</button>
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-3 md:gap-0">
+                        <div class="font-bold text-lg text-gray-800 tracking-tight flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
+                            Filters
                         </div>
-                        <div>
+                        <button type="button" id="applyFilters" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold shadow-md hover:shadow-lg transition-all duration-200 hover:scale-[1.02] w-full md:w-auto">Apply Filters</button>
+                    </div>
+                    <div class="flex flex-col md:flex-row items-end gap-3">
+                        <div class="w-full md:flex-1">
                             <label class="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">File Type</label>
-                            <input type="text" id="filterFileType" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" autocomplete="off" placeholder="Filter by type">
+                            <input type="text" id="filterFileType" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" autocomplete="off" placeholder="Filter by type" onkeydown="if(event.key==='Enter'){event.preventDefault();return false;}">
                         </div>
-                        <div>
+                        <div class="w-full md:flex-1">
                             <label class="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Linked To</label>
-                            <select id="filterLinkedType" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                            <select id="filterLinkedType" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" onkeydown="if(event.key==='Enter'){event.preventDefault();return false;}">
                                 <option value="">All Types</option>
                                 <option value="contact">Contact</option>
                                 <option value="lead">Lead</option>
                                 <option value="deal">Deal</option>
                             </select>
                         </div>
-                        <div>
+                        <div class="w-full md:flex-1">
                             <label class="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Uploaded From</label>
-                            <input type="date" id="filterUploadedFrom" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" autocomplete="off">
+                            <input type="date" id="filterUploadedFrom" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();return false;}">
                         </div>
-                        <div>
+                        <div class="w-full md:flex-1">
                             <label class="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Uploaded To</label>
-                            <input type="date" id="filterUploadedTo" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" autocomplete="off">
+                            <input type="date" id="filterUploadedTo" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();return false;}">
                         </div>
                     </div>
                 </div>
