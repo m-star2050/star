@@ -331,8 +331,8 @@
 </head>
 <body>
 
-<div x-data="{mobileMenu:false, open:true, showCreate:false, showEdit:false, showDelete:false, showBulkDelete:false, editId:null, editName:'', editEmail:'', editCompany:'', editSource:'', editStage:'new', editAssigned:'', editLeadScore:'', editTags:'', editNotes:'', showNotification:false, notificationMessage:'', notificationType:'success', wasCreateOpen:false}" 
-     x-init="$watch('showCreate', value => { if (value && !wasCreateOpen) { setTimeout(() => { const form = document.getElementById('createForm'); if (form) form.reset(); const stage = document.getElementById('createStage'); if (stage) stage.value = 'new'; const btn = document.getElementById('createSubmitBtn'); if (btn) { btn.disabled = false; btn.textContent = 'Create'; } } }, 100); } wasCreateOpen = value; })" 
+<div x-data="{mobileMenu:false, open:true, showCreate:false, showEdit:false, showDelete:false, showBulkDelete:false, showConvert:false, editId:null, editName:'', editEmail:'', editCompany:'', editSource:'', editStage:'new', editAssigned:'', editLeadScore:'', editTags:'', editNotes:'', convertLeadId:null, convertLeadName:'', showNotification:false, notificationMessage:'', notificationType:'success', wasCreateOpen:false}" 
+     x-init="$watch('showCreate', function(value) { if (value && !wasCreateOpen) { setTimeout(function() { const form = document.getElementById('createForm'); if (form) form.reset(); const stage = document.getElementById('createStage'); if (stage) stage.value = 'new'; const btn = document.getElementById('createSubmitBtn'); if (btn) { btn.disabled = false; btn.textContent = 'Create'; } }, 100); } wasCreateOpen = value; })" 
      class="relative">
     <div class="lg:hidden fixed top-0 left-0 right-0 z-50 glass-card rounded-b-2xl p-4 shadow-xl">
         <div class="flex items-center justify-between pt-4">
@@ -767,6 +767,33 @@
         </div>
     </div>
 
+    <div id="convertModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display: none;">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" id="convertModalBackdrop"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 sm:p-8">
+            <div class="flex items-center gap-4 mb-4">
+                <div class="flex-shrink-0 w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800">Convert Lead</h2>
+                    <p class="text-sm text-gray-600 mt-1">Choose conversion type</p>
+                </div>
+            </div>
+            <p class="text-sm text-gray-700 mb-6 ml-16">Convert lead "<span id="convertLeadNameDisplay" class="font-semibold"></span>" to:</p>
+            <div class="flex flex-col gap-3 pt-4 border-t border-gray-100">
+                <button type="button" id="convertToContact" class="w-full px-6 py-4 rounded-xl border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 text-blue-700 font-semibold shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center gap-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                    <span>Convert to Contact</span>
+                </button>
+                <button type="button" id="convertToDeal" class="w-full px-6 py-4 rounded-xl border-2 border-purple-200 bg-gradient-to-r from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 text-purple-700 font-semibold shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center gap-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                    <span>Convert to Deal</span>
+                </button>
+                <button type="button" class="w-full px-6 py-3 rounded-xl border-2 border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-semibold transition-all duration-200 cancel-convert-btn mt-2">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <div x-show="showNotification" x-transition.opacity class="fixed inset-0 z-[60] flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/50" @click="showNotification=false"></div>
         <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
@@ -997,7 +1024,15 @@ $(document).ready(function() {
     }
 
     function getAlpineData() {
-        return document.querySelector('[x-data]');
+        const element = document.querySelector('[x-data]');
+        if (element && element.__x) {
+            return element;
+        }
+        // Try to find Alpine instance
+        if (window.Alpine && element) {
+            return element;
+        }
+        return element;
     }
     
     function closeModal(modalName) {
@@ -1417,6 +1452,126 @@ $(document).ready(function() {
         e.stopImmediatePropagation();
         closeModal('showBulkDelete');
         return false;
+    });
+
+    // Store current lead ID globally
+    let currentConvertLeadId = null;
+    
+    // Convert Lead handlers
+    $(document).on('click', '.convert-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const btn = $(this);
+        const leadId = btn.data('id');
+        const leadName = btn.data('name');
+        
+        if (!leadId) {
+            showNotification('Lead ID not found.', 'error');
+            return;
+        }
+        
+        // Store globally
+        currentConvertLeadId = leadId;
+        
+        // Update modal display
+        $('#convertLeadNameDisplay').text(leadName || 'Unknown');
+        
+        // Show modal
+        $('#convertModal').css('display', 'flex');
+    });
+
+    // Close modal handlers
+    $(document).on('click', '#convertModalBackdrop, .cancel-convert-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $('#convertModal').hide();
+        currentConvertLeadId = null;
+        return false;
+    });
+
+    $(document).on('click', '#convertToContact', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (!currentConvertLeadId) {
+            showNotification('Lead ID not found.', 'error');
+            return;
+        }
+        
+        const btn = $(this);
+        const originalHtml = btn.html();
+        btn.prop('disabled', true).html('<span>Converting...</span>');
+        
+        $.ajax({
+            url: '/crm/leads/' + currentConvertLeadId + '/convert-to-contact',
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            success: function(response) {
+                btn.prop('disabled', false).html(originalHtml);
+                
+                if (response && response.success) {
+                    if (typeof table !== 'undefined') {
+                        table.ajax.reload();
+                    }
+                    $('#convertModal').hide();
+                    currentConvertLeadId = null;
+                } else {
+                    showNotification(response?.message || 'Conversion failed.', 'error');
+                }
+            },
+            error: function(xhr) {
+                btn.prop('disabled', false).html(originalHtml);
+                const errorMsg = xhr.responseJSON?.message || 'Error converting lead to contact.';
+                showNotification(errorMsg, 'error');
+            }
+        });
+    });
+
+    $(document).on('click', '#convertToDeal', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (!currentConvertLeadId) {
+            showNotification('Lead ID not found.', 'error');
+            return;
+        }
+        
+        const btn = $(this);
+        const originalHtml = btn.html();
+        btn.prop('disabled', true).html('<span>Converting...</span>');
+        
+        $.ajax({
+            url: '/crm/leads/' + currentConvertLeadId + '/convert-to-deal',
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            success: function(response) {
+                btn.prop('disabled', false).html(originalHtml);
+                
+                if (response && response.success) {
+                    if (typeof table !== 'undefined') {
+                        table.ajax.reload();
+                    }
+                    $('#convertModal').hide();
+                    currentConvertLeadId = null;
+                } else {
+                    showNotification(response?.message || 'Conversion failed.', 'error');
+                }
+            },
+            error: function(xhr) {
+                btn.prop('disabled', false).html(originalHtml);
+                const errorMsg = xhr.responseJSON?.message || 'Error converting lead to deal.';
+                showNotification(errorMsg, 'error');
+            }
+        });
     });
 
     $('#applyFilters').on('click', function() {
