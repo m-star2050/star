@@ -200,18 +200,18 @@
             transition: background-color 0.15s ease;
         }
         
-        #leadsTable th:nth-child(3),
-        #leadsTable td:nth-child(3),
-        #leadsTable th:nth-child(4),
-        #leadsTable td:nth-child(4),
-        #leadsTable th:nth-child(5),
-        #leadsTable td:nth-child(5),
-        #leadsTable th:nth-child(6),
-        #leadsTable td:nth-child(6),
-        #leadsTable th:nth-child(7),
-        #leadsTable td:nth-child(7),
-        #leadsTable th:nth-child(8),
-        #leadsTable td:nth-child(8) {
+        #contactsTable th:nth-child(3),
+        #contactsTable td:nth-child(3),
+        #contactsTable th:nth-child(4),
+        #contactsTable td:nth-child(4),
+        #contactsTable th:nth-child(5),
+        #contactsTable td:nth-child(5),
+        #contactsTable th:nth-child(6),
+        #contactsTable td:nth-child(6),
+        #contactsTable th:nth-child(7),
+        #contactsTable td:nth-child(7),
+        #contactsTable th:nth-child(8),
+        #contactsTable td:nth-child(8) {
             padding-left: 0.25rem !important;
             padding-right: 0.25rem !important;
         }
@@ -224,7 +224,7 @@
             border-spacing: 0;
         }
         
-        #leadsTable th,
+        #contactsTable th,
         #leadsTable td {
             white-space: nowrap;
         }
@@ -234,27 +234,27 @@
             overflow-y: visible !important;
         }
         
-        #leadsTable th .flex.items-center {
+        #contactsTable th .flex.items-center {
             justify-content: center;
         }
         
-        #leadsTable th.sorting,
-        #leadsTable th.sorting_asc,
-        #leadsTable th.sorting_desc {
+        #contactsTable th.sorting,
+        #contactsTable th.sorting_asc,
+        #contactsTable th.sorting_desc {
             position: relative;
             padding-right: 2rem !important;
         }
         
-        #leadsTable th.sorting:before,
-        #leadsTable th.sorting:after,
-        #leadsTable th.sorting_asc:before,
-        #leadsTable th.sorting_asc:after,
-        #leadsTable th.sorting_desc:before,
-        #leadsTable th.sorting_desc:after {
+        #contactsTable th.sorting:before,
+        #contactsTable th.sorting:after,
+        #contactsTable th.sorting_asc:before,
+        #contactsTable th.sorting_asc:after,
+        #contactsTable th.sorting_desc:before,
+        #contactsTable th.sorting_desc:after {
             display: none !important;
         }
         
-        #leadsTable th.sorting::after {
+        #contactsTable th.sorting::after {
             content: '';
             position: absolute;
             right: 0.5rem;
@@ -269,7 +269,7 @@
             opacity: 0.5;
         }
         
-        #leadsTable th.sorting::before {
+        #contactsTable th.sorting::before {
             content: '';
             position: absolute;
             right: 0.5rem;
@@ -284,7 +284,7 @@
             opacity: 0.5;
         }
         
-        #leadsTable th.sorting_asc::after {
+        #contactsTable th.sorting_asc::after {
             content: '';
             position: absolute;
             right: 0.5rem;
@@ -299,11 +299,11 @@
             opacity: 1;
         }
         
-        #leadsTable th.sorting_asc::before {
+        #contactsTable th.sorting_asc::before {
             display: none;
         }
         
-        #leadsTable th.sorting_desc::before {
+        #contactsTable th.sorting_desc::before {
             content: '';
             position: absolute;
             right: 0.5rem;
@@ -331,7 +331,7 @@
 </head>
 <body>
 
-<div x-data="{mobileMenu:false, open:true, showCreate:false, showEdit:false, showDelete:false, showBulkDelete:false, showConvert:false, editId:null, editName:'', editCompany:'', editEmail:'', editSource:'', editStage:'new', editAssigned:'', editScore:'', editTags:'', editNotes:'', showNotification:false, notificationMessage:'', notificationType:'success', wasCreateOpen:false}" 
+<div x-data="{mobileMenu:false, open:true, showCreate:false, showEdit:false, showDelete:false, showBulkDelete:false, editId:null, editName:'', editEmail:'', editCompany:'', editSource:'', editStage:'new', editAssigned:'', editLeadScore:'', editTags:'', editNotes:'', showNotification:false, notificationMessage:'', notificationType:'success', wasCreateOpen:false}" 
      x-init="$watch('showCreate', value => { if (value && !wasCreateOpen) { setTimeout(() => { const form = document.getElementById('createForm'); if (form) form.reset(); const stage = document.getElementById('createStage'); if (stage) stage.value = 'new'; const btn = document.getElementById('createSubmitBtn'); if (btn) { btn.disabled = false; btn.textContent = 'Create'; } } }, 100); } wasCreateOpen = value; })" 
      class="relative">
     <div class="lg:hidden fixed top-0 left-0 right-0 z-50 glass-card rounded-b-2xl p-4 shadow-xl">
@@ -435,7 +435,7 @@
             <div class="w-full max-w-[95%] mx-auto px-3 md:px-4 py-3">
                 <div class="glass-card w-full rounded-2xl px-6 py-4 mb-6 flex items-center justify-between">
                     <div class="text-2xl md:text-3xl font-bold text-gray-800 tracking-tight">Leads</div>
-                    <div class="text-sm text-gray-500 font-medium">Manage your lead generation pipeline</div>
+                    <div class="text-sm text-gray-500 font-medium">Manage your leads and prospects</div>
                 </div>
                 <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
                     <div class="flex items-end gap-6 w-full md:max-w-xl">
@@ -457,14 +457,6 @@
                             <button type="button" id="applyFilters" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold shadow-md hover:shadow-lg transition-all duration-200 hover:scale-[1.02]">Apply Filters</button>
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Company</label>
-                            <input type="text" id="filterCompany" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" autocomplete="off" placeholder="Filter by company">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Source</label>
-                            <input type="text" id="filterSource" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" autocomplete="off" placeholder="Filter by source">
-                        </div>
-                        <div>
                             <label class="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Stage</label>
                             <select id="filterStage" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
                                 <option value="">All Stages</option>
@@ -476,20 +468,24 @@
                             </select>
                         </div>
                         <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Source</label>
+                            <input type="text" id="filterSource" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" autocomplete="off" placeholder="Lead source">
+                        </div>
+                        <div>
                             <label class="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Assigned User</label>
                             <input type="number" id="filterAssigned" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" autocomplete="off" placeholder="User ID">
                         </div>
                         <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Date From</label>
+                            <input type="date" id="filterDateFrom" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" autocomplete="off">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Date To</label>
+                            <input type="date" id="filterDateTo" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" autocomplete="off">
+                        </div>
+                        <div>
                             <label class="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Lead Score</label>
-                            <input type="number" id="filterScore" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" autocomplete="off" placeholder="Lead Score">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Created From</label>
-                            <input type="date" id="filterCreatedFrom" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" autocomplete="off">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Created To</label>
-                            <input type="date" id="filterCreatedTo" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" autocomplete="off">
+                            <input type="number" id="filterLeadScore" min="0" max="100" class="w-full border-2 border-white/30 rounded-xl px-4 py-2.5 bg-white/15 backdrop-blur-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" autocomplete="off" placeholder="Min score">
                         </div>
                     </div>
                 </div>
@@ -504,7 +500,7 @@
                     </span>
                 </div>
                 <div class="overflow-x-auto rounded-2xl shadow-2xl glass-card -mx-2 sm:mx-0" style="overflow-x: auto; overflow-y: visible;">
-                    <table id="leadsTable" class="w-full text-sm bg-white/15 backdrop-blur-sm rounded-2xl whitespace-nowrap" style="min-width: 1200px;">
+                    <table id="leadsTable" class="w-full text-sm bg-white/15 backdrop-blur-sm rounded-2xl whitespace-nowrap" style="min-width: 1000px;">
                         <thead class="uppercase bg-white/25 backdrop-blur-sm text-gray-700 rounded-t-2xl border-b-2 border-white/20">
                             <tr>
                                 <th class="p-3 text-center"><input type="checkbox" id="selectAll"></th>
@@ -527,17 +523,9 @@
                                 </th>
                                 <th class="p-3 font-semibold tracking-widest text-center">
                                     <div class="flex items-center justify-center gap-2">
-                                        <span>Company</span>
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd"/>
-                                        </svg>
-                                    </div>
-                                </th>
-                                <th class="p-3 font-semibold tracking-widest text-center">
-                                    <div class="flex items-center justify-center gap-2">
                                         <span>Source</span>
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                                            <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd"/>
                                         </svg>
                                     </div>
                                 </th>
@@ -546,14 +534,6 @@
                                         <span>Stage</span>
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                             <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd"/>
-                                        </svg>
-                                    </div>
-                                </th>
-                                <th class="p-3 font-semibold tracking-widest text-center">
-                                    <div class="flex items-center justify-center gap-2">
-                                        <span>Score</span>
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
                                         </svg>
                                     </div>
                                 </th>
@@ -573,7 +553,6 @@
                                         </svg>
                                     </div>
                                 </th>
-                                <th class="p-3 font-semibold tracking-widest text-center">Status</th>
                                 <th class="p-3 font-semibold tracking-widest text-center">Actions</th>
                             </tr>
                         </thead>
@@ -635,8 +614,8 @@
             <form id="createForm" class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 @csrf
                 <div class="md:col-span-2">
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Full Name <span class="text-red-500">*</span></label>
-                    <input name="name" id="createName" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="Enter full name" required>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Name <span class="text-red-500">*</span></label>
+                    <input name="name" id="createName" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="Enter lead name" required>
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Email</label>
@@ -648,12 +627,12 @@
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Source</label>
-                    <input name="source" id="createSource" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="e.g., Website, Referral">
+                    <input name="source" id="createSource" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="Lead source">
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Stage <span class="text-red-500">*</span></label>
                     <select name="stage" id="createStage" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
-                        <option value="new">New</option>
+                        <option value="new" selected>New</option>
                         <option value="contacted">Contacted</option>
                         <option value="qualified">Qualified</option>
                         <option value="won">Won</option>
@@ -666,7 +645,7 @@
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Lead Score</label>
-                    <input name="lead_score" id="createScore" type="number" min="0" max="100" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="0-100">
+                    <input name="lead_score" id="createLeadScore" type="number" min="0" max="100" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="0-100">
                 </div>
                 <div class="md:col-span-2">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Tags</label>
@@ -700,8 +679,8 @@
                 @csrf
                 @method('PUT')
                 <div class="md:col-span-2">
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Full Name <span class="text-red-500">*</span></label>
-                    <input name="name" id="editName" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="Enter full name" x-model="editName" required>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Name <span class="text-red-500">*</span></label>
+                    <input name="name" id="editName" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="Enter lead name" x-model="editName" required>
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Email</label>
@@ -713,7 +692,7 @@
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Source</label>
-                    <input name="source" id="editSource" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="Source" x-model="editSource">
+                    <input name="source" id="editSource" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="Lead source" x-model="editSource">
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Stage <span class="text-red-500">*</span></label>
@@ -731,7 +710,7 @@
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Lead Score</label>
-                    <input name="lead_score" id="editScore" type="number" min="0" max="100" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="Lead Score" x-model="editScore">
+                    <input name="lead_score" id="editLeadScore" type="number" min="0" max="100" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="0-100" x-model="editLeadScore">
                 </div>
                 <div class="md:col-span-2">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Tags</label>
@@ -765,37 +744,6 @@
             <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
                 <button type="button" class="px-6 py-3 rounded-xl border-2 border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-semibold transition-all duration-200 cancel-delete-btn" @click="showDelete=false">Cancel</button>
                 <button type="button" id="confirmDelete" class="px-6 py-3 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200">Delete Lead</button>
-            </div>
-        </div>
-    </div>
-
-    <div x-show="showConvert" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display: none;">
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="showConvert=false"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 sm:p-8" @click.stop>
-            <div class="flex items-center gap-4 mb-6">
-                <div class="flex-shrink-0 w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                </div>
-                <div>
-                    <h2 class="text-xl font-bold text-gray-800">Convert Lead</h2>
-                    <p class="text-sm text-gray-600 mt-1">Convert lead to contact or deal</p>
-                </div>
-            </div>
-            <p class="text-sm text-gray-700 mb-6 ml-16">Convert "<span x-text="editName"></span>" to Contact or Deal?</p>
-            <div class="flex flex-col gap-3 pt-4 border-t border-gray-100">
-                <form id="convertToContactForm" method="POST">
-                    @csrf
-                    <button type="submit" class="w-full px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200">
-                        Convert to Contact
-                    </button>
-                </form>
-                <form id="convertToDealForm" method="POST">
-                    @csrf
-                    <button type="submit" class="w-full px-6 py-3 rounded-xl bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200">
-                        Convert to Deal
-                    </button>
-                </form>
-                <button type="button" class="px-6 py-3 rounded-xl border-2 border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-semibold transition-all duration-200 cancel-convert-btn" @click="showConvert=false">Cancel</button>
             </div>
         </div>
     </div>
@@ -844,13 +792,12 @@ $(document).ready(function() {
         ajax: {
             url: '{{ route('crm.leads.datatable') }}',
             data: function(d) {
-                d.company = $('#filterCompany').val() || '';
-                d.source = $('#filterSource').val() || '';
                 d.stage = $('#filterStage').val() || '';
+                d.source = $('#filterSource').val() || '';
                 d.assigned_user_id = $('#filterAssigned').val() || '';
-                d.lead_score = $('#filterScore').val() || '';
-                d.created_from = $('#filterCreatedFrom').val() || '';
-                d.created_to = $('#filterCreatedTo').val() || '';
+                d.date_from = $('#filterDateFrom').val() || '';
+                d.date_to = $('#filterDateTo').val() || '';
+                d.lead_score = $('#filterLeadScore').val() || '';
             }
         },
         columns: [
@@ -863,26 +810,19 @@ $(document).ready(function() {
             { data: 'email', name: 'email', render: function(data) {
                 return '<span class="text-gray-700">' + (data || '-') + '</span>';
             }},
-            { data: 'company', name: 'company', render: function(data) {
-                return '<span class="text-gray-700">' + (data || '-') + '</span>';
-            }},
             { data: 'source', name: 'source', render: function(data) {
                 return '<span class="text-gray-700">' + (data || '-') + '</span>';
             }},
             { data: 'stage_html', name: 'stage', orderable: false, searchable: false },
-            { data: 'lead_score', name: 'lead_score', render: function(data) {
-                return '<span class="text-gray-700">' + (data || '-') + '</span>';
-            }},
             { data: 'assigned', name: 'assigned_user_id', render: function(data) {
                 return '<span class="text-gray-700">' + (data || '-') + '</span>';
             }},
             { data: 'created_at', name: 'created_at', render: function(data) {
                 return '<span class="text-gray-700">' + (data || '-') + '</span>';
             }},
-            { data: 'status_html', name: 'status', orderable: false, searchable: false },
             { data: 'actions_html', name: 'actions', orderable: false, searchable: false }
         ],
-        order: [[8, 'desc']],
+        order: [[6, 'desc']],
         pageLength: 10,
         dom: '<"top"f>rt<"bottom"lip><"clear">',
         pagingType: 'simple_numbers',
@@ -920,7 +860,7 @@ $(document).ready(function() {
                     const self = this;
                     searchTimeout = setTimeout(function() {
                         table.search(self.value).draw();
-                    }, 300);
+                    }, 300); 
                 });
                 
                 input.on('input', function() {
@@ -1100,12 +1040,12 @@ $(document).ready(function() {
         }
         
         $('#editName').val(btn.data('name') || '');
-        $('#editCompany').val(btn.data('company') || '');
         $('#editEmail').val(btn.data('email') || '');
+        $('#editCompany').val(btn.data('company') || '');
         $('#editSource').val(btn.data('source') || '');
         $('#editStage').val(btn.data('stage') || 'new');
         $('#editAssigned').val(btn.data('assigned') || '');
-        $('#editScore').val(btn.data('score') || '');
+        $('#editLeadScore').val(btn.data('lead-score') || '');
         $('#editTags').val(btn.data('tags') || '');
         $('#editNotes').val(btn.data('notes') || '');
         
@@ -1114,12 +1054,12 @@ $(document).ready(function() {
             const data = alpineData.__x.$data;
             data.editId = currentLeadId;
             data.editName = btn.data('name') || '';
-            data.editCompany = btn.data('company') || '';
             data.editEmail = btn.data('email') || '';
+            data.editCompany = btn.data('company') || '';
             data.editSource = btn.data('source') || '';
             data.editStage = btn.data('stage') || 'new';
             data.editAssigned = btn.data('assigned') || '';
-            data.editScore = btn.data('score') || '';
+            data.editLeadScore = btn.data('lead-score') || '';
             data.editTags = btn.data('tags') || '';
             data.editNotes = btn.data('notes') || '';
             data.showEdit = true;
@@ -1159,36 +1099,6 @@ $(document).ready(function() {
         }
     });
 
-    $(document).on('click', '.convert-btn', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        const btn = $(this);
-        currentLeadId = btn.data('id');
-        
-        if (!currentLeadId) {
-            showNotification('Lead ID not found.', 'error');
-            return;
-        }
-        
-        const alpineData = getAlpineData();
-        if (alpineData && alpineData.__x) {
-            const data = alpineData.__x.$data;
-            data.editId = currentLeadId;
-            data.editName = btn.data('name') || '';
-            data.showConvert = true;
-        }
-        
-        const convertModal = $('[x-show="showConvert"]');
-        if (convertModal.length) {
-            convertModal.removeAttr('style');
-            convertModal.show();
-            convertModal.css('display', 'flex');
-        }
-        
-        $('#convertToContactForm').attr('action', '{{ route('crm.leads.convert-to-contact','__ID__') }}'.replace('__ID__', currentLeadId));
-        $('#convertToDealForm').attr('action', '{{ route('crm.leads.convert-to-deal','__ID__') }}'.replace('__ID__', currentLeadId));
-    });
-
     $('#createForm').on('submit', function(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -1205,7 +1115,7 @@ $(document).ready(function() {
             source: $('#createSource').val() || null,
             stage: $('#createStage').val() || 'new',
             assigned_user_id: $('#createAssigned').val() || null,
-            lead_score: $('#createScore').val() || null,
+            lead_score: $('#createLeadScore').val() || null,
             tags: $('#createTags').val() ? [$('#createTags').val()] : [],
             notes: $('#createNotes').val() || null
         };
@@ -1284,7 +1194,7 @@ $(document).ready(function() {
             source: $('#editSource').val(),
             stage: $('#editStage').val(),
             assigned_user_id: $('#editAssigned').val(),
-            lead_score: $('#editScore').val(),
+            lead_score: $('#editLeadScore').val(),
             tags: [$('#editTags').val()],
             notes: $('#editNotes').val()
         };
@@ -1366,7 +1276,7 @@ $(document).ready(function() {
         
         const bulkDeleteModal = $('[x-show="showBulkDelete"]');
         if (bulkDeleteModal.length) {
-            bulkDeleteModal.removeAttr('style');
+            bulkDeleteModal.removeAttr('style'); // Remove inline styles so Alpine.js can control visibility
             bulkDeleteModal.show();
             bulkDeleteModal.css('display', 'flex');
         }
@@ -1437,14 +1347,6 @@ $(document).ready(function() {
             closeModal('showBulkDelete');
             return false;
         });
-        
-        $('.cancel-convert-btn').off('click').on('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            e.stopImmediatePropagation();
-            closeModal('showConvert');
-            return false;
-        });
     }, 100);
     
     $(document).off('click', '.cancel-create-btn').on('click', '.cancel-create-btn', function(e) {
@@ -1478,33 +1380,24 @@ $(document).ready(function() {
         closeModal('showBulkDelete');
         return false;
     });
-    
-    $(document).off('click', '.cancel-convert-btn').on('click', '.cancel-convert-btn', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        closeModal('showConvert');
-        return false;
-    });
 
     $('#applyFilters').on('click', function() {
         table.ajax.reload(function() {
-        }, false);
+        }, false); 
     });
 
     $('#resetFilters').on('click', function() {
-        $('#filterCompany').val('');
-        $('#filterSource').val('');
         $('#filterStage').val('');
+        $('#filterSource').val('');
         $('#filterAssigned').val('');
-        $('#filterScore').val('');
-        $('#filterCreatedFrom').val('');
-        $('#filterCreatedTo').val('');
+        $('#filterDateFrom').val('');
+        $('#filterDateTo').val('');
+        $('#filterLeadScore').val('');
         table.search('').draw();
         table.ajax.reload(null, false);
     });
     
-    $('#filterCompany, #filterSource, #filterStage, #filterAssigned, #filterScore, #filterCreatedFrom, #filterCreatedTo').on('keypress', function(e) {
+    $('#filterStage, #filterSource, #filterAssigned, #filterDateFrom, #filterDateTo, #filterLeadScore').on('keypress', function(e) {
         if (e.which === 13) {
             e.preventDefault();
             $('#applyFilters').click();
@@ -1520,6 +1413,34 @@ $(document).ready(function() {
         setTimeout(function() {
             resetCreateForm();
         }, 150);
+    });
+
+    $(document).on('click', '.toggle-stage-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const btn = $(this);
+        const leadId = btn.data('id');
+        const currentStage = btn.data('stage');
+        
+        const stages = ['new', 'contacted', 'qualified', 'won', 'lost'];
+        const currentIndex = stages.indexOf(currentStage);
+        const nextIndex = (currentIndex + 1) % stages.length;
+        const newStage = stages[nextIndex];
+        
+        $.ajax({
+            url: '{{ route('crm.leads.stage', '__ID__') }}'.replace('__ID__', leadId),
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                stage: newStage
+            },
+            success: function(response) {
+                table.ajax.reload(null, false);
+            },
+            error: function() {
+                showNotification('Error updating lead stage.', 'error');
+            }
+        });
     });
 });
 </script>

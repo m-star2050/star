@@ -6,75 +6,19 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Packages\Crm\Models\Task;
-use Packages\Crm\Models\Contact;
-use Packages\Crm\Models\Lead;
 
 class TaskController extends Controller
 {
     public function index(Request $request)
     {
-        $perPage = (int) $request->input('per_page', 10);
-        $sort = $request->input('sort', 'due_date');
-        $direction = $request->input('direction', 'asc');
-
-        $query = Task::query()->with(['contact', 'lead']);
-
-        // Search by task title, contact name, or lead name
-        if ($search = trim((string) $request->input('search'))) {
-            $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('notes', 'like', "%{$search}%")
-                  ->orWhereHas('contact', function($q2) use ($search) {
-                      $q2->where('name', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('lead', function($q2) use ($search) {
-                      $q2->where('name', 'like', "%{$search}%");
-                  });
-            });
-        }
-
-        // Filters
-        if ($request->filled('type')) {
-            $query->where('type', $request->input('type'));
-        }
-        if ($request->filled('priority')) {
-            $query->where('priority', $request->input('priority'));
-        }
-        if ($request->filled('status')) {
-            $query->where('status', $request->input('status'));
-        }
-        if ($request->filled('assigned_user_id')) {
-            $query->where('assigned_user_id', $request->input('assigned_user_id'));
-        }
-        if ($request->filled('due_date_from')) {
-            $query->whereDate('due_date', '>=', $request->input('due_date_from'));
-        }
-        if ($request->filled('due_date_to')) {
-            $query->whereDate('due_date', '<=', $request->input('due_date_to'));
-        }
-
-        // Sorting
-        $allowedSorts = ['title', 'type', 'priority', 'due_date', 'status', 'assigned_user_id', 'created_at'];
-        if (! in_array($sort, $allowedSorts, true)) {
-            $sort = 'due_date';
-        }
-        $direction = strtolower($direction) === 'desc' ? 'desc' : 'asc';
-
-        $tasks = $query->orderBy($sort, $direction)->paginate($perPage)->withQueryString();
-
-        return view('crm::tasks.index', [
-            'tasks' => $tasks,
-            'sort' => $sort,
-            'direction' => $direction,
-            'perPage' => $perPage,
-        ]);
+        return view('crm::tasks.index');
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
             'title' => ['required', 'string', 'max:255'],
-            'type' => ['nullable', 'string', 'max:100'],
+            'type' => ['nullable', 'string', 'max:255'],
             'priority' => ['required', Rule::in(['low', 'medium', 'high'])],
             'due_date' => ['nullable', 'date'],
             'status' => ['required', Rule::in(['pending', 'in_progress', 'completed'])],
@@ -101,7 +45,7 @@ class TaskController extends Controller
     {
         $data = $request->validate([
             'title' => ['required', 'string', 'max:255'],
-            'type' => ['nullable', 'string', 'max:100'],
+            'type' => ['nullable', 'string', 'max:255'],
             'priority' => ['required', Rule::in(['low', 'medium', 'high'])],
             'due_date' => ['nullable', 'date'],
             'status' => ['required', Rule::in(['pending', 'in_progress', 'completed'])],
@@ -135,7 +79,7 @@ class TaskController extends Controller
             ]);
         }
         
-        return redirect()->route('crm.tasks.index')->with('status', 'Task deleted');
+        return redirect()->route('crm.tasks.index');
     }
 
     public function restore($id)
@@ -145,13 +89,12 @@ class TaskController extends Controller
         return redirect()->route('crm.tasks.index')->with('status', 'Task restored');
     }
 
-    // Inline status toggle
     public function toggleStatus(Request $request, Task $task)
     {
         $status = $request->input('status');
         
         if (! in_array($status, ['pending', 'in_progress', 'completed'], true)) {
-            abort(422, 'Invalid status');
+            return response()->json(['success' => false, 'message' => 'Invalid status'], 422);
         }
 
         $task->status = $status;
@@ -183,7 +126,68 @@ class TaskController extends Controller
             ]);
         }
         
-        return redirect()->route('crm.tasks.index')->with('status', 'Selected tasks deleted');
+        return redirect()->route('crm.tasks.index');
+    }
+
+    public function export(Request $request)
+    {
+        $query = Task::query()->with(['contact', 'lead']);
+
+        if ($search = trim((string) $request->input('search'))) {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('type', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('type')) {
+            $query->where('type', 'like', '%'.$request->input('type').'%');
+        }
+        if ($request->filled('priority')) {
+            $query->where('priority', $request->input('priority'));
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+        if ($request->filled('assigned_user_id')) {
+            $query->where('assigned_user_id', $request->input('assigned_user_id'));
+        }
+        if ($request->filled('due_date_from')) {
+            $query->whereDate('due_date', '>=', $request->input('due_date_from'));
+        }
+        if ($request->filled('due_date_to')) {
+            $query->whereDate('due_date', '<=', $request->input('due_date_to'));
+        }
+
+        $rows = $query->orderBy('created_at', 'desc')->get();
+
+        $filename = 'tasks_export_'.now()->format('Ymd_His').'.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ];
+
+        $callback = function () use ($rows) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['ID', 'Title', 'Type', 'Priority', 'Due Date', 'Status', 'Assigned User', 'Contact', 'Lead', 'Created At']);
+            foreach ($rows as $r) {
+                fputcsv($out, [
+                    $r->id,
+                    $r->title,
+                    $r->type,
+                    $r->priority,
+                    $r->due_date?->format('Y-m-d'),
+                    $r->status,
+                    $r->assigned_user_id,
+                    $r->contact?->name,
+                    $r->lead?->name,
+                    $r->created_at?->format('Y-m-d H:i:s'),
+                ]);
+            }
+            fclose($out);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 
     public function datatable(Request $request)
@@ -193,7 +197,6 @@ class TaskController extends Controller
         if ($search = trim((string) $request->input('search.value'))) {
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('notes', 'like', "%{$search}%")
                   ->orWhere('type', 'like', "%{$search}%")
                   ->orWhereHas('contact', function($q2) use ($search) {
                       $q2->where('name', 'like', "%{$search}%");
@@ -226,18 +229,18 @@ class TaskController extends Controller
         $totalRecords = Task::count();
         $filteredRecords = $query->count();
 
-        $orderColumn = $request->input('order.0.column', 4);
-        $orderDir = $request->input('order.0.dir', 'asc');
+        $orderColumn = $request->input('order.0.column', 8);
+        $orderDir = $request->input('order.0.dir', 'desc');
         
-        $columns = ['id', 'title', 'type', 'priority', 'due_date', 'status', 'assigned_user_id', 'linked_to', 'created_at'];
-        $sortColumn = $columns[$orderColumn] ?? 'due_date';
+        $columns = ['id', 'title', 'type', 'priority', 'due_date', 'status', 'assigned_user_id', 'contact_id', 'created_at'];
+        $sortColumn = $columns[$orderColumn] ?? 'created_at';
         
         $allowedSorts = ['title', 'type', 'priority', 'due_date', 'status', 'assigned_user_id', 'created_at'];
         if (!in_array($sortColumn, $allowedSorts, true)) {
-            $sortColumn = 'due_date';
+            $sortColumn = 'created_at';
         }
         
-        $orderDir = strtolower($orderDir) === 'desc' ? 'desc' : 'asc';
+        $orderDir = strtolower($orderDir) === 'asc' ? 'asc' : 'desc';
 
         $start = $request->input('start', 0);
         $length = $request->input('length', 10);
@@ -248,28 +251,21 @@ class TaskController extends Controller
             ->get();
 
         $data = $tasks->map(function ($task) {
+            $isArchived = !is_null($task->deleted_at ?? null);
+            
             $priorityColors = [
-                'high' => 'text-red-600',
-                'medium' => 'text-amber-600',
                 'low' => 'text-green-600',
+                'medium' => 'text-yellow-600',
+                'high' => 'text-red-600',
             ];
             $priorityColor = $priorityColors[$task->priority] ?? 'text-gray-600';
             
             $statusColors = [
-                'completed' => 'text-green-600',
-                'in_progress' => 'text-blue-600',
                 'pending' => 'text-gray-600',
+                'in_progress' => 'text-blue-600',
+                'completed' => 'text-green-600',
             ];
             $statusColor = $statusColors[$task->status] ?? 'text-gray-600';
-            
-            $linkedTo = '-';
-            if ($task->contact) {
-                $linkedTo = 'Contact: ' . $task->contact->name;
-            } elseif ($task->lead) {
-                $linkedTo = 'Lead: ' . $task->lead->name;
-            }
-            
-            $isArchived = !is_null($task->deleted_at ?? null);
             
             return [
                 'id' => $task->id,
@@ -278,19 +274,18 @@ class TaskController extends Controller
                 'priority' => ucfirst($task->priority),
                 'priority_html' => '<span class="inline-flex items-center gap-1 '.$priorityColor.' font-semibold">'.ucfirst($task->priority).'</span>',
                 'due_date' => $task->due_date?->format('Y-m-d') ?? '-',
-                'status' => str_replace('_', ' ', ucfirst($task->status)),
-                'status_html' => '<span class="inline-flex items-center gap-1 '.$statusColor.' font-semibold">'.str_replace('_', ' ', ucfirst($task->status)).'</span>',
-                'assigned' => $task->assigned_user_id ? ('User '.$task->assigned_user_id) : '-',
-                'linked_to' => $linkedTo,
+                'status' => ucfirst(str_replace('_', ' ', $task->status)),
+                'status_html' => '<span class="inline-flex items-center gap-1 '.$statusColor.' font-semibold">'.ucfirst(str_replace('_', ' ', $task->status)).'</span>',
+                'assigned' => $task->assigned_user_id ? ('User ' . $task->assigned_user_id) : '-',
+                'contact' => $task->contact?->name ?? '-',
+                'lead' => $task->lead?->name ?? '-',
                 'created_at' => $task->created_at?->format('Y-m-d') ?? '-',
-                'notes' => $task->notes ?? '',
-                'contact_id' => $task->contact_id ?? '',
-                'lead_id' => $task->lead_id ?? '',
-                'status_badge' => $isArchived 
+                'archive_html' => $isArchived 
                     ? '<span class="inline-flex items-center gap-1 text-red-600"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.54-10.46a.75.75 0 00-1.06-1.06L10 8.94 7.52 6.48a.75.75 0 00-1.06 1.06L8.94 10l-2.48 2.48a.75.75 0 101.06 1.06L10 11.06l2.48 2.48a.75.75 0 101.06-1.06L11.06 10l2.48-2.46z" clip-rule="evenodd"/></svg>Archived</span>'
                     : '<span class="inline-flex items-center gap-1 text-blue-600"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-7.364 7.364a1 1 0 01-1.414 0L3.293 10.435a1 1 0 011.414-1.414l3.221 3.221 6.657-6.657a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Active</span>',
                 'actions_html' => '<div class="flex flex-col sm:flex-row gap-1 justify-center">
-                    <button type="button" class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 rounded-lg border border-blue-400 text-blue-600 hover:bg-blue-50 shadow-sm text-xs edit-btn" data-id="'.$task->id.'" data-title="'.htmlspecialchars($task->title, ENT_QUOTES).'" data-type="'.htmlspecialchars($task->type ?? '', ENT_QUOTES).'" data-priority="'.$task->priority.'" data-due-date="'.($task->due_date?->format('Y-m-d') ?? '').'" data-status="'.$task->status.'" data-assigned="'.($task->assigned_user_id ?? '').'" data-contact-id="'.($task->contact_id ?? '').'" data-lead-id="'.($task->lead_id ?? '').'" data-notes="'.htmlspecialchars($task->notes ?? '', ENT_QUOTES).'"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-8.5 8.5a2 2 0 01-.878.515l-3.3.943a.5.5 0 01-.62-.62l.943-3.3a2 2 0 01.515-.878l8.5-8.5z"/></svg><span class="hidden sm:inline">Edit</span></button>
+                    <button type="button" class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 rounded-lg border border-blue-400 text-blue-600 hover:bg-blue-50 shadow-sm text-xs edit-btn" data-id="'.$task->id.'" data-title="'.htmlspecialchars($task->title, ENT_QUOTES).'" data-type="'.htmlspecialchars($task->type ?? '', ENT_QUOTES).'" data-priority="'.($task->priority ?? 'medium').'" data-due-date="'.($task->due_date?->format('Y-m-d') ?? '').'" data-status="'.($task->status ?? 'pending').'" data-assigned="'.($task->assigned_user_id ?? '').'" data-contact="'.($task->contact_id ?? '').'" data-lead="'.($task->lead_id ?? '').'" data-notes="'.htmlspecialchars($task->notes ?? '', ENT_QUOTES).'"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-8.5 8.5a2 2 0 01-.878.515l-3.3.943a.5.5 0 01-.62-.62l.943-3.3a2 2 0 01.515-.878l8.5-8.5z"/></svg><span class="hidden sm:inline">Edit</span></button>
+                    <button type="button" class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 rounded-lg border border-green-400 text-green-600 hover:bg-green-50 shadow-sm text-xs toggle-status-btn" data-id="'.$task->id.'" data-status="'.($task->status ?? 'pending').'"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-7.364 7.364a1 1 0 01-1.414 0L3.293 10.435a1 1 0 011.414-1.414l3.221 3.221 6.657-6.657a1 1 0 011.414 0z" clip-rule="evenodd"/></svg><span class="hidden sm:inline">Toggle</span></button>
                     <button type="button" class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 rounded-lg border border-red-400 text-red-600 hover:bg-red-50 shadow-sm text-xs delete-btn" data-id="'.$task->id.'"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 8a1 1 0 011 1v6a1 1 0 102 0V9a1 1 0 112 0v6a1 1 0 102 0V9a1 1 0 011-1h1a1 1 0 100-2h-1V5a2 2 0 00-2-2H9a2 2 0 00-2 2v1H6a1 1 0 100 2h1zm3-3h2v1H9V5z" clip-rule="evenodd"/></svg><span class="hidden sm:inline">Del</span></button>
                 </div>',
             ];
@@ -302,45 +297,6 @@ class TaskController extends Controller
             'recordsFiltered' => $filteredRecords,
             'data' => $data,
         ]);
-    }
-
-    public function export(Request $request)
-    {
-        $query = Task::query()->with(['contact', 'lead']);
-
-        if ($search = trim((string) $request->input('search'))) {
-            $query->where('title', 'like', "%{$search}%");
-        }
-
-        $rows = $query->orderBy('due_date', 'asc')->get();
-
-        $filename = 'tasks_export_'.now()->format('Ymd_His').'.csv';
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
-        ];
-
-        $callback = function () use ($rows) {
-            $out = fopen('php://output', 'w');
-            fputcsv($out, ['ID', 'Title', 'Type', 'Priority', 'Due Date', 'Status', 'Assigned User', 'Contact', 'Lead', 'Created At']);
-            foreach ($rows as $r) {
-                fputcsv($out, [
-                    $r->id,
-                    $r->title,
-                    $r->type,
-                    $r->priority,
-                    $r->due_date?->format('Y-m-d'),
-                    $r->status,
-                    $r->assigned_user_id,
-                    $r->contact?->name,
-                    $r->lead?->name,
-                    $r->created_at?->format('Y-m-d H:i:s'),
-                ]);
-            }
-            fclose($out);
-        };
-
-        return response()->stream($callback, 200, $headers);
     }
 }
 

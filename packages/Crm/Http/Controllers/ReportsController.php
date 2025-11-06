@@ -3,219 +3,332 @@
 namespace Packages\Crm\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use Packages\Crm\Models\Contact;
 use Packages\Crm\Models\Lead;
-use Packages\Crm\Models\Task;
 use Packages\Crm\Models\Pipeline;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
 class ReportsController extends Controller
 {
-    /**
-     * Display analytics dashboard
-     */
-    public function index(Request $request)
+    public function index()
     {
-        // Get date range from request or default to last 30 days
-        $dateFrom = $request->input('date_from', Carbon::now()->subDays(30)->format('Y-m-d'));
-        $dateTo = $request->input('date_to', Carbon::now()->format('Y-m-d'));
+        return view('crm::reports.index');
+    }
+
+    public function dashboardData(Request $request)
+    {
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
         $userId = $request->input('user_id');
         $stage = $request->input('stage');
 
-        // Overview Statistics
-        $stats = [
-            'total_contacts' => Contact::when($dateFrom && $dateTo, function($q) use ($dateFrom, $dateTo) {
-                return $q->whereBetween('created_at', [$dateFrom, $dateTo]);
-            })->count(),
-            
-            'total_leads' => Lead::when($dateFrom && $dateTo, function($q) use ($dateFrom, $dateTo) {
-                return $q->whereBetween('created_at', [$dateFrom, $dateTo]);
-            })->count(),
-            
-            'total_tasks' => Task::when($dateFrom && $dateTo, function($q) use ($dateFrom, $dateTo) {
-                return $q->whereBetween('created_at', [$dateFrom, $dateTo]);
-            })->count(),
-            
-            'total_deals' => Pipeline::when($dateFrom && $dateTo, function($q) use ($dateFrom, $dateTo) {
-                return $q->whereBetween('created_at', [$dateFrom, $dateTo]);
-            })->count(),
-            
-            'deals_won' => Pipeline::where('stage', 'closed_won')
-                ->when($dateFrom && $dateTo, function($q) use ($dateFrom, $dateTo) {
-                    return $q->whereBetween('created_at', [$dateFrom, $dateTo]);
-                })->count(),
-            
-            'deals_lost' => Pipeline::where('stage', 'closed_lost')
-                ->when($dateFrom && $dateTo, function($q) use ($dateFrom, $dateTo) {
-                    return $q->whereBetween('created_at', [$dateFrom, $dateTo]);
-                })->count(),
-            
-            'total_revenue' => Pipeline::where('stage', 'closed_won')
-                ->when($dateFrom && $dateTo, function($q) use ($dateFrom, $dateTo) {
-                    return $q->whereBetween('created_at', [$dateFrom, $dateTo]);
-                })->sum('value'),
-            
-            'pending_revenue' => Pipeline::whereIn('stage', ['prospect', 'negotiation', 'proposal'])
-                ->when($dateFrom && $dateTo, function($q) use ($dateFrom, $dateTo) {
-                    return $q->whereBetween('created_at', [$dateFrom, $dateTo]);
-                })->sum('value'),
-        ];
+        $contactsQuery = Contact::query();
+        $leadsQuery = Lead::query();
+        $dealsQuery = Pipeline::query();
 
-        // Lead Conversion Rate
-        $totalLeads = Lead::when($dateFrom && $dateTo, function($q) use ($dateFrom, $dateTo) {
-            return $q->whereBetween('created_at', [$dateFrom, $dateTo]);
-        })->count();
-        
-        $convertedLeads = Lead::where('stage', 'won')
-            ->when($dateFrom && $dateTo, function($q) use ($dateFrom, $dateTo) {
-                return $q->whereBetween('created_at', [$dateFrom, $dateTo]);
-            })->count();
-        
-        $stats['conversion_rate'] = $totalLeads > 0 ? round(($convertedLeads / $totalLeads) * 100, 2) : 0;
-
-        // Deals by Stage
-        $dealsByStage = Pipeline::select('stage', DB::raw('count(*) as count'), DB::raw('sum(value) as total_value'))
-            ->when($dateFrom && $dateTo, function($q) use ($dateFrom, $dateTo) {
-                return $q->whereBetween('created_at', [$dateFrom, $dateTo]);
-            })
-            ->when($userId, function($q) use ($userId) {
-                return $q->where('owner_user_id', $userId);
-            })
-            ->groupBy('stage')
-            ->get();
-
-        // Monthly Revenue Trend (last 6 months)
-        $dbDriver = config('database.default');
-        $connection = config("database.connections.{$dbDriver}.driver");
-        
-        if ($connection === 'sqlite') {
-            $monthlyRevenue = Pipeline::where('stage', 'closed_won')
-                ->where('created_at', '>=', Carbon::now()->subMonths(6))
-                ->select(
-                    DB::raw("cast(strftime('%m', created_at) as integer) as month"),
-                    DB::raw("cast(strftime('%Y', created_at) as integer) as year"),
-                    DB::raw('sum(value) as revenue')
-                )
-                ->groupBy('year', 'month')
-                ->orderBy('year')
-                ->orderBy('month')
-                ->get();
-        } else {
-            // MySQL/MariaDB
-            $monthlyRevenue = Pipeline::where('stage', 'closed_won')
-                ->where('created_at', '>=', Carbon::now()->subMonths(6))
-                ->select(
-                    DB::raw('MONTH(created_at) as month'),
-                    DB::raw('YEAR(created_at) as year'),
-                    DB::raw('sum(value) as revenue')
-                )
-                ->groupBy('year', 'month')
-                ->orderBy('year')
-                ->orderBy('month')
-                ->get();
+        if ($dateFrom) {
+            $contactsQuery->whereDate('created_at', '>=', $dateFrom);
+            $leadsQuery->whereDate('created_at', '>=', $dateFrom);
+            $dealsQuery->whereDate('created_at', '>=', $dateFrom);
         }
 
-        // Lead Source Performance
-        $leadsBySource = Lead::select('source', DB::raw('count(*) as count'))
-            ->when($dateFrom && $dateTo, function($q) use ($dateFrom, $dateTo) {
-                return $q->whereBetween('created_at', [$dateFrom, $dateTo]);
-            })
-            ->whereNotNull('source')
-            ->groupBy('source')
-            ->orderBy('count', 'desc')
-            ->limit(10)
-            ->get();
+        if ($dateTo) {
+            $contactsQuery->whereDate('created_at', '<=', $dateTo);
+            $leadsQuery->whereDate('created_at', '<=', $dateTo);
+            $dealsQuery->whereDate('created_at', '<=', $dateTo);
+        }
 
-        // User Performance
-        $userPerformance = Pipeline::select(
-                'owner_user_id',
-                DB::raw('count(*) as total_deals'),
-                DB::raw('sum(case when stage = "closed_won" then 1 else 0 end) as won_deals'),
-                DB::raw('sum(case when stage = "closed_lost" then 1 else 0 end) as lost_deals'),
-                DB::raw('sum(case when stage = "closed_won" then value else 0 end) as total_revenue')
-            )
-            ->when($dateFrom && $dateTo, function($q) use ($dateFrom, $dateTo) {
-                return $q->whereBetween('created_at', [$dateFrom, $dateTo]);
-            })
-            ->whereNotNull('owner_user_id')
-            ->groupBy('owner_user_id')
-            ->orderBy('total_revenue', 'desc')
-            ->get();
+        if ($userId) {
+            $contactsQuery->where('assigned_user_id', $userId);
+            $leadsQuery->where('assigned_user_id', $userId);
+            $dealsQuery->where('owner_user_id', $userId);
+        }
 
-        // Tasks Status Distribution
-        $tasksByStatus = Task::select('status', DB::raw('count(*) as count'))
-            ->when($dateFrom && $dateTo, function($q) use ($dateFrom, $dateTo) {
-                return $q->whereBetween('created_at', [$dateFrom, $dateTo]);
-            })
-            ->groupBy('status')
-            ->get();
+        $totalContacts = $contactsQuery->count();
+        $totalLeads = $leadsQuery->count();
+        $totalDeals = $dealsQuery->count();
 
-        return view('crm::reports.index', compact(
-            'stats',
-            'dealsByStage',
-            'monthlyRevenue',
-            'leadsBySource',
-            'userPerformance',
-            'tasksByStatus',
-            'dateFrom',
-            'dateTo',
-            'userId',
-            'stage'
-        ));
+        $wonDealsQuery = clone $dealsQuery;
+        $wonDeals = $wonDealsQuery->where('stage', 'closed_won')->count();
+
+        $lostDealsQuery = clone $dealsQuery;
+        $lostDeals = $lostDealsQuery->where('stage', 'closed_lost')->count();
+
+        $conversionRate = $totalDeals > 0 ? round(($wonDeals / $totalDeals) * 100, 2) : 0;
+
+        $revenueQuery = clone $dealsQuery;
+        $totalRevenue = $revenueQuery->where('stage', 'closed_won')->sum('value') ?? 0;
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'total_contacts' => $totalContacts,
+                'total_leads' => $totalLeads,
+                'total_deals' => $totalDeals,
+                'won_deals' => $wonDeals,
+                'lost_deals' => $lostDeals,
+                'conversion_rate' => $conversionRate,
+                'total_revenue' => number_format($totalRevenue, 2, '.', ''),
+            ]
+        ]);
     }
 
-    /**
-     * Export reports to CSV
-     */
-    public function export(Request $request)
+    public function chartData(Request $request)
     {
-        $dateFrom = $request->input('date_from', Carbon::now()->subDays(30)->format('Y-m-d'));
-        $dateTo = $request->input('date_to', Carbon::now()->format('Y-m-d'));
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+        $userId = $request->input('user_id');
+        $stage = $request->input('stage');
+        $chartType = $request->input('chart_type');
 
-        $data = Pipeline::select(
-                'deal_name',
-                'stage',
-                'value',
-                'owner_user_id',
-                'close_date',
-                'probability',
-                'company',
-                'created_at'
-            )
-            ->whereBetween('created_at', [$dateFrom, $dateTo])
-            ->get();
+        $dealsQuery = Pipeline::query();
 
-        $filename = 'crm_report_' . date('Y-m-d_His') . '.csv';
-        $handle = fopen('php://output', 'w');
-        
-        ob_start();
-        
-        // Headers
-        fputcsv($handle, ['Deal Name', 'Stage', 'Value', 'Owner ID', 'Close Date', 'Probability %', 'Company', 'Created At']);
-        
-        // Data
-        foreach ($data as $row) {
-            fputcsv($handle, [
-                $row->deal_name,
-                ucfirst(str_replace('_', ' ', $row->stage)),
-                '$' . number_format($row->value, 2),
-                $row->owner_user_id ?? '-',
-                $row->close_date ?? '-',
-                $row->probability ?? '-',
-                $row->company ?? '-',
-                $row->created_at->format('Y-m-d H:i:s')
+        if ($dateFrom) {
+            $dealsQuery->whereDate('created_at', '>=', $dateFrom);
+        }
+
+        if ($dateTo) {
+            $dealsQuery->whereDate('created_at', '<=', $dateTo);
+        }
+
+        if ($userId) {
+            $dealsQuery->where('owner_user_id', $userId);
+        }
+
+        if ($chartType === 'deals_won_lost') {
+            $wonCount = (clone $dealsQuery)->where('stage', 'closed_won')->count();
+            $lostCount = (clone $dealsQuery)->where('stage', 'closed_lost')->count();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'labels' => ['Won', 'Lost'],
+                    'values' => [$wonCount, $lostCount],
+                    'colors' => ['rgba(16, 185, 129, 0.6)', 'rgba(239, 68, 68, 0.6)']
+                ]
             ]);
         }
-        
-        fclose($handle);
-        $csv = ob_get_clean();
 
-        return response($csv, 200, [
+        if ($chartType === 'revenue_by_stage') {
+            $stages = ['prospect', 'negotiation', 'proposal', 'closed_won', 'closed_lost'];
+            $data = [];
+
+            foreach ($stages as $stageName) {
+                $stageQuery = clone $dealsQuery;
+                $revenue = $stageQuery->where('stage', $stageName)->sum('value') ?? 0;
+                
+                $label = match($stageName) {
+                    'prospect' => 'Prospect',
+                    'negotiation' => 'Negotiation',
+                    'proposal' => 'Proposal',
+                    'closed_won' => 'Closed Won',
+                    'closed_lost' => 'Closed Lost',
+                    default => ucfirst($stageName),
+                };
+
+                $data[] = [
+                    'stage' => $label,
+                    'revenue' => (float) $revenue
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $data
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Invalid chart type'
+        ], 400);
+    }
+
+    public function datatable(Request $request)
+    {
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+        $userId = $request->input('user_id');
+        $stage = $request->input('stage');
+
+        $userIds = Pipeline::query()
+            ->when($dateFrom, function($q) use ($dateFrom) {
+                $q->whereDate('created_at', '>=', $dateFrom);
+            })
+            ->when($dateTo, function($q) use ($dateTo) {
+                $q->whereDate('created_at', '<=', $dateTo);
+            })
+            ->when($userId, function($q) use ($userId) {
+                $q->where('owner_user_id', $userId);
+            })
+            ->when($stage, function($q) use ($stage) {
+                $q->where('stage', $stage);
+            })
+            ->distinct()
+            ->pluck('owner_user_id')
+            ->filter()
+            ->unique();
+
+        $data = [];
+        foreach ($userIds as $uid) {
+            $userDealsQuery = Pipeline::query()->where('owner_user_id', $uid);
+            
+            if ($dateFrom) {
+                $userDealsQuery->whereDate('created_at', '>=', $dateFrom);
+            }
+            if ($dateTo) {
+                $userDealsQuery->whereDate('created_at', '<=', $dateTo);
+            }
+            if ($stage) {
+                $userDealsQuery->where('stage', $stage);
+            }
+
+            $totalDeals = $userDealsQuery->count();
+            $wonDeals = (clone $userDealsQuery)->where('stage', 'closed_won')->count();
+            $lostDeals = (clone $userDealsQuery)->where('stage', 'closed_lost')->count();
+            $conversionRate = $totalDeals > 0 ? round(($wonDeals / $totalDeals) * 100, 2) : 0;
+            
+            $revenueQuery = clone $userDealsQuery;
+            $totalRevenue = $revenueQuery->where('stage', 'closed_won')->sum('value') ?? 0;
+
+            $data[] = [
+                'user_id' => $uid,
+                'user_name' => 'User ' . $uid,
+                'total_deals' => $totalDeals,
+                'won_deals' => $wonDeals,
+                'lost_deals' => $lostDeals,
+                'conversion_rate' => $conversionRate . '%',
+                'total_revenue' => '$' . number_format($totalRevenue, 2),
+            ];
+        }
+
+        if ($search = trim((string) $request->input('search.value'))) {
+            $data = array_filter($data, function($item) use ($search) {
+                return stripos($item['user_name'], $search) !== false ||
+                       stripos((string)$item['user_id'], $search) !== false;
+            });
+        }
+
+        $totalRecords = count($data);
+        $filteredRecords = count($data);
+
+        $orderColumn = $request->input('order.0.column', 0);
+        $orderDir = $request->input('order.0.dir', 'desc');
+
+        $columns = ['user_id', 'user_name', 'total_deals', 'won_deals', 'lost_deals', 'conversion_rate', 'total_revenue'];
+        $sortColumn = $columns[$orderColumn] ?? 'user_id';
+
+        usort($data, function($a, $b) use ($sortColumn, $orderDir) {
+            $aVal = $a[$sortColumn];
+            $bVal = $b[$sortColumn];
+            
+            if (is_numeric($aVal)) {
+                $aVal = (float) $aVal;
+            }
+            if (is_numeric($bVal)) {
+                $bVal = (float) $bVal;
+            }
+            
+            if ($orderDir === 'asc') {
+                return $aVal <=> $bVal;
+            }
+            return $bVal <=> $aVal;
+        });
+
+        $start = $request->input('start', 0);
+        $length = $request->input('length', 10);
+        $data = array_slice($data, $start, $length);
+
+        return response()->json([
+            'draw' => (int) $request->input('draw'),
+            'recordsTotal' => $totalRecords,
+            'recordsFiltered' => $filteredRecords,
+            'data' => array_values($data),
+        ]);
+    }
+
+    public function export(Request $request)
+    {
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+        $userId = $request->input('user_id');
+        $stage = $request->input('stage');
+
+        $userIds = Pipeline::query()
+            ->when($dateFrom, function($q) use ($dateFrom) {
+                $q->whereDate('created_at', '>=', $dateFrom);
+            })
+            ->when($dateTo, function($q) use ($dateTo) {
+                $q->whereDate('created_at', '<=', $dateTo);
+            })
+            ->when($userId, function($q) use ($userId) {
+                $q->where('owner_user_id', $userId);
+            })
+            ->when($stage, function($q) use ($stage) {
+                $q->where('stage', $stage);
+            })
+            ->distinct()
+            ->pluck('owner_user_id')
+            ->filter()
+            ->unique();
+
+        $rows = [];
+        foreach ($userIds as $uid) {
+            $userDealsQuery = Pipeline::query()->where('owner_user_id', $uid);
+            
+            if ($dateFrom) {
+                $userDealsQuery->whereDate('created_at', '>=', $dateFrom);
+            }
+            if ($dateTo) {
+                $userDealsQuery->whereDate('created_at', '<=', $dateTo);
+            }
+            if ($stage) {
+                $userDealsQuery->where('stage', $stage);
+            }
+
+            $totalDeals = $userDealsQuery->count();
+            $wonDeals = (clone $userDealsQuery)->where('stage', 'closed_won')->count();
+            $lostDeals = (clone $userDealsQuery)->where('stage', 'closed_lost')->count();
+            $conversionRate = $totalDeals > 0 ? round(($wonDeals / $totalDeals) * 100, 2) : 0;
+            
+            $revenueQuery = clone $userDealsQuery;
+            $totalRevenue = $revenueQuery->where('stage', 'closed_won')->sum('value') ?? 0;
+
+            $rows[] = [
+                'user_id' => $uid,
+                'user_name' => 'User ' . $uid,
+                'total_deals' => $totalDeals,
+                'won_deals' => $wonDeals,
+                'lost_deals' => $lostDeals,
+                'conversion_rate' => $conversionRate . '%',
+                'total_revenue' => number_format($totalRevenue, 2),
+            ];
+        }
+
+        $filename = 'reports_export_' . now()->format('Ymd_His') . '.csv';
+        $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-        ]);
+        ];
+
+        $callback = function () use ($rows) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['User ID', 'User Name', 'Total Deals', 'Won Deals', 'Lost Deals', 'Conversion Rate', 'Total Revenue']);
+            foreach ($rows as $r) {
+                fputcsv($out, [
+                    $r['user_id'],
+                    $r['user_name'],
+                    $r['total_deals'],
+                    $r['won_deals'],
+                    $r['lost_deals'],
+                    $r['conversion_rate'],
+                    $r['total_revenue'],
+                ]);
+            }
+            fclose($out);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }
 

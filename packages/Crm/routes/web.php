@@ -39,6 +39,8 @@ Route::prefix('crm')->group(function () {
 
             Route::get('pipeline', [PipelineController::class, 'index'])->name('pipeline.index');
             Route::get('pipeline/kanban', [PipelineController::class, 'kanban'])->name('pipeline.kanban');
+            Route::get('pipeline/datatable', [PipelineController::class, 'datatable'])->name('pipeline.datatable');
+            Route::get('pipeline/kanban-data', [PipelineController::class, 'kanbanData'])->name('pipeline.kanban-data');
             Route::post('pipeline', [PipelineController::class, 'store'])->name('pipeline.store');
             Route::put('pipeline/{pipeline}', [PipelineController::class, 'update'])->name('pipeline.update');
             Route::delete('pipeline/{pipeline}', [PipelineController::class, 'destroy'])->name('pipeline.destroy');
@@ -48,9 +50,13 @@ Route::prefix('crm')->group(function () {
             Route::get('pipeline-export', [PipelineController::class, 'export'])->name('pipeline.export');
 
             Route::get('reports', [ReportsController::class, 'index'])->name('reports.index');
+            Route::get('reports/dashboard-data', [ReportsController::class, 'dashboardData'])->name('reports.dashboard-data');
+            Route::get('reports/chart-data', [ReportsController::class, 'chartData'])->name('reports.chart-data');
+            Route::get('reports/datatable', [ReportsController::class, 'datatable'])->name('reports.datatable');
             Route::get('reports-export', [ReportsController::class, 'export'])->name('reports.export');
 
             Route::get('files', [FilesController::class, 'index'])->name('files.index');
+            Route::get('files/datatable', [FilesController::class, 'datatable'])->name('files.datatable');
             Route::post('files', [FilesController::class, 'store'])->name('files.store');
             Route::get('files/{file}/download', [FilesController::class, 'download'])->name('files.download');
             Route::get('files/{file}/preview', [FilesController::class, 'preview'])->name('files.preview');
