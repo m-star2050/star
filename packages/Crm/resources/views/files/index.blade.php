@@ -932,13 +932,19 @@ $(document).ready(function() {
         e.preventDefault();
         e.stopPropagation();
         
+        const fileInput = $('#uploadFile')[0];
+        if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+            showNotification('Please select a file to upload.', 'error');
+            return false;
+        }
+        
         const submitBtn = $('#uploadSubmitBtn');
         const originalText = submitBtn.text();
         submitBtn.prop('disabled', true).text('Uploading...');
         
         const formData = new FormData();
         formData.append('_token', '{{ csrf_token() }}');
-        formData.append('file', $('#uploadFile')[0].files[0]);
+        formData.append('file', fileInput.files[0]);
         formData.append('linked_type', $('#uploadLinkedType').val() || '');
         formData.append('linked_id', $('#uploadLinkedId').val() || '');
         formData.append('description', $('#uploadDescription').val() || '');
@@ -954,6 +960,14 @@ $(document).ready(function() {
             contentType: false,
             data: formData,
             success: function(response) {
+                console.log('Upload response:', response);
+                
+                if (!response || !response.success) {
+                    showNotification('File upload failed. Please try again.', 'error');
+                    submitBtn.prop('disabled', false).text(originalText);
+                    return;
+                }
+                
                 submitBtn.prop('disabled', false).text(originalText);
                 table.ajax.reload();
                 
@@ -981,19 +995,21 @@ $(document).ready(function() {
                         modalAfter.css('display', 'none');
                     }
                 }, 50);
-                
-                showNotification('File uploaded successfully.', 'success');
             },
-            error: function(xhr) {
+            error: function(xhr, status, error) {
                 submitBtn.prop('disabled', false).text(originalText);
-                console.error('Error uploading file:', xhr);
-                if (xhr.responseJSON && xhr.responseJSON.errors) {
+                console.error('Error uploading file:', xhr, status, error);
+                console.error('Response text:', xhr.responseText);
+                
+                if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
                     let errors = Object.values(xhr.responseJSON.errors).flat();
                     showNotification('Validation errors:\n' + errors.join('\n'), 'error');
                 } else if (xhr.responseJSON && xhr.responseJSON.message) {
                     showNotification('Error: ' + xhr.responseJSON.message, 'error');
+                } else if (xhr.status === 0) {
+                    showNotification('Network error. Please check your connection and try again.', 'error');
                 } else {
-                    showNotification('Error uploading file. Please try again.', 'error');
+                    showNotification('Error uploading file: ' + (error || 'Unknown error'), 'error');
                 }
             }
         });
@@ -1028,8 +1044,6 @@ $(document).ready(function() {
                     deleteModal.hide();
                     deleteModal.css('display', 'none');
                 }
-                
-                showNotification('File deleted successfully.', 'success');
             },
             error: function() {
                 showNotification('Error deleting file.', 'error');
@@ -1083,8 +1097,6 @@ $(document).ready(function() {
                     bulkDeleteModal.hide();
                     bulkDeleteModal.css('display', 'none');
                 }
-                
-                showNotification('Selected files deleted successfully.', 'success');
             },
             error: function() {
                 showNotification('Error deleting files.', 'error');

@@ -16,43 +16,87 @@ class FilesController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'file' => 'required|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:10240',
-            'linked_type' => 'nullable|string|in:contact,lead,deal',
-            'linked_id' => 'nullable|integer',
-            'description' => 'nullable|string|max:1000',
-        ]);
-
-        $uploadedFile = $request->file('file');
-        $originalName = $uploadedFile->getClientOriginalName();
-        $extension = $uploadedFile->getClientOriginalExtension();
-        $fileSize = $uploadedFile->getSize();
-        $mimeType = $uploadedFile->getMimeType();
-
-        $storedName = 'file_' . time() . '_' . uniqid() . '.' . $extension;
-        $filePath = $uploadedFile->storeAs('crm/files', $storedName, 'public');
-
-        $file = File::create([
-            'original_name' => $originalName,
-            'stored_name' => $storedName,
-            'file_path' => $filePath,
-            'file_type' => $mimeType,
-            'file_size' => $fileSize,
-            'linked_type' => $request->input('linked_type'),
-            'linked_id' => $request->input('linked_id'),
-            'uploaded_by' => auth()->id() ?? 1,
-            'description' => $request->input('description'),
-        ]);
-
-        if ($request->ajax()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'File uploaded successfully',
-                'file' => $file
+        try {
+            $request->validate([
+                'file' => 'required|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:10240',
+                'linked_type' => 'nullable|string|in:contact,lead,deal',
+                'linked_id' => 'nullable|integer',
+                'description' => 'nullable|string|max:1000',
             ]);
-        }
 
-        return redirect()->route('crm.files.index')->with('status', 'File uploaded successfully');
+            $uploadedFile = $request->file('file');
+            
+            if (!$uploadedFile || !$uploadedFile->isValid()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid file upload'
+                ], 422);
+            }
+
+            $originalName = $uploadedFile->getClientOriginalName();
+            $extension = $uploadedFile->getClientOriginalExtension();
+            $fileSize = $uploadedFile->getSize();
+            $mimeType = $uploadedFile->getMimeType();
+
+            $storedName = 'file_' . time() . '_' . uniqid() . '.' . $extension;
+            
+            if (!Storage::disk('public')->exists('crm/files')) {
+                Storage::disk('public')->makeDirectory('crm/files', 0755, true);
+            }
+            
+            $filePath = $uploadedFile->storeAs('crm/files', $storedName, 'public');
+
+            if (!$filePath) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to store file'
+                ], 500);
+            }
+
+            $file = File::create([
+                'original_name' => $originalName,
+                'stored_name' => $storedName,
+                'file_name' => $storedName,
+                'file_path' => $filePath,
+                'path' => $filePath,
+                'file_type' => $mimeType,
+                'file_size' => $fileSize,
+                'linked_type' => $request->input('linked_type'),
+                'linked_id' => $request->input('linked_id'),
+                'uploaded_by' => auth()->id() ?? 1,
+                'description' => $request->input('description'),
+            ]);
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'File uploaded successfully',
+                    'file' => $file
+                ]);
+            }
+
+            return redirect()->route('crm.files.index')->with('status', 'File uploaded successfully');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            throw $e;
+        } catch (\Exception $e) {
+            \Log::error('File upload error: ' . $e->getMessage());
+            
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'File upload failed: ' . $e->getMessage()
+                ], 500);
+            }
+
+            return redirect()->route('crm.files.index')->with('error', 'File upload failed: ' . $e->getMessage());
+        }
     }
 
     public function download(File $file)
