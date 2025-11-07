@@ -7,12 +7,20 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Packages\Crm\Models\Contact;
 use App\Models\User;
+use Illuminate\Support\Facades\Schema;
 
 class ContactController extends Controller
 {
     public function index(Request $request)
     {
-        $users = User::select('id', 'name', 'email')->orderBy('name')->get();
+        $users = collect([]);
+        if (Schema::hasTable('users')) {
+            try {
+                $users = User::select('id', 'name', 'email')->orderBy('name')->get();
+            } catch (\Exception $e) {
+                $users = collect([]);
+            }
+        }
         $perPage = (int) $request->input('per_page', 10);
         $sort = $request->input('sort', 'created_at');
         $direction = $request->input('direction', 'desc');
@@ -55,7 +63,14 @@ class ContactController extends Controller
 
         $contacts = $query->orderBy($sort, $direction)->paginate($perPage)->withQueryString();
 
-        $users = User::select('id', 'name', 'email')->orderBy('name')->get();
+        $users = collect([]);
+        if (Schema::hasTable('users')) {
+            try {
+                $users = User::select('id', 'name', 'email')->orderBy('name')->get();
+            } catch (\Exception $e) {
+                $users = collect([]);
+            }
+        }
 
         return view('crm::contacts.index', [
             'contacts' => $contacts,
@@ -212,7 +227,11 @@ class ContactController extends Controller
 
     public function datatable(Request $request)
     {
-        $query = Contact::with('assignedUser');
+        if (Schema::hasTable('users')) {
+            $query = Contact::with('assignedUser');
+        } else {
+            $query = Contact::query();
+        }
 
         // Search from DataTables
         if ($search = trim((string) $request->input('search.value'))) {

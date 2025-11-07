@@ -9,12 +9,20 @@ use Packages\Crm\Models\Task;
 use App\Models\User;
 use Packages\Crm\Models\Contact;
 use Packages\Crm\Models\Lead;
+use Illuminate\Support\Facades\Schema;
 
 class TaskController extends Controller
 {
     public function index(Request $request)
     {
-        $users = User::select('id', 'name', 'email')->orderBy('name')->get();
+        $users = collect([]);
+        if (Schema::hasTable('users')) {
+            try {
+                $users = User::select('id', 'name', 'email')->orderBy('name')->get();
+            } catch (\Exception $e) {
+                $users = collect([]);
+            }
+        }
         $contacts = Contact::select('id', 'name', 'email', 'company')->orderBy('name')->get();
         $leads = Lead::select('id', 'name', 'email', 'company')->orderBy('name')->get();
         
@@ -203,7 +211,11 @@ class TaskController extends Controller
 
     public function datatable(Request $request)
     {
-        $query = Task::query()->with(['contact', 'lead', 'assignedUser']);
+        if (Schema::hasTable('users')) {
+            $query = Task::query()->with(['contact', 'lead', 'assignedUser']);
+        } else {
+            $query = Task::query()->with(['contact', 'lead']);
+        }
 
         if ($search = trim((string) $request->input('search.value'))) {
             $query->where(function ($q) use ($search) {

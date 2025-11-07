@@ -16,7 +16,14 @@ class LeadController extends Controller
 {
     public function index(Request $request)
     {
-        $users = User::select('id', 'name', 'email')->orderBy('name')->get();
+        $users = collect([]);
+        if (Schema::hasTable('users')) {
+            try {
+                $users = User::select('id', 'name', 'email')->orderBy('name')->get();
+            } catch (\Exception $e) {
+                $users = collect([]);
+            }
+        }
         return view('crm::leads.index', ['users' => $users]);
     }
 
@@ -336,7 +343,11 @@ class LeadController extends Controller
 
     public function datatable(Request $request)
     {
-        $query = Lead::with('assignedUser');
+        if (Schema::hasTable('users')) {
+            $query = Lead::with('assignedUser');
+        } else {
+            $query = Lead::query();
+        }
 
         if ($search = trim((string) $request->input('search.value'))) {
             $query->where(function ($q) use ($search) {

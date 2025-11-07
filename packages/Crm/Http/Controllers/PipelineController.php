@@ -9,18 +9,33 @@ use Illuminate\Support\Facades\Log;
 use Packages\Crm\Models\Pipeline;
 use Packages\Crm\Models\Contact;
 use App\Models\User;
+use Illuminate\Support\Facades\Schema;
 
 class PipelineController extends Controller
 {
     public function index(Request $request)
     {
-        $users = User::select('id', 'name', 'email')->orderBy('name')->get();
+        $users = collect([]);
+        if (Schema::hasTable('users')) {
+            try {
+                $users = User::select('id', 'name', 'email')->orderBy('name')->get();
+            } catch (\Exception $e) {
+                $users = collect([]);
+            }
+        }
         return view('crm::pipeline.index', ['users' => $users]);
     }
 
     public function kanban(Request $request)
     {
-        $users = User::select('id', 'name', 'email')->orderBy('name')->get();
+        $users = collect([]);
+        if (Schema::hasTable('users')) {
+            try {
+                $users = User::select('id', 'name', 'email')->orderBy('name')->get();
+            } catch (\Exception $e) {
+                $users = collect([]);
+            }
+        }
         return view('crm::pipeline.index', ['view' => 'kanban', 'users' => $users]);
     }
 
@@ -224,7 +239,11 @@ class PipelineController extends Controller
 
     public function datatable(Request $request)
     {
-        $query = Pipeline::query()->with(['contact', 'ownerUser']);
+        if (Schema::hasTable('users')) {
+            $query = Pipeline::query()->with(['contact', 'ownerUser']);
+        } else {
+            $query = Pipeline::query()->with(['contact']);
+        }
 
         if ($search = trim((string) $request->input('search.value'))) {
             $query->where(function ($q) use ($search) {

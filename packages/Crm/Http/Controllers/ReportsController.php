@@ -5,6 +5,7 @@ namespace Packages\Crm\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Support\Facades\Schema;
 use Packages\Crm\Models\Contact;
 use Packages\Crm\Models\Lead;
 use Packages\Crm\Models\Pipeline;
@@ -13,7 +14,14 @@ class ReportsController extends Controller
 {
     public function index()
     {
-        $users = User::select('id', 'name', 'email')->orderBy('name')->get();
+        $users = collect([]);
+        if (Schema::hasTable('users')) {
+            try {
+                $users = User::select('id', 'name', 'email')->orderBy('name')->get();
+            } catch (\Exception $e) {
+                $users = collect([]);
+            }
+        }
         return view('crm::reports.index', ['users' => $users]);
     }
 
