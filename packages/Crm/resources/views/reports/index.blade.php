@@ -366,7 +366,7 @@
 <body>
 
 <div x-data="{mobileMenu:false, open:true, showNotification:false, notificationMessage:'', notificationType:'success', dashboardData: {total_contacts: 0, total_leads: 0, total_deals: 0, won_deals: 0, lost_deals: 0, conversion_rate: 0, total_revenue: 0}}" 
-     x-init="setTimeout(() => { if (typeof loadDashboardData === 'function') { const scrollY = window.scrollY; loadDashboardData(); setTimeout(() => window.scrollTo(0, scrollY), 10); } }, 100);" 
+     x-init="setTimeout(() => { if (typeof loadDashboardData === 'function') { const scrollY = window.scrollY; loadDashboardData(); setTimeout(() => window.scrollTo(0, scrollY), 10); } else { console.error('loadDashboardData function not found'); } }, 200);" 
      class="relative">
     <div class="lg:hidden fixed top-0 left-0 right-0 z-50 glass-card rounded-b-2xl p-4 shadow-xl">
         <div class="flex items-center justify-between pt-4">
@@ -720,16 +720,60 @@ function loadDashboardData() {
         method: 'GET',
         data: filterData,
         success: function(response) {
+            console.log('Dashboard data response:', response);
             if (response.success && response.data) {
-                const alpineData = getAlpineData();
-                if (alpineData && alpineData.__x) {
-                    const data = alpineData.__x.$data;
-                    data.dashboardData = response.data;
+                // Try multiple methods to update Alpine.js data
+                const alpineEl = document.querySelector('[x-data]');
+                
+                if (alpineEl) {
+                    // Method 1: Direct Alpine instance access
+                    if (window.Alpine && window.Alpine.$data) {
+                        try {
+                            const alpineInstance = window.Alpine.$data(alpineEl);
+                            if (alpineInstance) {
+                                alpineInstance.dashboardData = response.data;
+                                console.log('Updated dashboard data via Alpine.$data');
+                                return;
+                            }
+                        } catch (e) {
+                            console.log('Alpine.$data method failed:', e);
+                        }
+                    }
+                    
+                    // Method 2: __x property
+                    if (alpineEl.__x) {
+                        try {
+                            const data = alpineEl.__x.$data;
+                            if (data) {
+                                data.dashboardData = response.data;
+                                console.log('Updated dashboard data via __x.$data');
+                                return;
+                            }
+                        } catch (e) {
+                            console.log('__x.$data method failed:', e);
+                        }
+                    }
+                    
+                    // Method 3: _x_dataStack
+                    if (alpineEl._x_dataStack && alpineEl._x_dataStack[0]) {
+                        try {
+                            alpineEl._x_dataStack[0].dashboardData = response.data;
+                            console.log('Updated dashboard data via _x_dataStack');
+                            return;
+                        } catch (e) {
+                            console.log('_x_dataStack method failed:', e);
+                        }
+                    }
                 }
+                
+                console.warn('Could not update Alpine.js data - all methods failed');
+            } else {
+                console.error('Invalid response format:', response);
             }
         },
-        error: function() {
-            console.error('Error loading dashboard data');
+        error: function(xhr, status, error) {
+            console.error('Error loading dashboard data:', xhr, status, error);
+            console.error('Response:', xhr.responseText);
         }
     });
 }
@@ -979,6 +1023,15 @@ if (document.readyState === 'complete') {
 
 $(document).ready(function() {
     const initialScrollY = window.scrollY;
+    
+    // Ensure loadDashboardData is called after everything is ready
+    setTimeout(function() {
+        if (typeof loadDashboardData === 'function') {
+            loadDashboardData();
+        } else {
+            console.error('loadDashboardData function not found');
+        }
+    }, 500);
 
     let table = $('#reportsTable').DataTable({
         processing: true,
@@ -1203,6 +1256,7 @@ $(document).ready(function() {
     
     $('#applyFilters').on('click', function() {
         const currentScrollY = window.scrollY;
+        loadDashboardData();
         reloadCharts();
         table.ajax.reload(function() {
             window.scrollTo(0, currentScrollY);
@@ -1216,6 +1270,7 @@ $(document).ready(function() {
         $('#filterUser').val('');
         $('#filterStage').val('');
         table.search('').draw();
+        loadDashboardData();
         reloadCharts();
         table.ajax.reload(null, false);
         window.scrollTo(0, currentScrollY);

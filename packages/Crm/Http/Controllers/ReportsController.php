@@ -69,17 +69,19 @@ class ReportsController extends Controller
         $revenueQuery = clone $dealsQuery;
         $totalRevenue = $revenueQuery->where('stage', 'closed_won')->sum('value') ?? 0;
 
+        $data = [
+            'total_contacts' => (int) $totalContacts,
+            'total_leads' => (int) $totalLeads,
+            'total_deals' => (int) $totalDeals,
+            'won_deals' => (int) $wonDeals,
+            'lost_deals' => (int) $lostDeals,
+            'conversion_rate' => (float) $conversionRate,
+            'total_revenue' => number_format((float) $totalRevenue, 2, '.', ''),
+        ];
+
         return response()->json([
             'success' => true,
-            'data' => [
-                'total_contacts' => $totalContacts,
-                'total_leads' => $totalLeads,
-                'total_deals' => $totalDeals,
-                'won_deals' => $wonDeals,
-                'lost_deals' => $lostDeals,
-                'conversion_rate' => $conversionRate,
-                'total_revenue' => number_format($totalRevenue, 2, '.', ''),
-            ]
+            'data' => $data
         ]);
     }
 
