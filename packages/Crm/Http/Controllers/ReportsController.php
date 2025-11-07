@@ -4,6 +4,7 @@ namespace Packages\Crm\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\User;
 use Packages\Crm\Models\Contact;
 use Packages\Crm\Models\Lead;
 use Packages\Crm\Models\Pipeline;
@@ -12,7 +13,8 @@ class ReportsController extends Controller
 {
     public function index()
     {
-        return view('crm::reports.index');
+        $users = User::select('id', 'name', 'email')->orderBy('name')->get();
+        return view('crm::reports.index', ['users' => $users]);
     }
 
     public function dashboardData(Request $request)

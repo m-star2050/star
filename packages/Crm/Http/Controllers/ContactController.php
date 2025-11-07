@@ -12,6 +12,7 @@ class ContactController extends Controller
 {
     public function index(Request $request)
     {
+        $users = User::select('id', 'name', 'email')->orderBy('name')->get();
         $perPage = (int) $request->input('per_page', 10);
         $sort = $request->input('sort', 'created_at');
         $direction = $request->input('direction', 'desc');
