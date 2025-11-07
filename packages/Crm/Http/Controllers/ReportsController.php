@@ -163,7 +163,8 @@ class ReportsController extends Controller
         $userId = $request->input('user_id');
         $stage = $request->input('stage');
 
-        $userIds = Pipeline::query()
+        // Get all user IDs that have deals, contacts, or leads
+        $userIdsFromDeals = Pipeline::query()
             ->when($dateFrom, function($q) use ($dateFrom) {
                 $q->whereDate('created_at', '>=', $dateFrom);
             })
@@ -176,42 +177,126 @@ class ReportsController extends Controller
             ->when($stage, function($q) use ($stage) {
                 $q->where('stage', $stage);
             })
+            ->whereNotNull('owner_user_id')
             ->distinct()
             ->pluck('owner_user_id')
             ->filter()
             ->unique();
 
-        $data = [];
-        foreach ($userIds as $uid) {
-            $userDealsQuery = Pipeline::query()->where('owner_user_id', $uid);
-            
+        $userIdsFromContacts = Contact::query()
+            ->when($dateFrom, function($q) use ($dateFrom) {
+                $q->whereDate('created_at', '>=', $dateFrom);
+            })
+            ->when($dateTo, function($q) use ($dateTo) {
+                $q->whereDate('created_at', '<=', $dateTo);
+            })
+            ->when($userId, function($q) use ($userId) {
+                $q->where('assigned_user_id', $userId);
+            })
+            ->whereNotNull('assigned_user_id')
+            ->distinct()
+            ->pluck('assigned_user_id')
+            ->filter()
+            ->unique();
+
+        $userIdsFromLeads = Lead::query()
+            ->when($dateFrom, function($q) use ($dateFrom) {
+                $q->whereDate('created_at', '>=', $dateFrom);
+            })
+            ->when($dateTo, function($q) use ($dateTo) {
+                $q->whereDate('created_at', '<=', $dateTo);
+            })
+            ->when($userId, function($q) use ($userId) {
+                $q->where('assigned_user_id', $userId);
+            })
+            ->whereNotNull('assigned_user_id')
+            ->distinct()
+            ->pluck('assigned_user_id')
+            ->filter()
+            ->unique();
+
+        // Combine all user IDs
+        $allUserIds = $userIdsFromDeals
+            ->merge($userIdsFromContacts)
+            ->merge($userIdsFromLeads)
+            ->unique()
+            ->values();
+
+        // If no user IDs found and no specific user filter, show a summary row
+        if ($allUserIds->isEmpty() && !$userId) {
+            // Show overall summary
+            $dealsQuery = Pipeline::query();
             if ($dateFrom) {
-                $userDealsQuery->whereDate('created_at', '>=', $dateFrom);
+                $dealsQuery->whereDate('created_at', '>=', $dateFrom);
             }
             if ($dateTo) {
-                $userDealsQuery->whereDate('created_at', '<=', $dateTo);
+                $dealsQuery->whereDate('created_at', '<=', $dateTo);
             }
             if ($stage) {
-                $userDealsQuery->where('stage', $stage);
+                $dealsQuery->where('stage', $stage);
             }
 
-            $totalDeals = $userDealsQuery->count();
-            $wonDeals = (clone $userDealsQuery)->where('stage', 'closed_won')->count();
-            $lostDeals = (clone $userDealsQuery)->where('stage', 'closed_lost')->count();
+            $totalDeals = $dealsQuery->count();
+            $wonDeals = (clone $dealsQuery)->where('stage', 'closed_won')->count();
+            $lostDeals = (clone $dealsQuery)->where('stage', 'closed_lost')->count();
             $conversionRate = $totalDeals > 0 ? round(($wonDeals / $totalDeals) * 100, 2) : 0;
-            
-            $revenueQuery = clone $userDealsQuery;
-            $totalRevenue = $revenueQuery->where('stage', 'closed_won')->sum('value') ?? 0;
+            $totalRevenue = (clone $dealsQuery)->where('stage', 'closed_won')->sum('value') ?? 0;
 
-            $data[] = [
-                'user_id' => $uid,
-                'user_name' => 'User ' . $uid,
+            $data = [[
+                'user_id' => '-',
+                'user_name' => 'All Users',
                 'total_deals' => $totalDeals,
                 'won_deals' => $wonDeals,
                 'lost_deals' => $lostDeals,
                 'conversion_rate' => $conversionRate . '%',
                 'total_revenue' => '$' . number_format($totalRevenue, 2),
-            ];
+            ]];
+        } else {
+            $data = [];
+            foreach ($allUserIds as $uid) {
+                $userDealsQuery = Pipeline::query()->where('owner_user_id', $uid);
+                
+                if ($dateFrom) {
+                    $userDealsQuery->whereDate('created_at', '>=', $dateFrom);
+                }
+                if ($dateTo) {
+                    $userDealsQuery->whereDate('created_at', '<=', $dateTo);
+                }
+                if ($stage) {
+                    $userDealsQuery->where('stage', $stage);
+                }
+
+                $totalDeals = $userDealsQuery->count();
+                $wonDeals = (clone $userDealsQuery)->where('stage', 'closed_won')->count();
+                $lostDeals = (clone $userDealsQuery)->where('stage', 'closed_lost')->count();
+                $conversionRate = $totalDeals > 0 ? round(($wonDeals / $totalDeals) * 100, 2) : 0;
+                
+                $revenueQuery = clone $userDealsQuery;
+                $totalRevenue = $revenueQuery->where('stage', 'closed_won')->sum('value') ?? 0;
+
+                // Try to get user name if users table exists
+                $userName = 'User ' . $uid;
+                if (Schema::hasTable('users')) {
+                    try {
+                        $user = \App\Models\User::find($uid);
+                        if ($user && $user->name) {
+                            $userName = $user->name;
+                        }
+                    } catch (\Exception $e) {
+                        // Keep default name
+                    }
+                }
+
+                $data[] = [
+                    'user_id' => $uid,
+                    'user_name' => $userName,
+                    'total_deals' => $totalDeals,
+                    'won_deals' => $wonDeals,
+                    'lost_deals' => $lostDeals,
+                    'conversion_rate' => $conversionRate . '%',
+                    'total_revenue' => '$' . number_format($totalRevenue, 2),
+                ];
+            }
         }
 
         if ($search = trim((string) $request->input('search.value'))) {
