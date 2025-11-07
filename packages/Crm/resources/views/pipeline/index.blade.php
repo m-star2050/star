@@ -469,7 +469,7 @@
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 20 20" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"/></svg>
                             New Deal
                         </button>
-                        <button type="button" @click="viewMode = viewMode === 'list' ? 'kanban' : 'list'; if (viewMode === 'kanban' && typeof loadKanbanData === 'function') { setTimeout(() => loadKanbanData(), 100); }" class="flex-shrink-0 flex items-center gap-2.5 px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]">
+                        <button type="button" @click="const newMode = viewMode === 'list' ? 'kanban' : 'list'; viewMode = newMode; if (newMode === 'kanban' && typeof loadKanbanData === 'function') { setTimeout(() => loadKanbanData(), 200); }" class="flex-shrink-0 flex items-center gap-2.5 px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
                             <span x-text="viewMode === 'list' ? 'Kanban View' : 'List View'"></span>
                         </button>
@@ -624,7 +624,7 @@
                             </tbody>
                         </table>
                     </div>
-                <div x-show="viewMode === 'kanban'" class="overflow-x-auto rounded-2xl shadow-2xl glass-card -mx-2 sm:mx-0" style="overflow-x: auto; overflow-y: visible;">
+                <div x-show="viewMode === 'kanban'" x-transition class="overflow-x-auto rounded-2xl shadow-2xl glass-card -mx-2 sm:mx-0" style="overflow-x: auto; overflow-y: visible; display: none;">
                     <div class="grid grid-cols-1 md:grid-cols-5 gap-4 p-4" style="min-width: 1200px;">
                         <template x-for="(stage, stageKey) in ['prospect', 'negotiation', 'proposal', 'closed_won', 'closed_lost']" :key="stageKey">
                             <div class="kanban-column" 
@@ -650,6 +650,9 @@
                                         </div>
                                     </div>
                                 </template>
+                                <div x-show="!kanbanData[stage] || kanbanData[stage].length === 0" class="text-center text-gray-400 text-sm py-4">
+                                    No deals in this stage
+                                </div>
                             </div>
                         </template>
                     </div>
@@ -1612,38 +1615,107 @@ function loadKanbanData() {
         method: 'GET',
         data: filterData,
         success: function(response) {
-            const alpineData = getAlpineData();
-            if (alpineData && alpineData.__x) {
-                const stages = ['prospect', 'negotiation', 'proposal', 'closed_won', 'closed_lost'];
-                const kanbanData = {};
+            console.log('Kanban data response:', response);
+            
+            // Helper function to get Alpine data with retry mechanism
+            function getAlpineDataWithRetry(retries = 10, delay = 100) {
+                return new Promise((resolve) => {
+                    function tryGet() {
+                        const alpineData = getAlpineData();
+                        if (alpineData && alpineData.__x && alpineData.__x.$data) {
+                            resolve(alpineData);
+                        } else if (retries > 0) {
+                            retries--;
+                            setTimeout(tryGet, delay);
+                        } else {
+                            console.warn('Alpine data not found after retries, attempting direct access');
+                            resolve(alpineData);
+                        }
+                    }
+                    tryGet();
+                });
+            }
+            
+            getAlpineDataWithRetry().then((alpineData) => {
+                if (!alpineData) {
+                    console.error('Alpine data element not found');
+                    return;
+                }
                 
+                // Try multiple methods to access Alpine data
+                let alpineInstance = null;
+                if (alpineData.__x) {
+                    alpineInstance = alpineData.__x;
+                } else if (window.Alpine && alpineData._x_dataStack) {
+                    // Alternative method for newer Alpine versions
+                    alpineInstance = { $data: alpineData._x_dataStack[0] };
+                } else if (window.Alpine) {
+                    // Try to get data using Alpine's API
+                    const data = window.Alpine.$data(alpineData);
+                    if (data) {
+                        alpineInstance = { $data: data };
+                    }
+                }
+                
+                if (!alpineInstance || !alpineInstance.$data) {
+                    console.error('Alpine instance not found or not initialized');
+                    // Fallback: try to dispatch an event or use a different approach
+                    if (window.Alpine && alpineData) {
+                        // Try using Alpine's reactive system
+                        window.Alpine.store('kanbanData', response.data || {});
+                    }
+                    return;
+                }
+                
+                const stages = ['prospect', 'negotiation', 'proposal', 'closed_won', 'closed_lost'];
+                let kanbanData = {};
+                
+                // Initialize all stages with empty arrays
                 stages.forEach(stage => {
                     kanbanData[stage] = [];
                 });
                 
-                if (response.data) {
-                    response.data.forEach(function(deal) {
-                        const stage = deal.stage || 'prospect';
-                        if (!kanbanData[stage]) {
-                            kanbanData[stage] = [];
+                // The API already returns data organized by stage, so use it directly
+                if (response.success && response.data) {
+                    // Merge the API response data (which is already organized by stage)
+                    stages.forEach(stage => {
+                        if (response.data[stage] && Array.isArray(response.data[stage])) {
+                            kanbanData[stage] = response.data[stage];
                         }
-                        kanbanData[stage].push({
-                            id: deal.id,
-                            deal_name: deal.deal_name,
-                            value: deal.value,
-                            company: deal.company,
-                            contact: deal.contact,
-                            probability: deal.probability,
-                            close_date: deal.close_date,
-                            owner: deal.owner
-                        });
                     });
                 }
                 
-                alpineData.__x.$data.kanbanData = kanbanData;
-            }
+                console.log('Setting kanbanData:', kanbanData);
+                
+                // Ensure kanbanData exists in Alpine data
+                if (!alpineInstance.$data.kanbanData) {
+                    alpineInstance.$data.kanbanData = {};
+                }
+                
+                // Update each stage individually to ensure reactivity
+                stages.forEach(stage => {
+                    if (!alpineInstance.$data.kanbanData[stage]) {
+                        alpineInstance.$data.kanbanData[stage] = [];
+                    }
+                    // Replace the array to trigger reactivity
+                    alpineInstance.$data.kanbanData[stage] = kanbanData[stage] || [];
+                });
+                
+                // Force Alpine.js to update the view
+                if (alpineInstance.$nextTick) {
+                    alpineInstance.$nextTick(() => {
+                        console.log('Kanban data updated, viewMode:', alpineInstance.$data.viewMode);
+                    });
+                } else {
+                    // Fallback: trigger a reactive update
+                    setTimeout(() => {
+                        console.log('Kanban data updated (fallback), viewMode:', alpineInstance.$data.viewMode);
+                    }, 50);
+                }
+            });
         },
-        error: function() {
+        error: function(xhr, status, error) {
+            console.error('Error loading kanban data:', xhr, status, error);
             showNotification('Error loading kanban data.', 'error');
         }
     });
