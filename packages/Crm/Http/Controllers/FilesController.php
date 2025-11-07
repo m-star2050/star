@@ -6,16 +6,25 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Packages\Crm\Models\File;
+use Packages\Crm\Helpers\PermissionHelper;
 
 class FilesController extends Controller
 {
     public function index()
     {
+        if (!auth()->user()->can('view files')) {
+            abort(403, 'Unauthorized. You do not have permission to view files.');
+        }
+
         return view('crm::files.index');
     }
 
     public function store(Request $request)
     {
+        if (!auth()->user()->can('upload files')) {
+            abort(403, 'Unauthorized. You do not have permission to upload files.');
+        }
+
         try {
             $request->validate([
                 'file' => 'required|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:10240',
@@ -127,6 +136,15 @@ class FilesController extends Controller
 
     public function destroy(Request $request, File $file)
     {
+        if (!auth()->user()->can('delete files')) {
+            abort(403, 'Unauthorized. You do not have permission to delete files.');
+        }
+
+        // Check if user can access this file (for Executive role)
+        if (!PermissionHelper::canAccessRecord($file, auth()->user())) {
+            abort(403, 'Unauthorized. You do not have access to this file.');
+        }
+
         if (Storage::disk('public')->exists($file->file_path)) {
             Storage::disk('public')->delete($file->file_path);
         }
@@ -145,6 +163,10 @@ class FilesController extends Controller
 
     public function bulkDelete(Request $request)
     {
+        if (!auth()->user()->can('delete files')) {
+            abort(403, 'Unauthorized. You do not have permission to delete files.');
+        }
+
         $ids = (array) $request->input('ids', []);
 
         if (empty($ids)) {
@@ -159,6 +181,12 @@ class FilesController extends Controller
         }
 
         $files = File::whereIn('id', $ids)->get();
+        
+        // Filter files by access permission
+        $user = auth()->user();
+        $files = $files->filter(function($file) use ($user) {
+            return PermissionHelper::canAccessRecord($file, $user);
+        });
 
         foreach ($files as $file) {
             if (Storage::disk('public')->exists($file->file_path)) {
@@ -179,7 +207,17 @@ class FilesController extends Controller
 
     public function datatable(Request $request)
     {
+        if (!auth()->user()->can('view files')) {
+            abort(403, 'Unauthorized. You do not have permission to view files.');
+        }
+
         $query = File::query();
+        
+        // Filter by role (Executive sees only uploaded files)
+        $user = auth()->user();
+        if (PermissionHelper::isExecutive($user)) {
+            $query->where('uploaded_by', $user->id);
+        }
 
         if ($search = trim((string) $request->input('search.value'))) {
             $query->where(function ($q) use ($search) {
@@ -205,7 +243,12 @@ class FilesController extends Controller
             $query->whereDate('created_at', '<=', $request->input('uploaded_to'));
         }
 
-        $totalRecords = File::count();
+        // Count total and filtered records with role filtering
+        $totalQuery = File::query();
+        if (PermissionHelper::isExecutive(auth()->user())) {
+            $totalQuery->where('uploaded_by', auth()->id());
+        }
+        $totalRecords = $totalQuery->count();
         $filteredRecords = $query->count();
 
         $orderColumn = $request->input('order.0.column', 5);
@@ -250,6 +293,20 @@ class FilesController extends Controller
                 $linkedInfo = ucfirst($file->linked_type) . ' #' . $file->linked_id;
             }
 
+            $user = auth()->user();
+            $canDelete = $user->can('delete files');
+            $canAccess = PermissionHelper::canAccessRecord($file, $user);
+            
+            $actionsHtml = '<div class="flex flex-col sm:flex-row gap-1 justify-center">';
+            $actionsHtml .= '<a href="' . route('crm.files.preview', $file->id) . '" target="_blank" class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 rounded-lg border border-blue-400 text-blue-600 hover:bg-blue-50 shadow-sm text-xs"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg><span class="hidden sm:inline">Preview</span></a>';
+            $actionsHtml .= '<a href="' . route('crm.files.download', $file->id) . '" class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 rounded-lg border border-green-400 text-green-600 hover:bg-green-50 shadow-sm text-xs"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/></svg><span class="hidden sm:inline">Download</span></a>';
+            
+            if ($canDelete && $canAccess) {
+                $actionsHtml .= '<button type="button" class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 rounded-lg border border-red-400 text-red-600 hover:bg-red-50 shadow-sm text-xs delete-btn" data-id="' . $file->id . '" data-name="' . htmlspecialchars($file->original_name, ENT_QUOTES) . '"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/></svg><span class="hidden sm:inline">Delete</span></button>';
+            }
+            
+            $actionsHtml .= '</div>';
+            
             return [
                 'id' => $file->id,
                 'original_name' => $file->original_name,
@@ -259,11 +316,7 @@ class FilesController extends Controller
                 'created_at' => $file->created_at?->format('Y-m-d H:i') ?? '-',
                 'uploaded_by' => $file->uploaded_by ? ('User ' . $file->uploaded_by) : '-',
                 'icon_html' => $iconHtml,
-                'actions_html' => '<div class="flex flex-col sm:flex-row gap-1 justify-center">
-                    <a href="' . route('crm.files.preview', $file->id) . '" target="_blank" class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 rounded-lg border border-blue-400 text-blue-600 hover:bg-blue-50 shadow-sm text-xs"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg><span class="hidden sm:inline">Preview</span></a>
-                    <a href="' . route('crm.files.download', $file->id) . '" class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 rounded-lg border border-green-400 text-green-600 hover:bg-green-50 shadow-sm text-xs"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/></svg><span class="hidden sm:inline">Download</span></a>
-                    <button type="button" class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 rounded-lg border border-red-400 text-red-600 hover:bg-red-50 shadow-sm text-xs delete-btn" data-id="' . $file->id . '" data-name="' . htmlspecialchars($file->original_name, ENT_QUOTES) . '"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/></svg><span class="hidden sm:inline">Delete</span></button>
-                </div>',
+                'actions_html' => $actionsHtml,
             ];
         });
 

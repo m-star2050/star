@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Packages\Crm\Models\Contact;
+use Packages\Crm\Helpers\PermissionHelper;
 use App\Models\User;
 use Illuminate\Support\Facades\Schema;
 
@@ -13,6 +14,11 @@ class ContactController extends Controller
 {
     public function index(Request $request)
     {
+        // Check permission
+        if (!auth()->user()->can('view contacts')) {
+            abort(403, 'Unauthorized. You do not have permission to view contacts.');
+        }
+
         $users = collect([]);
         if (Schema::hasTable('users')) {
             try {
@@ -26,6 +32,9 @@ class ContactController extends Controller
         $direction = $request->input('direction', 'desc');
 
         $query = Contact::query();
+        
+        // Filter by role (Executive sees only assigned records)
+        $query = PermissionHelper::filterByRole($query, auth()->user(), 'assigned_user_id');
 
         if ($search = trim((string) $request->input('search'))) {
             $query->where(function ($q) use ($search) {
@@ -83,6 +92,10 @@ class ContactController extends Controller
 
     public function store(Request $request)
     {
+        if (!auth()->user()->can('create contacts')) {
+            abort(403, 'Unauthorized. You do not have permission to create contacts.');
+        }
+
         $data = $request->validate([
             'name' => ['required','string','max:255'],
             'company' => ['nullable','string','max:255'],
@@ -121,6 +134,15 @@ class ContactController extends Controller
 
     public function update(Request $request, Contact $contact)
     {
+        if (!auth()->user()->can('edit contacts')) {
+            abort(403, 'Unauthorized. You do not have permission to edit contacts.');
+        }
+
+        // Check if user can access this record
+        if (!PermissionHelper::canAccessRecord($contact, auth()->user())) {
+            abort(403, 'Unauthorized. You do not have access to this contact.');
+        }
+
         $data = $request->validate([
             'name' => ['required','string','max:255'],
             'company' => ['nullable','string','max:255'],
@@ -159,6 +181,15 @@ class ContactController extends Controller
 
     public function destroy(Request $request, Contact $contact)
     {
+        if (!auth()->user()->can('delete contacts')) {
+            abort(403, 'Unauthorized. You do not have permission to delete contacts.');
+        }
+
+        // Check if user can access this record
+        if (!PermissionHelper::canAccessRecord($contact, auth()->user())) {
+            abort(403, 'Unauthorized. You do not have access to this contact.');
+        }
+
         $contact->delete();
         
         if ($request->ajax()) {
@@ -173,7 +204,17 @@ class ContactController extends Controller
 
     public function restore($id)
     {
+        if (!auth()->user()->can('edit contacts')) {
+            abort(403, 'Unauthorized. You do not have permission to restore contacts.');
+        }
+
         $contact = Contact::withTrashed()->findOrFail($id);
+        
+        // Check if user can access this record
+        if (!PermissionHelper::canAccessRecord($contact, auth()->user())) {
+            abort(403, 'Unauthorized. You do not have access to this contact.');
+        }
+
         $contact->restore();
         return redirect()->route('crm.contacts.index')->with('status', 'Contact restored');
     }
@@ -199,6 +240,10 @@ class ContactController extends Controller
 
     public function bulkDelete(Request $request)
     {
+        if (!auth()->user()->can('delete contacts')) {
+            abort(403, 'Unauthorized. You do not have permission to delete contacts.');
+        }
+
         $ids = (array) $request->input('ids', []);
         
         // Return error if no IDs provided
@@ -227,11 +272,18 @@ class ContactController extends Controller
 
     public function datatable(Request $request)
     {
+        if (!auth()->user()->can('view contacts')) {
+            abort(403, 'Unauthorized. You do not have permission to view contacts.');
+        }
+
         if (Schema::hasTable('users')) {
             $query = Contact::with('assignedUser');
         } else {
             $query = Contact::query();
         }
+
+        // Filter by role (Executive sees only assigned records)
+        $query = PermissionHelper::filterByRole($query, auth()->user(), 'assigned_user_id');
 
         // Search from DataTables
         if ($search = trim((string) $request->input('search.value'))) {
@@ -287,10 +339,29 @@ class ContactController extends Controller
             ->take($length)
             ->get();
 
-        $data = $contacts->map(function ($contact) {
+        $user = auth()->user();
+        $canDelete = $user->can('delete contacts');
+        $canEdit = $user->can('edit contacts');
+
+        $data = $contacts->map(function ($contact) use ($canDelete, $canEdit, $user) {
             $isArchived = (($contact->status ?? null) === 'archived' || !is_null($contact->deleted_at ?? null));
             $tagsText = implode(',', (array) $contact->tags);
             $assigned = $contact->assignedUser ? $contact->assignedUser->name : ($contact->assigned_user_id ? 'User '.$contact->assigned_user_id : '-');
+            
+            // Check if user can access this record for edit/delete
+            $canAccess = PermissionHelper::canAccessRecord($contact, $user);
+            
+            $actionsHtml = '<div class="flex flex-col sm:flex-row gap-1 justify-center">';
+            
+            if ($canEdit && $canAccess) {
+                $actionsHtml .= '<button type="button" class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 rounded-lg border border-blue-400 text-blue-600 hover:bg-blue-50 shadow-sm text-xs edit-btn" data-id="'.$contact->id.'" data-name="'.htmlspecialchars($contact->name, ENT_QUOTES).'" data-company="'.htmlspecialchars($contact->company ?? '', ENT_QUOTES).'" data-email="'.htmlspecialchars($contact->email ?? '', ENT_QUOTES).'" data-phone="'.htmlspecialchars($contact->phone ?? '', ENT_QUOTES).'" data-assigned="'.($contact->assigned_user_id ?? '').'" data-status="'.($contact->status ?? 'active').'" data-tags="'.htmlspecialchars($tagsText, ENT_QUOTES).'" data-notes="'.htmlspecialchars($contact->notes ?? '', ENT_QUOTES).'"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-8.5 8.5a2 2 0 01-.878.515l-3.3.943a.5.5 0 01-.62-.62l.943-3.3a2 2 0 01.515-.878l8.5-8.5z"/></svg><span class="hidden sm:inline">Edit</span></button>';
+            }
+            
+            if ($canDelete && $canAccess) {
+                $actionsHtml .= '<button type="button" class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 rounded-lg border border-red-400 text-red-600 hover:bg-red-50 shadow-sm text-xs delete-btn" data-id="'.$contact->id.'"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 8a1 1 0 011 1v6a1 1 0 102 0V9a1 1 0 112 0v6a1 1 0 102 0V9a1 1 0 011-1h1a1 1 0 100-2h-1V5a2 2 0 00-2-2H9a2 2 0 00-2 2v1H6a1 1 0 100 2h1zm3-3h2v1H9V5z" clip-rule="evenodd"/></svg><span class="hidden sm:inline">Del</span></button>';
+            }
+            
+            $actionsHtml .= '</div>';
             
             return [
                 'id' => $contact->id,
@@ -305,10 +376,7 @@ class ContactController extends Controller
                 'status_html' => $isArchived 
                     ? '<span class="inline-flex items-center gap-1 text-red-600" title="Archived"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.54-10.46a.75.75 0 00-1.06-1.06L10 8.94 7.52 6.48a.75.75 0 00-1.06 1.06L8.94 10l-2.48 2.48a.75.75 0 101.06 1.06L10 11.06l2.48 2.48a.75.75 0 101.06-1.06L11.06 10l2.48-2.46z" clip-rule="evenodd"/></svg>Archived</span>'
                     : '<span class="inline-flex items-center gap-1 text-blue-600" title="Active"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-7.364 7.364a1 1 0 01-1.414 0L3.293 10.435a1 1 0 011.414-1.414l3.221 3.221 6.657-6.657a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Active</span>',
-                'actions_html' => '<div class="flex flex-col sm:flex-row gap-1 justify-center">
-                    <button type="button" class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 rounded-lg border border-blue-400 text-blue-600 hover:bg-blue-50 shadow-sm text-xs edit-btn" data-id="'.$contact->id.'" data-name="'.htmlspecialchars($contact->name, ENT_QUOTES).'" data-company="'.htmlspecialchars($contact->company ?? '', ENT_QUOTES).'" data-email="'.htmlspecialchars($contact->email ?? '', ENT_QUOTES).'" data-phone="'.htmlspecialchars($contact->phone ?? '', ENT_QUOTES).'" data-assigned="'.($contact->assigned_user_id ?? '').'" data-status="'.($contact->status ?? 'active').'" data-tags="'.htmlspecialchars($tagsText, ENT_QUOTES).'" data-notes="'.htmlspecialchars($contact->notes ?? '', ENT_QUOTES).'"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-8.5 8.5a2 2 0 01-.878.515l-3.3.943a.5.5 0 01-.62-.62l.943-3.3a2 2 0 01.515-.878l8.5-8.5z"/></svg><span class="hidden sm:inline">Edit</span></button>
-                    <button type="button" class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 rounded-lg border border-red-400 text-red-600 hover:bg-red-50 shadow-sm text-xs delete-btn" data-id="'.$contact->id.'"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 8a1 1 0 011 1v6a1 1 0 102 0V9a1 1 0 112 0v6a1 1 0 102 0V9a1 1 0 011-1h1a1 1 0 100-2h-1V5a2 2 0 00-2-2H9a2 2 0 00-2 2v1H6a1 1 0 100 2h1zm3-3h2v1H9V5z" clip-rule="evenodd"/></svg><span class="hidden sm:inline">Del</span></button>
-                </div>',
+                'actions_html' => $actionsHtml,
             ];
         });
 
@@ -322,7 +390,14 @@ class ContactController extends Controller
 
     public function export(Request $request)
     {
+        if (!auth()->user()->can('export contacts')) {
+            abort(403, 'Unauthorized. You do not have permission to export contacts.');
+        }
+
         $query = Contact::query();
+        
+        // Filter by role (Executive sees only assigned records)
+        $query = PermissionHelper::filterByRole($query, auth()->user(), 'assigned_user_id');
 
         if ($search = trim((string) $request->input('search'))) {
             $query->where(function ($q) use ($search) {

@@ -1,6 +1,7 @@
 <?php 
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
 use Packages\Crm\Http\Controllers\ContactController;
 use Packages\Crm\Http\Controllers\LeadController;
 use Packages\Crm\Http\Controllers\TaskController;
@@ -12,7 +13,14 @@ Route::prefix('crm')->group(function () {
     Route::get('check', function(){
         echo "Check";
     });
-    Route::middleware(['web'])->group(function () {
+    
+    // Authentication routes under /crm prefix (no auth middleware required)
+    Route::get('login', [AuthController::class, 'showLoginForm'])->name('crm.login');
+    Route::post('login', [AuthController::class, 'login']);
+    Route::get('register', [AuthController::class, 'showRegisterForm'])->name('crm.register');
+    Route::post('register', [AuthController::class, 'register']);
+    
+    Route::middleware(['web', 'auth', 'crm.access'])->group(function () {
         Route::name('crm.')->group(function () {
             Route::resource('contacts', ContactController::class)->only(['index','store','update','destroy']);
             Route::get('contacts/datatable', [ContactController::class, 'datatable'])->name('contacts.datatable');
@@ -87,6 +95,11 @@ Route::prefix('crm')->group(function () {
                     'data' => $leads
                 ]);
             })->name('api.leads');
+
+            // User Role Management (Admin only)
+            Route::get('user-roles', [\Packages\Crm\Http\Controllers\UserRoleController::class, 'index'])->name('user-roles.index');
+            Route::put('user-roles/{user}', [\Packages\Crm\Http\Controllers\UserRoleController::class, 'update'])->name('user-roles.update');
+            Route::get('api/user-roles/{user}', [\Packages\Crm\Http\Controllers\UserRoleController::class, 'show'])->name('user-roles.show');
         });
     });
 

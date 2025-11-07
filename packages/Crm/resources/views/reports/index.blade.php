@@ -420,13 +420,32 @@
         <div class="flex items-center mb-6 pb-4 border-b border-white/20" :class="open ? 'justify-between' : 'justify-center'">
             <div class="flex items-center gap-3" :class="open ? 'opacity-100' : 'opacity-0 pointer-events-none absolute'">
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
+                    @if(auth()->check() && auth()->user()->name)
+                        <span class="text-white font-bold text-sm">{{ strtoupper(substr(auth()->user()->name, 0, 2)) }}</span>
+                    @else
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                    @endif
                 </div>
-                <div>
-                    <div class="text-gray-800 font-bold text-sm leading-tight">Welcome</div>
-                    <div class="text-gray-600 font-medium text-xs">User</div>
+                <div class="flex-1 min-w-0">
+                    <div class="text-gray-800 font-bold text-sm leading-tight truncate">{{ auth()->check() ? auth()->user()->name : 'User' }}</div>
+                    <div class="text-gray-600 font-medium text-xs truncate">{{ auth()->check() ? auth()->user()->email : 'user@example.com' }}</div>
+                    @if(auth()->check() && method_exists(auth()->user(), 'hasRole'))
+                        @php
+                            $user = auth()->user();
+                            $isAdmin = method_exists($user, 'hasRole') && $user->hasRole('Admin');
+                            $isManager = method_exists($user, 'hasRole') && $user->hasRole('Manager');
+                            $isExecutive = method_exists($user, 'hasRole') && $user->hasRole('Executive');
+                        @endphp
+                        @if($isAdmin)
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 mt-1">Admin</span>
+                        @elseif($isManager)
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mt-1">Manager</span>
+                        @elseif($isExecutive)
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mt-1">Executive</span>
+                        @endif
+                    @endif
                 </div>
             </div>
             <button @click="open=!open" class="text-gray-600 bg-white/20 hover:bg-white/30 border border-white/30 rounded-lg w-8 h-8 flex items-center justify-center hover:scale-110 transition-all duration-200 flex-shrink-0 shadow-sm" :aria-expanded="open">
@@ -461,6 +480,36 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/></svg>
                 <span x-show="open" x-transition>Files</span>
             </a>
+            @php
+                $showUserRoles = false;
+                if (auth()->check()) {
+                    $user = auth()->user();
+                    // Always show for first user (by ID) - allows them to assign Admin role
+                    $firstUser = \App\Models\User::orderBy('id', 'asc')->first();
+                    $isFirstUser = $firstUser && $firstUser->id === $user->id;
+                    
+                    if (method_exists($user, 'hasRole')) {
+                        try {
+                            $showUserRoles = $user->hasRole('Admin') || $isFirstUser;
+                        } catch (\Exception $e) {
+                            $showUserRoles = $isFirstUser;
+                        }
+                    } else {
+                        $showUserRoles = $isFirstUser;
+                    }
+                }
+            @endphp
+            @if($showUserRoles)
+            <div class="pt-4 mt-4 border-t border-white/20">
+                <div class="sidebar-section-title mb-2" :class="open ? 'opacity-100' : 'opacity-0 pointer-events-none'">
+                    <span x-show="open" x-transition>Administration</span>
+                </div>
+                <a href="{{ route('crm.user-roles.index') }}" class="sidebar-link {{ request()->routeIs('crm.user-roles.*') ? 'active' : '' }}" :class="!open ? 'justify-center px-0' : ''">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg>
+                    <span x-show="open" x-transition>User Roles</span>
+                </a>
+            </div>
+            @endif
         </nav>
     </aside>
 
@@ -643,10 +692,12 @@
                     <div class="flex flex-wrap items-center gap-2 justify-center" id="datatablePaginationContainer">
                     </div>
                     <div class="flex flex-wrap items-center gap-3">
+                        @if(auth()->check() && auth()->user()->can('export reports'))
                         <button type="button" id="exportBtn" class="px-4 py-2.5 rounded-xl border-2 border-green-200 bg-gradient-to-r from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 text-green-700 font-semibold text-sm shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                             Export CSV
                         </button>
+                        @endif
                         <button type="button" id="resetFilters" class="px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-semibold text-sm shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                             Reset
@@ -1040,11 +1091,33 @@ $(document).ready(function() {
         scrollY: false,
         ajax: {
             url: '{{ route('crm.reports.datatable') }}',
+            type: 'GET',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
             data: function(d) {
                 d.date_from = $('#filterDateFrom').val() || '';
                 d.date_to = $('#filterDateTo').val() || '';
                 d.user_id = $('#filterUser').val() || '';
                 d.stage = $('#filterStage').val() || '';
+            },
+            error: function(xhr, error, thrown) {
+                console.error('DataTables AJAX error:', {
+                    status: xhr.status,
+                    statusText: xhr.statusText,
+                    responseText: xhr.responseText,
+                    error: error,
+                    thrown: thrown
+                });
+                
+                // Show user-friendly error message
+                if (xhr.status === 403) {
+                    alert('You do not have permission to view reports. Please contact your administrator.');
+                } else if (xhr.status === 500) {
+                    alert('A server error occurred. Please try refreshing the page or contact support.');
+                } else {
+                    alert('An error occurred while loading the reports table. Please try again.');
+                }
             }
         },
         columns: [

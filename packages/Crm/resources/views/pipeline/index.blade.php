@@ -599,6 +599,34 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/></svg>
                     <span>Files</span>
                 </a>
+                @php
+                    $showUserRolesMobile = false;
+                    if (auth()->check()) {
+                        $user = auth()->user();
+                        // Always show for first user (by ID) - allows them to assign Admin role
+                        $firstUser = \App\Models\User::orderBy('id', 'asc')->first();
+                        $isFirstUser = $firstUser && $firstUser->id === $user->id;
+                        
+                        if (method_exists($user, 'hasRole')) {
+                            try {
+                                $showUserRolesMobile = $user->hasRole('Admin') || $isFirstUser;
+                            } catch (\Exception $e) {
+                                $showUserRolesMobile = $isFirstUser;
+                            }
+                        } else {
+                            $showUserRolesMobile = $isFirstUser;
+                        }
+                    }
+                @endphp
+                @if($showUserRolesMobile)
+                <div class="pt-4 mt-4 border-t border-white/30">
+                    <div class="sidebar-section-title mb-2">Administration</div>
+                    <a href="{{ route('crm.user-roles.index') }}" class="sidebar-link {{ request()->routeIs('crm.user-roles.*') ? 'active' : '' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg>
+                        <span>User Roles</span>
+                    </a>
+                </div>
+                @endif
             </nav>
         </div>
     </div>
@@ -607,13 +635,46 @@
         <div class="flex items-center mb-6 pb-4 border-b border-white/20" :class="open ? 'justify-between' : 'justify-center'">
             <div class="flex items-center gap-3" :class="open ? 'opacity-100' : 'opacity-0 pointer-events-none absolute'">
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
+                    @if(auth()->check() && auth()->user()->name)
+                        <span class="text-white font-bold text-sm">{{ strtoupper(substr(auth()->user()->name, 0, 2)) }}</span>
+                    @else
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                    @endif
             </div>
-                <div>
-                    <div class="text-gray-800 font-bold text-sm leading-tight">Welcome</div>
-                    <div class="text-gray-600 font-medium text-xs">User</div>
+                <div class="flex-1 min-w-0">
+                    <div class="text-gray-800 font-bold text-sm leading-tight truncate">{{ auth()->check() ? auth()->user()->name : 'User' }}</div>
+                    <div class="text-gray-600 font-medium text-xs truncate">{{ auth()->check() ? auth()->user()->email : 'user@example.com' }}</div>
+                    @if(auth()->check())
+                        @php
+                            $user = auth()->user();
+                            $isAdmin = false;
+                            $isManager = false;
+                            $isExecutive = false;
+                            
+                            if (method_exists($user, 'hasRole')) {
+                                try {
+                                    $isAdmin = $user->hasRole('Admin');
+                                    $isManager = $user->hasRole('Manager');
+                                    $isExecutive = $user->hasRole('Executive');
+                                } catch (\Exception $e) {
+                                    // If Spatie not set up, check if first user
+                                    $isAdmin = \App\Models\User::orderBy('id', 'asc')->first()?->id === $user->id;
+                                }
+                            } else {
+                                // Fallback: first user is admin
+                                $isAdmin = \App\Models\User::orderBy('id', 'asc')->first()?->id === $user->id;
+                            }
+                        @endphp
+                        @if($isAdmin)
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 mt-1">Admin</span>
+                        @elseif($isManager)
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mt-1">Manager</span>
+                        @elseif($isExecutive)
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mt-1">Executive</span>
+                        @endif
+                    @endif
                 </div>
             </div>
             <button @click="open=!open" class="text-gray-600 bg-white/20 hover:bg-white/30 border border-white/30 rounded-lg w-8 h-8 flex items-center justify-center hover:scale-110 transition-all duration-200 flex-shrink-0 shadow-sm" :aria-expanded="open">
@@ -648,6 +709,36 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/></svg>
                 <span x-show="open" x-transition>Files</span>
             </a>
+            @php
+                $showUserRoles = false;
+                if (auth()->check()) {
+                    $user = auth()->user();
+                    // Always show for first user (by ID) - allows them to assign Admin role
+                    $firstUser = \App\Models\User::orderBy('id', 'asc')->first();
+                    $isFirstUser = $firstUser && $firstUser->id === $user->id;
+                    
+                    if (method_exists($user, 'hasRole')) {
+                        try {
+                            $showUserRoles = $user->hasRole('Admin') || $isFirstUser;
+                        } catch (\Exception $e) {
+                            $showUserRoles = $isFirstUser;
+                        }
+                    } else {
+                        $showUserRoles = $isFirstUser;
+                    }
+                }
+            @endphp
+            @if($showUserRoles)
+            <div class="pt-4 mt-4 border-t border-white/20">
+                <div class="sidebar-section-title mb-2" :class="open ? 'opacity-100' : 'opacity-0 pointer-events-none'">
+                    <span x-show="open" x-transition>Administration</span>
+                </div>
+                <a href="{{ route('crm.user-roles.index') }}" class="sidebar-link {{ request()->routeIs('crm.user-roles.*') ? 'active' : '' }}" :class="!open ? 'justify-center px-0' : ''">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg>
+                    <span x-show="open" x-transition>User Roles</span>
+                </a>
+            </div>
+            @endif
         </nav>
     </aside>
 
@@ -724,14 +815,12 @@
                 </div>
                 </div>
                 <div class="mb-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                    @if(auth()->check() && auth()->user()->can('delete pipeline'))
                     <button type="button" id="bulkDeleteBtn" class="px-4 py-2.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 text-sm font-semibold flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                         Delete Selected
                     </button>
-                    <span class="text-sm text-gray-600 font-medium flex items-center gap-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                        Click 'Export' to download to Excel
-                        </span>
+                    @endif
                     </div>
                 <div class="overflow-x-auto rounded-2xl shadow-2xl glass-card -mx-2 sm:mx-0" style="overflow-x: auto; overflow-y: visible;">
                     <table id="pipelineTable" class="w-full text-sm bg-white/15 backdrop-blur-sm rounded-2xl whitespace-nowrap" style="min-width: 1200px;" x-show="viewMode === 'list'">
@@ -877,10 +966,10 @@
                                                 <span class="kanban-card-detail-label">Probability:</span>
                                                 <span class="kanban-card-probability" 
                                                       :class="{
-                                                          'bg-red-100 text-red-700': (card.probability || 0) < 25,
-                                                          'bg-yellow-100 text-yellow-700': (card.probability || 0) >= 25 && (card.probability || 0) < 50,
-                                                          'bg-blue-100 text-blue-700': (card.probability || 0) >= 50 && (card.probability || 0) < 75,
-                                                          'bg-green-100 text-green-700': (card.probability || 0) >= 75
+                                                          'bg-red-100 text-red-700': parseInt(card.probability || 0) < 25,
+                                                          'bg-yellow-100 text-yellow-700': parseInt(card.probability || 0) >= 25 && parseInt(card.probability || 0) < 50,
+                                                          'bg-blue-100 text-blue-700': parseInt(card.probability || 0) >= 50 && parseInt(card.probability || 0) < 75,
+                                                          'bg-green-100 text-green-700': parseInt(card.probability || 0) >= 75
                                                       }"
                                                       x-text="(card.probability || 0) + '%'"></span>
                                             </div>
@@ -888,6 +977,27 @@
                                             <div class="kanban-card-detail" x-show="card.owner">
                                                 <span class="kanban-card-detail-label">Owner:</span>
                                                 <span class="kanban-card-detail-value" x-text="card.owner || '-'"></span>
+                                            </div>
+                                            
+                                            <div class="kanban-card-actions" x-show="card.canEdit || card.canDelete">
+                                                <button type="button" 
+                                                        x-show="card.canEdit"
+                                                        @click.stop="editDealFromKanban(card.id)"
+                                                        class="kanban-card-btn kanban-card-btn-edit">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-8.5 8.5a2 2 0 01-.878.515l-3.3.943a.5.5 0 01-.62-.62l.943-3.3a2 2 0 01.515-.878l8.5-8.5z"/>
+                                                    </svg>
+                                                    Edit
+                                                </button>
+                                                <button type="button" 
+                                                        x-show="card.canDelete"
+                                                        @click.stop="deleteDealFromKanban(card.id)"
+                                                        class="kanban-card-btn kanban-card-btn-delete">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                                    </svg>
+                                                    Delete
+                                                </button>
                                             </div>
                                         </div>
                                     </template>
@@ -927,10 +1037,12 @@
                     <div class="flex flex-wrap items-center gap-2 justify-center" id="datatablePaginationContainer">
                     </div>
                     <div class="flex flex-wrap items-center gap-3">
+                        @if(auth()->check() && auth()->user()->can('export pipeline'))
                         <a href="{{ route('crm.pipeline.export', request()->query()) }}" class="px-4 py-2.5 rounded-xl border-2 border-green-200 bg-gradient-to-r from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 text-green-700 font-semibold text-sm shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                             Export
                         </a>
+                        @endif
                         <button type="button" id="resetFilters" class="px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-semibold text-sm shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                             Reset
@@ -2109,9 +2221,16 @@ window.handleDrop = function(event, newStage) {
 };
 
 window.editDealFromKanban = function(dealId) {
+    // Fetch full pipeline record for editing
     $.ajax({
-        url: '{{ route('crm.pipeline.kanban-data') }}',
+        url: '{{ route('crm.pipeline.datatable') }}',
         method: 'GET',
+        data: {
+            search: { value: '' },
+            start: 0,
+            length: 1000,
+            draw: 1
+        },
         success: function(response) {
             const deal = response.data.find(d => d.id == dealId);
             if (deal) {
@@ -2122,14 +2241,25 @@ window.editDealFromKanban = function(dealId) {
                     data.editDeal = deal.deal_name || '';
                     data.editStage = deal.stage || 'prospect';
                     data.editValue = deal.value ? deal.value.replace('$', '').replace(/,/g, '') : '0';
-                    data.editOwner = deal.owner ? deal.owner.replace('User ', '') : '';
-                    data.editCloseDate = deal.close_date || '';
+                    data.editOwner = deal.owner_user_id_raw || '';
+                    data.editCloseDate = deal.close_date !== '-' ? deal.close_date : '';
                     data.editProbability = deal.probability ? deal.probability.replace('%', '') : '0';
-                    data.editContact = '';
-                    data.editCompany = deal.company || '';
-                    data.editNotes = '';
+                    data.editContact = deal.contact_id || '';
+                    data.editCompany = (deal.company && deal.company !== '-') ? deal.company : '';
+                    data.editNotes = deal.notes || '';
                     data.showEdit = true;
                 }
+                
+                // Also update form fields directly
+                $('#editDealName').val(deal.deal_name || '');
+                $('#editStage').val(deal.stage || 'prospect');
+                $('#editValue').val(deal.value ? deal.value.replace('$', '').replace(/,/g, '') : '0');
+                $('#editOwner').val(deal.owner_user_id_raw || '');
+                $('#editCloseDate').val(deal.close_date !== '-' ? deal.close_date : '');
+                $('#editProbability').val(deal.probability ? deal.probability.replace('%', '') : '0');
+                $('#editContact').val(deal.contact_id || '');
+                $('#editCompany').val((deal.company && deal.company !== '-') ? deal.company : '');
+                $('#editNotes').val(deal.notes || '');
                 
                 const editModal = $('[x-show="showEdit"]');
                 if (editModal.length) {
@@ -2139,7 +2269,12 @@ window.editDealFromKanban = function(dealId) {
                 }
                 
                 currentDealId = deal.id;
+            } else {
+                showNotification('Deal not found.', 'error');
             }
+        },
+        error: function() {
+            showNotification('Error loading deal data.', 'error');
         }
     });
 };

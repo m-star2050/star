@@ -8,6 +8,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Log;
 use Packages\Crm\Models\Pipeline;
 use Packages\Crm\Models\Contact;
+use Packages\Crm\Helpers\PermissionHelper;
 use App\Models\User;
 use Illuminate\Support\Facades\Schema;
 
@@ -15,6 +16,10 @@ class PipelineController extends Controller
 {
     public function index(Request $request)
     {
+        if (!auth()->user()->can('view pipeline')) {
+            abort(403, 'Unauthorized. You do not have permission to view pipeline.');
+        }
+
         $users = collect([]);
         if (Schema::hasTable('users')) {
             try {
@@ -28,6 +33,10 @@ class PipelineController extends Controller
 
     public function kanban(Request $request)
     {
+        if (!auth()->user()->can('view pipeline')) {
+            abort(403, 'Unauthorized. You do not have permission to view pipeline.');
+        }
+
         $users = collect([]);
         if (Schema::hasTable('users')) {
             try {
@@ -41,6 +50,10 @@ class PipelineController extends Controller
 
     public function store(Request $request)
     {
+        if (!auth()->user()->can('create pipeline')) {
+            abort(403, 'Unauthorized. You do not have permission to create pipeline.');
+        }
+
         try {
             $data = $request->validate([
                 'deal_name' => ['required', 'string', 'max:255'],
@@ -90,6 +103,15 @@ class PipelineController extends Controller
 
     public function update(Request $request, Pipeline $pipeline)
     {
+        if (!auth()->user()->can('edit pipeline')) {
+            abort(403, 'Unauthorized. You do not have permission to edit pipeline.');
+        }
+
+        // Check if user can access this record
+        if (!PermissionHelper::canAccessRecord($pipeline, auth()->user())) {
+            abort(403, 'Unauthorized. You do not have access to this pipeline.');
+        }
+
         $data = $request->validate([
             'deal_name' => ['required', 'string', 'max:255'],
             'stage' => ['required', Rule::in(['prospect', 'negotiation', 'proposal', 'closed_won', 'closed_lost'])],
@@ -117,6 +139,15 @@ class PipelineController extends Controller
 
     public function destroy(Request $request, Pipeline $pipeline)
     {
+        if (!auth()->user()->can('delete pipeline')) {
+            abort(403, 'Unauthorized. You do not have permission to delete pipeline.');
+        }
+
+        // Check if user can access this record
+        if (!PermissionHelper::canAccessRecord($pipeline, auth()->user())) {
+            abort(403, 'Unauthorized. You do not have access to this pipeline.');
+        }
+
         $pipeline->delete();
         
         if ($request->ajax()) {
@@ -131,13 +162,32 @@ class PipelineController extends Controller
 
     public function restore($id)
     {
+        if (!auth()->user()->can('edit pipeline')) {
+            abort(403, 'Unauthorized. You do not have permission to restore pipeline.');
+        }
+
         $pipeline = Pipeline::withTrashed()->findOrFail($id);
+        
+        // Check if user can access this record
+        if (!PermissionHelper::canAccessRecord($pipeline, auth()->user())) {
+            abort(403, 'Unauthorized. You do not have access to this pipeline.');
+        }
+
         $pipeline->restore();
         return redirect()->route('crm.pipeline.index')->with('status', 'Deal restored');
     }
 
     public function updateStage(Request $request, Pipeline $pipeline)
     {
+        if (!auth()->user()->can('edit pipeline')) {
+            abort(403, 'Unauthorized. You do not have permission to edit pipeline.');
+        }
+
+        // Check if user can access this record
+        if (!PermissionHelper::canAccessRecord($pipeline, auth()->user())) {
+            abort(403, 'Unauthorized. You do not have access to this pipeline.');
+        }
+
         $request->validate([
             'stage' => ['required', Rule::in(['prospect', 'negotiation', 'proposal', 'closed_won', 'closed_lost'])],
         ]);
@@ -156,6 +206,10 @@ class PipelineController extends Controller
 
     public function bulkDelete(Request $request)
     {
+        if (!auth()->user()->can('delete pipeline')) {
+            abort(403, 'Unauthorized. You do not have permission to delete pipeline.');
+        }
+
         $request->validate([
             'ids' => ['required', 'array'],
             'ids.*' => ['integer', 'exists:crm_pipelines,id'],
@@ -175,7 +229,14 @@ class PipelineController extends Controller
 
     public function export(Request $request)
     {
+        if (!auth()->user()->can('export pipeline')) {
+            abort(403, 'Unauthorized. You do not have permission to export pipeline.');
+        }
+
         $pipelines = Pipeline::query();
+        
+        // Filter by role (Executive sees only assigned records)
+        $pipelines = PermissionHelper::filterByRole($pipelines, auth()->user(), null, 'owner_user_id');
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -239,11 +300,18 @@ class PipelineController extends Controller
 
     public function datatable(Request $request)
     {
+        if (!auth()->user()->can('view pipeline')) {
+            abort(403, 'Unauthorized. You do not have permission to view pipeline.');
+        }
+
         if (Schema::hasTable('users')) {
             $query = Pipeline::query()->with(['contact', 'ownerUser']);
         } else {
             $query = Pipeline::query()->with(['contact']);
         }
+
+        // Filter by role (Executive sees only assigned records)
+        $query = PermissionHelper::filterByRole($query, auth()->user(), null, 'owner_user_id');
 
         if ($search = trim((string) $request->input('search.value'))) {
             $query->where(function ($q) use ($search) {
@@ -298,7 +366,11 @@ class PipelineController extends Controller
             ->take($length)
             ->get();
 
-        $data = $pipelines->map(function ($pipeline) {
+        $user = auth()->user();
+        $canDelete = $user->can('delete pipeline');
+        $canEdit = $user->can('edit pipeline');
+
+        $data = $pipelines->map(function ($pipeline) use ($canDelete, $canEdit, $user) {
             $stageColors = [
                 'prospect' => 'text-gray-700',
                 'negotiation' => 'text-blue-700',
@@ -308,6 +380,21 @@ class PipelineController extends Controller
             ];
             $stageColor = $stageColors[$pipeline->stage] ?? 'text-gray-700';
             
+            // Check if user can access this record for edit/delete
+            $canAccess = PermissionHelper::canAccessRecord($pipeline, $user);
+            
+            $actionsHtml = '<div class="flex flex-col sm:flex-row gap-1 justify-center">';
+            
+            if ($canEdit && $canAccess) {
+                $actionsHtml .= '<button type="button" class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 rounded-lg border border-blue-400 text-blue-600 hover:bg-blue-50 shadow-sm text-xs edit-btn" data-id="'.$pipeline->id.'" data-deal="'.htmlspecialchars($pipeline->deal_name, ENT_QUOTES).'" data-stage="'.($pipeline->stage ?? 'prospect').'" data-value="'.($pipeline->value ?? 0).'" data-owner="'.($pipeline->owner_user_id ?? '').'" data-close-date="'.($pipeline->close_date?->format('Y-m-d') ?? '').'" data-probability="'.($pipeline->probability ?? 0).'" data-contact="'.($pipeline->contact_id ?? '').'" data-company="'.htmlspecialchars($pipeline->company ?? '', ENT_QUOTES).'" data-notes="'.htmlspecialchars($pipeline->notes ?? '', ENT_QUOTES).'"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-8.5 8.5a2 2 0 01-.878.515l-3.3.943a.5.5 0 01-.62-.62l.943-3.3a2 2 0 01.515-.878l8.5-8.5z"/></svg><span class="hidden sm:inline">Edit</span></button>';
+            }
+            
+            if ($canDelete && $canAccess) {
+                $actionsHtml .= '<button type="button" class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 rounded-lg border border-red-400 text-red-600 hover:bg-red-50 shadow-sm text-xs delete-btn" data-id="'.$pipeline->id.'"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 8a1 1 0 011 1v6a1 1 0 102 0V9a1 1 0 112 0v6a1 1 0 102 0V9a1 1 0 011-1h1a1 1 0 100-2h-1V5a2 2 0 00-2-2H9a2 2 0 00-2 2v1H6a1 1 0 100 2h1zm3-3h2v1H9V5z" clip-rule="evenodd"/></svg><span class="hidden sm:inline">Del</span></button>';
+            }
+            
+            $actionsHtml .= '</div>';
+            
             return [
                 'id' => $pipeline->id,
                 'deal_name' => $pipeline->deal_name,
@@ -315,15 +402,15 @@ class PipelineController extends Controller
                 'stage_html' => '<button type="button" class="inline-flex items-center gap-1 '.$stageColor.' font-semibold toggle-stage-btn" data-id="'.$pipeline->id.'" data-stage="'.$pipeline->stage.'">'.$pipeline->getStageLabel().'</button>',
                 'value' => '$' . number_format($pipeline->value, 2),
                 'owner_user_id' => $pipeline->ownerUser ? $pipeline->ownerUser->name : ($pipeline->owner_user_id ? 'User ' . $pipeline->owner_user_id : '-'),
+                'owner_user_id_raw' => $pipeline->owner_user_id,
                 'close_date' => $pipeline->close_date?->format('Y-m-d') ?? '-',
                 'probability' => ($pipeline->probability ?? '-') . '%',
                 'company' => $pipeline->company ?? '-',
                 'contact' => $pipeline->contact?->name ?? '-',
+                'contact_id' => $pipeline->contact_id,
+                'notes' => $pipeline->notes ?? '',
                 'created_at' => $pipeline->created_at?->format('Y-m-d') ?? '-',
-                'actions_html' => '<div class="flex flex-col sm:flex-row gap-1 justify-center">
-                    <button type="button" class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 rounded-lg border border-blue-400 text-blue-600 hover:bg-blue-50 shadow-sm text-xs edit-btn" data-id="'.$pipeline->id.'" data-deal="'.htmlspecialchars($pipeline->deal_name, ENT_QUOTES).'" data-stage="'.($pipeline->stage ?? 'prospect').'" data-value="'.($pipeline->value ?? 0).'" data-owner="'.($pipeline->owner_user_id ?? '').'" data-close-date="'.($pipeline->close_date?->format('Y-m-d') ?? '').'" data-probability="'.($pipeline->probability ?? 0).'" data-contact="'.($pipeline->contact_id ?? '').'" data-company="'.htmlspecialchars($pipeline->company ?? '', ENT_QUOTES).'" data-notes="'.htmlspecialchars($pipeline->notes ?? '', ENT_QUOTES).'"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-8.5 8.5a2 2 0 01-.878.515l-3.3.943a.5.5 0 01-.62-.62l.943-3.3a2 2 0 01.515-.878l8.5-8.5z"/></svg><span class="hidden sm:inline">Edit</span></button>
-                    <button type="button" class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 rounded-lg border border-red-400 text-red-600 hover:bg-red-50 shadow-sm text-xs delete-btn" data-id="'.$pipeline->id.'"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 8a1 1 0 011 1v6a1 1 0 102 0V9a1 1 0 112 0v6a1 1 0 102 0V9a1 1 0 011-1h1a1 1 0 100-2h-1V5a2 2 0 00-2-2H9a2 2 0 00-2 2v1H6a1 1 0 100 2h1zm3-3h2v1H9V5z" clip-rule="evenodd"/></svg><span class="hidden sm:inline">Del</span></button>
-                </div>',
+                'actions_html' => $actionsHtml,
             ];
         });
 
@@ -337,7 +424,14 @@ class PipelineController extends Controller
 
     public function kanbanData(Request $request)
     {
+        if (!auth()->user()->can('view pipeline')) {
+            abort(403, 'Unauthorized. You do not have permission to view pipeline.');
+        }
+
         $query = Pipeline::query()->with(['contact']);
+        
+        // Filter by role (Executive sees only assigned records)
+        $query = PermissionHelper::filterByRole($query, auth()->user(), null, 'owner_user_id');
 
         if ($request->filled('stage')) {
             $query->where('stage', $request->input('stage'));
@@ -366,18 +460,27 @@ class PipelineController extends Controller
         $stages = ['prospect', 'negotiation', 'proposal', 'closed_won', 'closed_lost'];
         $kanbanData = [];
 
+        $user = auth()->user();
+        $canDelete = $user->can('delete pipeline');
+        $canEdit = $user->can('edit pipeline');
+
         foreach ($stages as $stage) {
             $stagePipelines = $pipelines->where('stage', $stage)->values();
-            $kanbanData[$stage] = $stagePipelines->map(function ($pipeline) {
+            $kanbanData[$stage] = $stagePipelines->map(function ($pipeline) use ($canDelete, $canEdit, $user) {
+                // Check if user can access this record for edit/delete
+                $canAccess = PermissionHelper::canAccessRecord($pipeline, $user);
+                
                 return [
                     'id' => $pipeline->id,
                     'deal_name' => $pipeline->deal_name,
                     'value' => '$' . number_format($pipeline->value, 2),
                     'company' => $pipeline->company ?? '-',
                     'contact' => $pipeline->contact?->name ?? '-',
-                    'probability' => ($pipeline->probability ?? 0) . '%',
+                    'probability' => $pipeline->probability ?? 0,
                     'close_date' => $pipeline->close_date?->format('Y-m-d') ?? '-',
                     'owner' => $pipeline->owner_user_id ? ('User ' . $pipeline->owner_user_id) : '-',
+                    'canEdit' => $canEdit && $canAccess,
+                    'canDelete' => $canDelete && $canAccess,
                 ];
             })->toArray();
         }

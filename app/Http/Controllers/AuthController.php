@@ -6,7 +6,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 use App\Models\User;
+use Packages\Crm\Database\Seeders\CrmRolePermissionSeeder;
 
 class AuthController extends Controller
 {
@@ -35,6 +37,24 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials, $request->filled('remember'))) {
             $request->session()->regenerate();
+            
+            // Ensure permissions are seeded
+            $this->ensurePermissionsSeeded();
+            
+            // Ensure user has a role (for existing users who registered before RBAC)
+            $user = Auth::user();
+            if ($user && !$user->roles()->exists()) {
+                // Check if this is the first user (oldest user)
+                $firstUser = User::orderBy('id', 'asc')->first();
+                if ($firstUser && $firstUser->id === $user->id) {
+                    // Assign Admin role to oldest user
+                    $this->assignRoleToUser($user, true);
+                } else {
+                    // Assign Executive role to other existing users
+                    $this->assignRoleToUser($user, false);
+                }
+            }
+            
             return redirect()->intended(route('crm.files.index'));
         }
 
@@ -67,6 +87,12 @@ class AuthController extends Controller
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
+        // Ensure permissions and roles are seeded before creating user
+        $this->ensurePermissionsSeeded();
+
+        // Check if this is the first user (before creating)
+        $isFirstUser = User::count() === 0;
+
         $userData = [
             'name' => $validated['name'],
             'email' => $validated['email'],
@@ -80,9 +106,77 @@ class AuthController extends Controller
         
         $user = User::create($userData);
 
+        // Assign role automatically (first user gets Admin, others get Executive)
+        $this->assignRoleToUser($user, $isFirstUser);
+
         Auth::login($user);
 
         return redirect()->route('crm.files.index')->with('success', 'Registration successful! Welcome!');
+    }
+
+    /**
+     * Ensure permissions and roles are seeded
+     */
+    protected function ensurePermissionsSeeded()
+    {
+        // Check if Spatie Permission package is installed
+        if (!class_exists(\Spatie\Permission\Models\Role::class)) {
+            \Log::warning('Spatie Permission package is not installed. Please run: composer require spatie/laravel-permission');
+            return;
+        }
+
+        try {
+            $roleClass = \Spatie\Permission\Models\Role::class;
+            // Check if roles exist, if not, seed them
+            if (!$roleClass::where('guard_name', 'web')->exists()) {
+                $seeder = new CrmRolePermissionSeeder();
+                $seeder->run();
+            }
+        } catch (\Exception $e) {
+            // If seeding fails, log but don't block registration
+            \Log::error('Failed to seed CRM permissions: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Assign role to newly registered user
+     * First user gets Admin role, others get Executive by default
+     */
+    protected function assignRoleToUser(User $user, bool $isFirstUser = false)
+    {
+        // Check if Spatie Permission package is installed
+        if (!class_exists(\Spatie\Permission\Models\Role::class)) {
+            \Log::warning('Cannot assign role: Spatie Permission package is not installed. Please run: composer require spatie/laravel-permission');
+            return;
+        }
+
+        try {
+            $roleClass = \Spatie\Permission\Models\Role::class;
+            if ($isFirstUser) {
+                // First user is Admin - gets full access
+                $role = $roleClass::where('name', 'Admin')->where('guard_name', 'web')->first();
+                if ($role) {
+                    $user->assignRole($role);
+                    \Log::info("Assigned Admin role to first user: {$user->email}");
+                }
+            } else {
+                // Default role for new users is Executive (limited access)
+                $role = $roleClass::where('name', 'Executive')->where('guard_name', 'web')->first();
+                if ($role) {
+                    $user->assignRole($role);
+                    \Log::info("Assigned Executive role to user: {$user->email}");
+                } else {
+                    // Fallback: try to assign Admin if Executive doesn't exist
+                    $adminRole = $roleClass::where('name', 'Admin')->where('guard_name', 'web')->first();
+                    if ($adminRole) {
+                        $user->assignRole($adminRole);
+                        \Log::warning("Executive role not found, assigned Admin to user: {$user->email}");
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::error('Failed to assign role to user: ' . $e->getMessage());
+        }
     }
 
     /**

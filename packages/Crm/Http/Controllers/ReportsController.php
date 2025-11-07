@@ -4,6 +4,7 @@ namespace Packages\Crm\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Packages\Crm\Helpers\PermissionHelper;
 use App\Models\User;
 use Illuminate\Support\Facades\Schema;
 use Packages\Crm\Models\Contact;
@@ -14,6 +15,10 @@ class ReportsController extends Controller
 {
     public function index()
     {
+        if (!auth()->user()->can('view reports')) {
+            abort(403, 'Unauthorized. You do not have permission to view reports.');
+        }
+
         $users = collect([]);
         if (Schema::hasTable('users')) {
             try {
@@ -27,6 +32,10 @@ class ReportsController extends Controller
 
     public function dashboardData(Request $request)
     {
+        if (!auth()->user()->can('view reports')) {
+            abort(403, 'Unauthorized. You do not have permission to view reports.');
+        }
+
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
         $userId = $request->input('user_id');
@@ -35,6 +44,11 @@ class ReportsController extends Controller
         $contactsQuery = Contact::query();
         $leadsQuery = Lead::query();
         $dealsQuery = Pipeline::query();
+
+        // Filter by role (Executive sees only assigned records)
+        $contactsQuery = PermissionHelper::filterByRole($contactsQuery, auth()->user(), 'assigned_user_id');
+        $leadsQuery = PermissionHelper::filterByRole($leadsQuery, auth()->user(), 'assigned_user_id');
+        $dealsQuery = PermissionHelper::filterByRole($dealsQuery, auth()->user(), null, 'owner_user_id');
 
         if ($dateFrom) {
             $contactsQuery->whereDate('created_at', '>=', $dateFrom);
@@ -87,6 +101,10 @@ class ReportsController extends Controller
 
     public function chartData(Request $request)
     {
+        if (!auth()->user()->can('view reports')) {
+            abort(403, 'Unauthorized. You do not have permission to view reports.');
+        }
+
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
         $userId = $request->input('user_id');
@@ -94,6 +112,9 @@ class ReportsController extends Controller
         $chartType = $request->input('chart_type');
 
         $dealsQuery = Pipeline::query();
+        
+        // Filter by role (Executive sees only assigned records)
+        $dealsQuery = PermissionHelper::filterByRole($dealsQuery, auth()->user(), null, 'owner_user_id');
 
         if ($dateFrom) {
             $dealsQuery->whereDate('created_at', '>=', $dateFrom);
@@ -158,13 +179,21 @@ class ReportsController extends Controller
 
     public function datatable(Request $request)
     {
-        $dateFrom = $request->input('date_from');
-        $dateTo = $request->input('date_to');
-        $userId = $request->input('user_id');
-        $stage = $request->input('stage');
+        try {
+            if (!auth()->user()->can('view reports')) {
+                abort(403, 'Unauthorized. You do not have permission to view reports.');
+            }
+
+            $dateFrom = $request->input('date_from');
+            $dateTo = $request->input('date_to');
+            $userId = $request->input('user_id');
+            $stage = $request->input('stage');
 
         // Get all user IDs that have deals, contacts, or leads
-        $userIdsFromDeals = Pipeline::query()
+        $dealsQuery = Pipeline::query();
+        $dealsQuery = PermissionHelper::filterByRole($dealsQuery, auth()->user(), null, 'owner_user_id');
+        
+        $userIdsFromDeals = $dealsQuery
             ->when($dateFrom, function($q) use ($dateFrom) {
                 $q->whereDate('created_at', '>=', $dateFrom);
             })
@@ -183,7 +212,10 @@ class ReportsController extends Controller
             ->filter()
             ->unique();
 
-        $userIdsFromContacts = Contact::query()
+        $contactsQuery = Contact::query();
+        $contactsQuery = PermissionHelper::filterByRole($contactsQuery, auth()->user(), 'assigned_user_id');
+        
+        $userIdsFromContacts = $contactsQuery
             ->when($dateFrom, function($q) use ($dateFrom) {
                 $q->whereDate('created_at', '>=', $dateFrom);
             })
@@ -199,7 +231,10 @@ class ReportsController extends Controller
             ->filter()
             ->unique();
 
-        $userIdsFromLeads = Lead::query()
+        $leadsQuery = Lead::query();
+        $leadsQuery = PermissionHelper::filterByRole($leadsQuery, auth()->user(), 'assigned_user_id');
+        
+        $userIdsFromLeads = $leadsQuery
             ->when($dateFrom, function($q) use ($dateFrom) {
                 $q->whereDate('created_at', '>=', $dateFrom);
             })
@@ -342,6 +377,21 @@ class ReportsController extends Controller
             'recordsFiltered' => $filteredRecords,
             'data' => array_values($data),
         ]);
+        } catch (\Exception $e) {
+            \Log::error('Reports datatable error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'request' => $request->all()
+            ]);
+            
+            // Return empty DataTables response on error
+            return response()->json([
+                'draw' => (int) $request->input('draw', 1),
+                'recordsTotal' => 0,
+                'recordsFiltered' => 0,
+                'data' => [],
+                'error' => 'An error occurred while loading the reports. Please try again later.'
+            ]);
+        }
     }
 
     public function export(Request $request)

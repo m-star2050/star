@@ -10,12 +10,17 @@ use Illuminate\Support\Facades\Schema;
 use Packages\Crm\Models\Lead;
 use Packages\Crm\Models\Contact;
 use Packages\Crm\Models\Pipeline;
+use Packages\Crm\Helpers\PermissionHelper;
 use App\Models\User;
 
 class LeadController extends Controller
 {
     public function index(Request $request)
     {
+        if (!auth()->user()->can('view leads')) {
+            abort(403, 'Unauthorized. You do not have permission to view leads.');
+        }
+
         $users = collect([]);
         if (Schema::hasTable('users')) {
             try {
@@ -29,6 +34,10 @@ class LeadController extends Controller
 
     public function store(Request $request)
     {
+        if (!auth()->user()->can('create leads')) {
+            abort(403, 'Unauthorized. You do not have permission to create leads.');
+        }
+
         try {
             $data = $request->validate([
                 'name' => ['required', 'string', 'max:255'],
@@ -101,6 +110,15 @@ class LeadController extends Controller
 
     public function update(Request $request, Lead $lead)
     {
+        if (!auth()->user()->can('edit leads')) {
+            abort(403, 'Unauthorized. You do not have permission to edit leads.');
+        }
+
+        // Check if user can access this record
+        if (!PermissionHelper::canAccessRecord($lead, auth()->user())) {
+            abort(403, 'Unauthorized. You do not have access to this lead.');
+        }
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
@@ -151,6 +169,15 @@ class LeadController extends Controller
 
     public function destroy(Request $request, Lead $lead)
     {
+        if (!auth()->user()->can('delete leads')) {
+            abort(403, 'Unauthorized. You do not have permission to delete leads.');
+        }
+
+        // Check if user can access this record
+        if (!PermissionHelper::canAccessRecord($lead, auth()->user())) {
+            abort(403, 'Unauthorized. You do not have access to this lead.');
+        }
+
         $lead->delete();
         
         if ($request->ajax()) {
@@ -165,13 +192,32 @@ class LeadController extends Controller
 
     public function restore($id)
     {
+        if (!auth()->user()->can('edit leads')) {
+            abort(403, 'Unauthorized. You do not have permission to restore leads.');
+        }
+
         $lead = Lead::withTrashed()->findOrFail($id);
+        
+        // Check if user can access this record
+        if (!PermissionHelper::canAccessRecord($lead, auth()->user())) {
+            abort(403, 'Unauthorized. You do not have access to this lead.');
+        }
+
         $lead->restore();
         return redirect()->route('crm.leads.index')->with('status', 'Lead restored');
     }
 
     public function inlineStage(Request $request, Lead $lead)
     {
+        if (!auth()->user()->can('edit leads')) {
+            abort(403, 'Unauthorized. You do not have permission to edit leads.');
+        }
+
+        // Check if user can access this record
+        if (!PermissionHelper::canAccessRecord($lead, auth()->user())) {
+            abort(403, 'Unauthorized. You do not have access to this lead.');
+        }
+
         $request->validate([
             'stage' => ['required', Rule::in(['new', 'contacted', 'qualified', 'won', 'lost'])],
         ]);
@@ -190,6 +236,15 @@ class LeadController extends Controller
 
     public function convertToContact(Request $request, Lead $lead)
     {
+        if (!auth()->user()->can('edit leads')) {
+            abort(403, 'Unauthorized. You do not have permission to convert leads.');
+        }
+
+        // Check if user can access this record
+        if (!PermissionHelper::canAccessRecord($lead, auth()->user())) {
+            abort(403, 'Unauthorized. You do not have access to this lead.');
+        }
+
         try {
             $hasTagsColumn = Schema::hasColumn('crm_leads', 'tags');
             
@@ -226,6 +281,15 @@ class LeadController extends Controller
 
     public function convertToDeal(Request $request, Lead $lead)
     {
+        if (!auth()->user()->can('edit leads')) {
+            abort(403, 'Unauthorized. You do not have permission to convert leads.');
+        }
+
+        // Check if user can access this record
+        if (!PermissionHelper::canAccessRecord($lead, auth()->user())) {
+            abort(403, 'Unauthorized. You do not have access to this lead.');
+        }
+
         try {
             $pipeline = Pipeline::create([
                 'deal_name' => $lead->name . ' - Deal',
@@ -255,6 +319,10 @@ class LeadController extends Controller
 
     public function bulkDelete(Request $request)
     {
+        if (!auth()->user()->can('delete leads')) {
+            abort(403, 'Unauthorized. You do not have permission to delete leads.');
+        }
+
         $request->validate([
             'ids' => ['required', 'array'],
             'ids.*' => ['integer', 'exists:crm_leads,id'],
@@ -274,7 +342,14 @@ class LeadController extends Controller
 
     public function export(Request $request)
     {
+        if (!auth()->user()->can('export leads')) {
+            abort(403, 'Unauthorized. You do not have permission to export leads.');
+        }
+
         $leads = Lead::query();
+        
+        // Filter by role (Executive sees only assigned records)
+        $leads = PermissionHelper::filterByRole($leads, auth()->user(), 'assigned_user_id');
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -343,11 +418,18 @@ class LeadController extends Controller
 
     public function datatable(Request $request)
     {
+        if (!auth()->user()->can('view leads')) {
+            abort(403, 'Unauthorized. You do not have permission to view leads.');
+        }
+
         if (Schema::hasTable('users')) {
             $query = Lead::with('assignedUser');
         } else {
             $query = Lead::query();
         }
+
+        // Filter by role (Executive sees only assigned records)
+        $query = PermissionHelper::filterByRole($query, auth()->user(), 'assigned_user_id');
 
         if ($search = trim((string) $request->input('search.value'))) {
             $query->where(function ($q) use ($search) {
@@ -402,7 +484,11 @@ class LeadController extends Controller
 
         $hasTagsColumn = Schema::hasColumn('crm_leads', 'tags');
         
-        $data = $leads->map(function ($lead) use ($hasTagsColumn) {
+        $user = auth()->user();
+        $canDelete = $user->can('delete leads');
+        $canEdit = $user->can('edit leads');
+
+        $data = $leads->map(function ($lead) use ($hasTagsColumn, $canDelete, $canEdit, $user) {
             $stageColors = [
                 'new' => 'text-gray-600',
                 'contacted' => 'text-blue-600',
@@ -417,6 +503,22 @@ class LeadController extends Controller
                 $tagsValue = is_array($lead->tags) ? implode(',', $lead->tags) : '';
             }
             
+            // Check if user can access this record for edit/delete
+            $canAccess = PermissionHelper::canAccessRecord($lead, $user);
+            
+            $actionsHtml = '<div class="flex flex-col sm:flex-row gap-1 justify-center">';
+            
+            if ($canEdit && $canAccess) {
+                $actionsHtml .= '<button type="button" class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 rounded-lg border border-blue-400 text-blue-600 hover:bg-blue-50 shadow-sm text-xs edit-btn" data-id="'.$lead->id.'" data-name="'.htmlspecialchars($lead->name, ENT_QUOTES).'" data-email="'.htmlspecialchars($lead->email ?? '', ENT_QUOTES).'" data-company="'.htmlspecialchars($lead->company ?? '', ENT_QUOTES).'" data-source="'.htmlspecialchars($lead->source ?? '', ENT_QUOTES).'" data-stage="'.($lead->stage ?? 'new').'" data-assigned="'.($lead->assigned_user_id ?? '').'" data-lead-score="'.($lead->lead_score ?? '').'" data-tags="'.htmlspecialchars($tagsValue, ENT_QUOTES).'" data-notes="'.htmlspecialchars($lead->notes ?? '', ENT_QUOTES).'"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-8.5 8.5a2 2 0 01-.878.515l-3.3.943a.5.5 0 01-.62-.62l.943-3.3a2 2 0 01.515-.878l8.5-8.5z"/></svg><span class="hidden sm:inline">Edit</span></button>';
+                $actionsHtml .= '<button type="button" class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 rounded-lg border border-green-400 text-green-600 hover:bg-green-50 shadow-sm text-xs convert-btn" data-id="'.$lead->id.'" data-name="'.htmlspecialchars($lead->name, ENT_QUOTES).'"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/></svg><span class="hidden sm:inline">Convert</span></button>';
+            }
+            
+            if ($canDelete && $canAccess) {
+                $actionsHtml .= '<button type="button" class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 rounded-lg border border-red-400 text-red-600 hover:bg-red-50 shadow-sm text-xs delete-btn" data-id="'.$lead->id.'"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 8a1 1 0 011 1v6a1 1 0 102 0V9a1 1 0 112 0v6a1 1 0 102 0V9a1 1 0 011-1h1a1 1 0 100-2h-1V5a2 2 0 00-2-2H9a2 2 0 00-2 2v1H6a1 1 0 100 2h1zm3-3h2v1H9V5z" clip-rule="evenodd"/></svg><span class="hidden sm:inline">Del</span></button>';
+            }
+            
+            $actionsHtml .= '</div>';
+            
             return [
                 'id' => $lead->id,
                 'name' => $lead->name,
@@ -426,11 +528,7 @@ class LeadController extends Controller
                 'stage_html' => '<button type="button" class="inline-flex items-center gap-1 '.$stageColor.' font-semibold toggle-stage-btn" data-id="'.$lead->id.'" data-stage="'.$lead->stage.'">'.ucfirst($lead->stage).'</button>',
                 'assigned' => $lead->assignedUser ? $lead->assignedUser->name : ($lead->assigned_user_id ? 'User ' . $lead->assigned_user_id : '-'),
                 'created_at' => $lead->created_at?->format('Y-m-d') ?? '-',
-                'actions_html' => '<div class="flex flex-col sm:flex-row gap-1 justify-center">
-                    <button type="button" class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 rounded-lg border border-blue-400 text-blue-600 hover:bg-blue-50 shadow-sm text-xs edit-btn" data-id="'.$lead->id.'" data-name="'.htmlspecialchars($lead->name, ENT_QUOTES).'" data-email="'.htmlspecialchars($lead->email ?? '', ENT_QUOTES).'" data-company="'.htmlspecialchars($lead->company ?? '', ENT_QUOTES).'" data-source="'.htmlspecialchars($lead->source ?? '', ENT_QUOTES).'" data-stage="'.($lead->stage ?? 'new').'" data-assigned="'.($lead->assigned_user_id ?? '').'" data-lead-score="'.($lead->lead_score ?? '').'" data-tags="'.htmlspecialchars($tagsValue, ENT_QUOTES).'" data-notes="'.htmlspecialchars($lead->notes ?? '', ENT_QUOTES).'"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-8.5 8.5a2 2 0 01-.878.515l-3.3.943a.5.5 0 01-.62-.62l.943-3.3a2 2 0 01.515-.878l8.5-8.5z"/></svg><span class="hidden sm:inline">Edit</span></button>
-                    <button type="button" class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 rounded-lg border border-green-400 text-green-600 hover:bg-green-50 shadow-sm text-xs convert-btn" data-id="'.$lead->id.'" data-name="'.htmlspecialchars($lead->name, ENT_QUOTES).'"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/></svg><span class="hidden sm:inline">Convert</span></button>
-                    <button type="button" class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 rounded-lg border border-red-400 text-red-600 hover:bg-red-50 shadow-sm text-xs delete-btn" data-id="'.$lead->id.'"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 8a1 1 0 011 1v6a1 1 0 102 0V9a1 1 0 112 0v6a1 1 0 102 0V9a1 1 0 011-1h1a1 1 0 100-2h-1V5a2 2 0 00-2-2H9a2 2 0 00-2 2v1H6a1 1 0 100 2h1zm3-3h2v1H9V5z" clip-rule="evenodd"/></svg><span class="hidden sm:inline">Del</span></button>
-                </div>',
+                'actions_html' => $actionsHtml,
             ];
         });
 

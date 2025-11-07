@@ -383,13 +383,32 @@
         <div class="flex items-center mb-6 pb-4 border-b border-white/20" :class="open ? 'justify-between' : 'justify-center'">
             <div class="flex items-center gap-3" :class="open ? 'opacity-100' : 'opacity-0 pointer-events-none absolute'">
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
+                    @if(auth()->check() && auth()->user()->name)
+                        <span class="text-white font-bold text-sm">{{ strtoupper(substr(auth()->user()->name, 0, 2)) }}</span>
+                    @else
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                    @endif
                 </div>
-                <div>
-                    <div class="text-gray-800 font-bold text-sm leading-tight">Welcome</div>
-                    <div class="text-gray-600 font-medium text-xs">User</div>
+                <div class="flex-1 min-w-0">
+                    <div class="text-gray-800 font-bold text-sm leading-tight truncate">{{ auth()->check() ? auth()->user()->name : 'User' }}</div>
+                    <div class="text-gray-600 font-medium text-xs truncate">{{ auth()->check() ? auth()->user()->email : 'user@example.com' }}</div>
+                    @if(auth()->check() && method_exists(auth()->user(), 'hasRole'))
+                        @php
+                            $user = auth()->user();
+                            $isAdmin = method_exists($user, 'hasRole') && $user->hasRole('Admin');
+                            $isManager = method_exists($user, 'hasRole') && $user->hasRole('Manager');
+                            $isExecutive = method_exists($user, 'hasRole') && $user->hasRole('Executive');
+                        @endphp
+                        @if($isAdmin)
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 mt-1">Admin</span>
+                        @elseif($isManager)
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mt-1">Manager</span>
+                        @elseif($isExecutive)
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mt-1">Executive</span>
+                        @endif
+                    @endif
                 </div>
             </div>
             <button @click="open=!open" class="text-gray-600 bg-white/20 hover:bg-white/30 border border-white/30 rounded-lg w-8 h-8 flex items-center justify-center hover:scale-110 transition-all duration-200 flex-shrink-0 shadow-sm" :aria-expanded="open">
@@ -424,6 +443,36 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/></svg>
                 <span x-show="open" x-transition>Files</span>
             </a>
+            @php
+                $showUserRoles = false;
+                if (auth()->check()) {
+                    $user = auth()->user();
+                    // Always show for first user (by ID) - allows them to assign Admin role
+                    $firstUser = \App\Models\User::orderBy('id', 'asc')->first();
+                    $isFirstUser = $firstUser && $firstUser->id === $user->id;
+                    
+                    if (method_exists($user, 'hasRole')) {
+                        try {
+                            $showUserRoles = $user->hasRole('Admin') || $isFirstUser;
+                        } catch (\Exception $e) {
+                            $showUserRoles = $isFirstUser;
+                        }
+                    } else {
+                        $showUserRoles = $isFirstUser;
+                    }
+                }
+            @endphp
+            @if($showUserRoles)
+            <div class="pt-4 mt-4 border-t border-white/20">
+                <div class="sidebar-section-title mb-2" :class="open ? 'opacity-100' : 'opacity-0 pointer-events-none'">
+                    <span x-show="open" x-transition>Administration</span>
+                </div>
+                <a href="{{ route('crm.user-roles.index') }}" class="sidebar-link {{ request()->routeIs('crm.user-roles.*') ? 'active' : '' }}" :class="!open ? 'justify-center px-0' : ''">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg>
+                    <span x-show="open" x-transition>User Roles</span>
+                </a>
+            </div>
+            @endif
         </nav>
     </aside>
 
@@ -477,14 +526,12 @@
                     </div>
                 </div>
                 <div class="mb-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                    @if(auth()->check() && auth()->user()->can('delete files'))
                     <button type="button" id="bulkDeleteBtn" class="px-4 py-2.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 text-sm font-semibold flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                         Delete Selected
                     </button>
-                    <span class="text-sm text-gray-600 font-medium flex items-center gap-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                        Click 'Export' to download to Excel
-                    </span>
+                    @endif
                 </div>
                 <div class="overflow-x-auto rounded-2xl shadow-2xl glass-card -mx-2 sm:mx-0" style="overflow-x: auto; overflow-y: visible;">
                     <table id="filesTable" class="w-full text-sm bg-white/15 backdrop-blur-sm rounded-2xl whitespace-nowrap" style="min-width: 1000px;">
