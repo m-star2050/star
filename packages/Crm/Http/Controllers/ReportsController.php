@@ -36,19 +36,30 @@ class ReportsController extends Controller
             abort(403, 'Unauthorized. You do not have permission to view reports.');
         }
 
+        $user = auth()->user();
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
         $userId = $request->input('user_id');
         $stage = $request->input('stage');
+
+        // Log user info for debugging (only for Executives to help diagnose issues)
+        if (PermissionHelper::isExecutive($user)) {
+            \Log::info('ReportsController::dashboardData - Executive user accessing reports', [
+                'user_id' => $user->id ?? null,
+                'user_email' => $user->email ?? null,
+            ]);
+        }
 
         $contactsQuery = Contact::query();
         $leadsQuery = Lead::query();
         $dealsQuery = Pipeline::query();
 
         // Filter by role (Executive sees only assigned records)
-        $contactsQuery = PermissionHelper::filterByRole($contactsQuery, auth()->user(), 'assigned_user_id');
-        $leadsQuery = PermissionHelper::filterByRole($leadsQuery, auth()->user(), 'assigned_user_id');
-        $dealsQuery = PermissionHelper::filterByRole($dealsQuery, auth()->user(), null, 'owner_user_id');
+        // Contacts and Leads only have assigned_user_id, not owner_user_id, so pass null for ownerField
+        $contactsQuery = PermissionHelper::filterByRole($contactsQuery, $user, 'assigned_user_id', null);
+        $leadsQuery = PermissionHelper::filterByRole($leadsQuery, $user, 'assigned_user_id', null);
+        // Deals/Pipeline use owner_user_id instead of assigned_user_id
+        $dealsQuery = PermissionHelper::filterByRole($dealsQuery, $user, null, 'owner_user_id');
 
         if ($dateFrom) {
             $contactsQuery->whereDate('created_at', '>=', $dateFrom);
@@ -62,6 +73,9 @@ class ReportsController extends Controller
             $dealsQuery->whereDate('created_at', '<=', $dateTo);
         }
 
+        // Apply user filter if provided
+        // Note: For Executives, the role-based filter already restricts to their own records
+        // So if they select another user, they'll see no results (correct behavior)
         if ($userId) {
             $contactsQuery->where('assigned_user_id', $userId);
             $leadsQuery->where('assigned_user_id', $userId);
@@ -71,6 +85,16 @@ class ReportsController extends Controller
         $totalContacts = $contactsQuery->count();
         $totalLeads = $leadsQuery->count();
         $totalDeals = $dealsQuery->count();
+
+        // Log query results for debugging (only for Executives when counts are zero)
+        if (PermissionHelper::isExecutive($user) && $totalContacts == 0 && $totalLeads == 0 && $totalDeals == 0) {
+            \Log::info('ReportsController::dashboardData - Executive user seeing zero results', [
+                'user_id' => $user->id ?? null,
+                'total_contacts' => $totalContacts,
+                'total_leads' => $totalLeads,
+                'total_deals' => $totalDeals,
+            ]);
+        }
 
         $wonDealsQuery = clone $dealsQuery;
         $wonDeals = $wonDealsQuery->where('stage', 'closed_won')->count();
@@ -237,7 +261,7 @@ class ReportsController extends Controller
         $userIdsFromContacts = collect([]);
         try {
             $contactsQuery = Contact::query();
-            $contactsQuery = PermissionHelper::filterByRole($contactsQuery, auth()->user(), 'assigned_user_id');
+            $contactsQuery = PermissionHelper::filterByRole($contactsQuery, auth()->user(), 'assigned_user_id', null);
             
             $userIdsFromContacts = $contactsQuery
                 ->when($dateFrom, function($q) use ($dateFrom) {
@@ -262,7 +286,7 @@ class ReportsController extends Controller
         $userIdsFromLeads = collect([]);
         try {
             $leadsQuery = Lead::query();
-            $leadsQuery = PermissionHelper::filterByRole($leadsQuery, auth()->user(), 'assigned_user_id');
+            $leadsQuery = PermissionHelper::filterByRole($leadsQuery, auth()->user(), 'assigned_user_id', null);
             
             $userIdsFromLeads = $leadsQuery
                 ->when($dateFrom, function($q) use ($dateFrom) {

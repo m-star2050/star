@@ -349,7 +349,7 @@ class LeadController extends Controller
         $leads = Lead::query();
         
         // Filter by role (Executive sees only assigned records)
-        $leads = PermissionHelper::filterByRole($leads, auth()->user(), 'assigned_user_id');
+        $leads = PermissionHelper::filterByRole($leads, auth()->user(), 'assigned_user_id', null);
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -445,7 +445,7 @@ class LeadController extends Controller
             }
 
             // Filter by role (Executive sees only assigned records)
-            $query = PermissionHelper::filterByRole($query, auth()->user(), 'assigned_user_id');
+            $query = PermissionHelper::filterByRole($query, auth()->user(), 'assigned_user_id', null);
 
         if ($search = trim((string) $request->input('search.value'))) {
             $query->where(function ($q) use ($search) {
@@ -476,7 +476,7 @@ class LeadController extends Controller
 
         // Get total records - must apply role filtering for accurate count
         $totalRecordsQuery = Lead::query();
-        $totalRecordsQuery = PermissionHelper::filterByRole($totalRecordsQuery, auth()->user(), 'assigned_user_id');
+        $totalRecordsQuery = PermissionHelper::filterByRole($totalRecordsQuery, auth()->user(), 'assigned_user_id', null);
         $totalRecords = $totalRecordsQuery->count();
         
         $filteredRecords = $query->count();

@@ -82,13 +82,27 @@ class PermissionHelper
 
         // Check if user has the hasRole method (Spatie package installed)
         if (!method_exists($user, 'hasRole')) {
+            \Log::debug('PermissionHelper::isExecutive - User does not have hasRole method', [
+                'user_id' => $user->id ?? null
+            ]);
             return false;
         }
 
         try {
-            return $user->hasRole('Executive');
+            $hasRole = $user->hasRole('Executive');
+            \Log::debug('PermissionHelper::isExecutive - Role check result', [
+                'user_id' => $user->id ?? null,
+                'has_executive_role' => $hasRole,
+                'user_roles' => method_exists($user, 'getRoleNames') ? $user->getRoleNames()->toArray() : 'N/A'
+            ]);
+            return $hasRole;
         } catch (\Exception $e) {
-            // If Spatie package not fully set up, return false
+            // If Spatie package not fully set up, log and return false
+            \Log::error('PermissionHelper::isExecutive - Exception checking role', [
+                'user_id' => $user->id ?? null,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return false;
         }
     }
@@ -147,22 +161,46 @@ class PermissionHelper
             $user = $user ?? Auth::user();
 
             if (!$user) {
+                \Log::warning('PermissionHelper::filterByRole - No user provided');
                 return $query->whereRaw('1 = 0'); // Return empty result if no user
             }
 
+            // Check roles with better error handling
+            $isAdmin = false;
+            $isManager = false;
+            $isExecutive = false;
+
+            try {
+                $isAdmin = self::isAdmin($user);
+                $isManager = self::isManager($user);
+                $isExecutive = self::isExecutive($user);
+            } catch (\Exception $e) {
+                \Log::error('PermissionHelper::filterByRole - Role check exception: ' . $e->getMessage(), [
+                    'user_id' => $user->id ?? null,
+                    'trace' => $e->getTraceAsString()
+                ]);
+            }
+
             // Admin sees everything
-            if (self::isAdmin($user)) {
+            if ($isAdmin) {
                 return $query;
             }
 
             // Manager sees everything (team data)
-            if (self::isManager($user)) {
+            if ($isManager) {
                 return $query;
             }
 
             // Executive sees only assigned records
-            if (self::isExecutive($user)) {
+            if ($isExecutive) {
                 $userId = $user->id;
+                
+                \Log::debug('PermissionHelper::filterByRole - Filtering for Executive user', [
+                    'user_id' => $userId,
+                    'assigned_field' => $assignedField,
+                    'owner_field' => $ownerField
+                ]);
+                
                 return $query->where(function($q) use ($userId, $assignedField, $ownerField) {
                     $hasConditions = false;
                     
@@ -191,16 +229,32 @@ class PermissionHelper
                     
                     // If no conditions were added, return empty result for safety
                     if (!$hasConditions) {
+                        \Log::warning('PermissionHelper::filterByRole - No conditions added for Executive user', [
+                            'user_id' => $userId,
+                            'assigned_field' => $assignedField,
+                            'owner_field' => $ownerField
+                        ]);
                         $q->whereRaw('1 = 0');
                     }
                 });
             }
 
+            // Log if user doesn't match any role
+            \Log::warning('PermissionHelper::filterByRole - User does not match any role, denying access', [
+                'user_id' => $user->id ?? null,
+                'is_admin' => $isAdmin,
+                'is_manager' => $isManager,
+                'is_executive' => $isExecutive
+            ]);
+
             // Default: no access
             return $query->whereRaw('1 = 0');
         } catch (\Exception $e) {
             // Log error and return empty result to prevent crashes
-            \Log::error('PermissionHelper::filterByRole error: ' . $e->getMessage());
+            \Log::error('PermissionHelper::filterByRole error: ' . $e->getMessage(), [
+                'user_id' => $user->id ?? null,
+                'trace' => $e->getTraceAsString()
+            ]);
             return $query->whereRaw('1 = 0');
         }
     }
