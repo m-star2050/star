@@ -358,7 +358,7 @@
 <body>
 
 <div x-data="{mobileMenu:false, open:true, showCreate:false, showEdit:false, showDelete:false, showBulkDelete:false, editId:null, editDeal:'', editStage:'prospect', editValue:'', editOwner:'', editCloseDate:'', editProbability:'', editContact:'', editCompany:'', editNotes:'', showNotification:false, notificationMessage:'', notificationType:'success', wasCreateOpen:false, viewMode:'list', kanbanData:{}, draggedCard:null, draggedFromStage:null, getStageLabel(stage) { const labels = {'prospect': 'Prospect', 'negotiation': 'Negotiation', 'proposal': 'Proposal', 'closed_won': 'Closed Won', 'closed_lost': 'Closed Lost'}; return labels[stage] || stage; }, handleDragStart(event, card, stage) { if (typeof window.handleDragStart === 'function') window.handleDragStart(event, card, stage); }, handleDragEnd(event) { if (typeof window.handleDragEnd === 'function') window.handleDragEnd(event); }, handleDrop(event, stage) { if (typeof window.handleDrop === 'function') window.handleDrop(event, stage); }, editDealFromKanban(dealId) { if (typeof window.editDealFromKanban === 'function') window.editDealFromKanban(dealId); }, deleteDealFromKanban(dealId) { if (typeof window.deleteDealFromKanban === 'function') window.deleteDealFromKanban(dealId); }}" 
-     x-init="$watch('showCreate', value => { if (value && !wasCreateOpen) { setTimeout(() => { const form = document.getElementById('createForm'); if (form) form.reset(); const stage = document.getElementById('createStage'); if (stage) stage.value = 'prospect'; const btn = document.getElementById('createSubmitBtn'); if (btn) { btn.disabled = false; btn.textContent = 'Create Deal'; } } }, 100); } wasCreateOpen = value; }); $watch('viewMode', value => { if (value === 'kanban' && Object.keys(kanbanData).length === 0) { setTimeout(() => { if (typeof loadKanbanData === 'function') loadKanbanData(); }, 100); } });" 
+     x-init="$watch('showCreate', value => { if (value && !wasCreateOpen) { setTimeout(() => { const form = document.getElementById('createForm'); if (form) form.reset(); const stage = document.getElementById('createStage'); if (stage) stage.value = 'prospect'; const btn = document.getElementById('createSubmitBtn'); if (btn) { btn.disabled = false; btn.textContent = 'Create Deal'; } }, 100); } wasCreateOpen = value; }); $watch('viewMode', value => { if (value === 'kanban' && Object.keys(kanbanData).length === 0) { setTimeout(() => { if (typeof loadKanbanData === 'function') loadKanbanData(); }, 100); } });" 
      class="relative">
     <div class="lg:hidden fixed top-0 left-0 right-0 z-50 glass-card rounded-b-2xl p-4 shadow-xl">
         <div class="flex items-center justify-between pt-4">
@@ -889,6 +889,34 @@ $.ajaxSetup({
     }
 });
 
+// Global functions - must be accessible outside document.ready
+function getAlpineData() {
+    return document.querySelector('[x-data]');
+}
+
+function showNotification(message, type = 'success') {
+    const alpineData = getAlpineData();
+    if (alpineData && alpineData.__x) {
+        const data = alpineData.__x.$data;
+        data.notificationMessage = message;
+        data.notificationType = type;
+        data.showNotification = true;
+    }
+    const notificationModal = $('[x-show="showNotification"]');
+    if (notificationModal.length) {
+        notificationModal[0].style.display = 'flex';
+    }
+    
+    setTimeout(function() {
+        if (alpineData && alpineData.__x) {
+            alpineData.__x.$data.showNotification = false;
+        }
+        if (notificationModal.length) {
+            notificationModal[0].style.display = 'none';
+        }
+    }, 5000);
+}
+
 $(document).ready(function() {
     let table = $('#pipelineTable').DataTable({
         processing: true,
@@ -1067,33 +1095,6 @@ $(document).ready(function() {
             }
         }
     });
-
-    function showNotification(message, type = 'success') {
-        const alpineData = getAlpineData();
-        if (alpineData && alpineData.__x) {
-            const data = alpineData.__x.$data;
-            data.notificationMessage = message;
-            data.notificationType = type;
-            data.showNotification = true;
-        }
-        const notificationModal = $('[x-show="showNotification"]');
-        if (notificationModal.length) {
-            notificationModal[0].style.display = 'flex';
-        }
-        
-        setTimeout(function() {
-            if (alpineData && alpineData.__x) {
-                alpineData.__x.$data.showNotification = false;
-            }
-            if (notificationModal.length) {
-                notificationModal[0].style.display = 'none';
-            }
-        }, 5000);
-    }
-
-    function getAlpineData() {
-        return document.querySelector('[x-data]');
-    }
     
     function closeModal(modalName) {
         const alpineData = getAlpineData();
@@ -1221,17 +1222,24 @@ $(document).ready(function() {
         const originalText = submitBtn.text();
         submitBtn.prop('disabled', true).text('Creating...');
         
+        const ownerUserId = $('#createOwner').val();
+        const closeDate = $('#createCloseDate').val();
+        const probability = $('#createProbability').val();
+        const contactId = $('#createContact').val();
+        const company = $('#createCompany').val();
+        const notes = $('#createNotes').val();
+        
         const formData = {
             _token: '{{ csrf_token() }}',
-            deal_name: $('#createDealName').val(),
+            deal_name: $('#createDealName').val().trim(),
             stage: $('#createStage').val() || 'prospect',
-            value: $('#createValue').val() || 0,
-            owner_user_id: $('#createOwner').val() || null,
-            close_date: $('#createCloseDate').val() || null,
-            probability: $('#createProbability').val() || null,
-            contact_id: $('#createContact').val() || null,
-            company: $('#createCompany').val() || null,
-            notes: $('#createNotes').val() || null
+            value: parseFloat($('#createValue').val()) || 0,
+            owner_user_id: ownerUserId && ownerUserId !== '' ? parseInt(ownerUserId) : null,
+            close_date: closeDate && closeDate !== '' ? closeDate : null,
+            probability: probability && probability !== '' ? parseInt(probability) : null,
+            contact_id: contactId && contactId !== '' ? parseInt(contactId) : null,
+            company: company && company.trim() !== '' ? company.trim() : null,
+            notes: notes && notes.trim() !== '' ? notes.trim() : null
         };
         
         $.ajax({
