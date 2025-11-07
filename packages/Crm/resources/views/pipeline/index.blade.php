@@ -328,30 +328,225 @@
             white-space: nowrap;
         }
         .kanban-column {
-            min-height: 400px;
-            background: rgba(255,255,255,0.15);
-            border-radius: 0.75rem;
-            padding: 1rem;
+            min-height: 500px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            background: rgba(255,255,255,0.25);
+            border-radius: 1rem;
+            padding: 1.25rem;
+            border: 1px solid rgba(255,255,255,0.25);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: visible;
+        }
+        .kanban-column[data-stage="prospect"] {
+            border-top: 4px solid #3b82f6;
+        }
+        .kanban-column[data-stage="negotiation"] {
+            border-top: 4px solid #f59e0b;
+        }
+        .kanban-column[data-stage="proposal"] {
+            border-top: 4px solid #8b5cf6;
+        }
+        .kanban-column[data-stage="closed_won"] {
+            border-top: 4px solid #10b981;
+        }
+        .kanban-column[data-stage="closed_lost"] {
+            border-top: 4px solid #ef4444;
+        }
+        .kanban-column-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid rgba(0,0,0,0.06);
+        }
+        .kanban-column-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .kanban-column-count {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.25rem 0.625rem;
+            border-radius: 9999px;
+            min-width: 1.75rem;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .kanban-card {
-            background: rgba(255,255,255,0.9);
-            border-radius: 0.5rem;
-            padding: 1rem;
-            margin-bottom: 0.75rem;
-            cursor: move;
-            transition: all 0.2s ease;
-            border: 1px solid rgba(0,0,0,0.1);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            background: rgba(255,255,255,0.4);
+            border-radius: 0.75rem;
+            padding: 1.125rem;
+            margin-bottom: 0.875rem;
+            cursor: grab;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255,255,255,0.3);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+            position: relative;
+            overflow: hidden;
+        }
+        .kanban-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            opacity: 0;
+            transition: opacity 0.25s ease;
         }
         .kanban-card:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            transform: translateY(-2px);
+            background: rgba(255,255,255,0.5);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.12), 0 4px 10px rgba(0,0,0,0.08);
+            transform: translateY(-4px);
+            border-color: rgba(102, 126, 234, 0.4);
+        }
+        .kanban-card:hover::before {
+            opacity: 1;
+        }
+        .kanban-card:active {
+            cursor: grabbing;
         }
         .kanban-card.dragging {
-            opacity: 0.5;
+            opacity: 0.6;
+            transform: rotate(2deg) scale(0.98);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        .kanban-card-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #111827;
+            margin-bottom: 0.875rem;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .kanban-card-detail {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.625rem;
+            font-size: 0.8125rem;
+            color: #4b5563;
+        }
+        .kanban-card-detail-label {
+            font-weight: 600;
+            color: #6b7280;
+            min-width: 4rem;
+        }
+        .kanban-card-detail-value {
+            color: #1f2937;
+            font-weight: 500;
+        }
+        .kanban-card-value {
+            font-weight: 700;
+            color: #059669;
+            font-size: 0.875rem;
+        }
+        .kanban-card-probability {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.125rem 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        .kanban-card-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.875rem;
+            padding-top: 0.875rem;
+            border-top: 1px solid rgba(0,0,0,0.06);
+        }
+        .kanban-card-btn {
+            flex: 1;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.375rem;
+            border: none;
+            cursor: pointer;
+        }
+        .kanban-card-btn-edit {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+        }
+        .kanban-card-btn-edit:hover {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+            transform: translateY(-1px);
+        }
+        .kanban-card-btn-delete {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+        }
+        .kanban-card-btn-delete:hover {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            box-shadow: 0 4px 8px rgba(239, 68, 68, 0.4);
+            transform: translateY(-1px);
+        }
+        .kanban-empty-state {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: #9ca3af;
+            font-size: 0.875rem;
+            font-style: italic;
         }
         .kanban-column.drag-over {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             background: rgba(59, 130, 246, 0.2);
             border: 2px dashed rgba(59, 130, 246, 0.5);
+            box-shadow: 0 8px 16px rgba(59, 130, 246, 0.2);
+            transform: scale(1.02);
+        }
+        .kanban-container {
+            background: transparent;
+            padding: 1.5rem;
+        }
+        /* Custom scrollbar for kanban columns */
+        .kanban-column > div::-webkit-scrollbar {
+            width: 6px;
+        }
+        .kanban-column > div::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.05);
+            border-radius: 10px;
+        }
+        .kanban-column > div::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+        }
+        .kanban-column > div::-webkit-scrollbar-thumb:hover {
+            background: rgba(0,0,0,0.3);
+        }
+        /* Smooth scrolling */
+        .kanban-column > div {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0,0,0,0.2) rgba(0,0,0,0.05);
         }
     </style>
 </head>
@@ -624,34 +819,101 @@
                             </tbody>
                         </table>
                     </div>
-                <div x-show="viewMode === 'kanban'" x-transition class="overflow-x-auto rounded-2xl shadow-2xl glass-card -mx-2 sm:mx-0" style="overflow-x: auto; overflow-y: visible; display: none;">
-                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 p-4" style="min-width: 1200px;">
+                <div x-show="viewMode === 'kanban'" x-transition class="overflow-x-auto -mx-2 sm:mx-0 kanban-container" style="overflow-x: auto; overflow-y: visible; display: none;">
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-5" style="min-width: 1400px;">
                         <template x-for="(stage, stageKey) in ['prospect', 'negotiation', 'proposal', 'closed_won', 'closed_lost']" :key="stageKey">
                             <div class="kanban-column" 
                                  @dragover.prevent="if (draggedCard) { $event.currentTarget.classList.add('drag-over'); }"
                                  @dragleave.prevent="$event.currentTarget.classList.remove('drag-over')"
                                  @drop.prevent="handleDrop($event, stage)"
                                  :data-stage="stage">
-                                <div class="font-bold text-lg text-gray-800 mb-3 text-center" x-text="getStageLabel(stage)"></div>
-                                <template x-for="(card, index) in (kanbanData[stage] || [])" :key="card.id">
-                                    <div class="kanban-card" 
-                                         draggable="true"
-                                         @dragstart="handleDragStart($event, card, stage)"
-                                         @dragend="handleDragEnd($event)">
-                                        <div class="font-semibold text-gray-900 mb-2" x-text="card.deal_name"></div>
-                                        <div class="text-sm text-gray-600 mb-1"><span class="font-medium">Value:</span> <span x-text="card.value"></span></div>
-                                        <div class="text-sm text-gray-600 mb-1"><span class="font-medium">Company:</span> <span x-text="card.company"></span></div>
-                                        <div class="text-sm text-gray-600 mb-1"><span class="font-medium">Contact:</span> <span x-text="card.contact"></span></div>
-                                        <div class="text-sm text-gray-600 mb-1"><span class="font-medium">Probability:</span> <span x-text="card.probability"></span></div>
-                                        <div class="text-sm text-gray-600 mb-2"><span class="font-medium">Owner:</span> <span x-text="card.owner"></span></div>
-                                        <div class="flex gap-2 mt-2">
-                                            <button type="button" @click="editDealFromKanban(card.id)" class="flex-1 px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200">Edit</button>
-                                            <button type="button" @click="deleteDealFromKanban(card.id)" class="flex-1 px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200">Delete</button>
-                                        </div>
+                                <div class="kanban-column-header">
+                                    <div class="kanban-column-title">
+                                        <svg x-show="stage === 'prospect'" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                                        </svg>
+                                        <svg x-show="stage === 'negotiation'" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                        </svg>
+                                        <svg x-show="stage === 'proposal'" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        <svg x-show="stage === 'closed_won'" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <svg x-show="stage === 'closed_lost'" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <span x-text="getStageLabel(stage)"></span>
                                     </div>
-                                </template>
-                                <div x-show="!kanbanData[stage] || kanbanData[stage].length === 0" class="text-center text-gray-400 text-sm py-4">
-                                    No deals in this stage
+                                    <div class="kanban-column-count" x-text="(kanbanData[stage] || []).length"></div>
+                                </div>
+                                <div style="max-height: calc(100vh - 300px); overflow-y: auto; padding-right: 0.5rem;">
+                                    <template x-for="(card, index) in (kanbanData[stage] || [])" :key="card.id">
+                                        <div class="kanban-card" 
+                                             draggable="true"
+                                             @dragstart="handleDragStart($event, card, stage)"
+                                             @dragend="handleDragEnd($event)">
+                                            <div class="kanban-card-title" x-text="card.deal_name || 'Untitled Deal'"></div>
+                                            
+                                            <div class="kanban-card-detail">
+                                                <span class="kanban-card-detail-label">Value:</span>
+                                                <span class="kanban-card-detail-value kanban-card-value" x-text="card.value || '$0.00'"></span>
+                                            </div>
+                                            
+                                            <div class="kanban-card-detail" x-show="card.company">
+                                                <span class="kanban-card-detail-label">Company:</span>
+                                                <span class="kanban-card-detail-value" x-text="card.company || '-'"></span>
+                                            </div>
+                                            
+                                            <div class="kanban-card-detail" x-show="card.contact">
+                                                <span class="kanban-card-detail-label">Contact:</span>
+                                                <span class="kanban-card-detail-value" x-text="card.contact || '-'"></span>
+                                            </div>
+                                            
+                                            <div class="kanban-card-detail" x-show="card.probability !== null && card.probability !== undefined">
+                                                <span class="kanban-card-detail-label">Probability:</span>
+                                                <span class="kanban-card-probability" 
+                                                      :class="{
+                                                          'bg-red-100 text-red-700': (card.probability || 0) < 25,
+                                                          'bg-yellow-100 text-yellow-700': (card.probability || 0) >= 25 && (card.probability || 0) < 50,
+                                                          'bg-blue-100 text-blue-700': (card.probability || 0) >= 50 && (card.probability || 0) < 75,
+                                                          'bg-green-100 text-green-700': (card.probability || 0) >= 75
+                                                      }"
+                                                      x-text="(card.probability || 0) + '%'"></span>
+                                            </div>
+                                            
+                                            <div class="kanban-card-detail" x-show="card.owner">
+                                                <span class="kanban-card-detail-label">Owner:</span>
+                                                <span class="kanban-card-detail-value" x-text="card.owner || '-'"></span>
+                                            </div>
+                                            
+                                            <div class="kanban-card-actions">
+                                                <button type="button" 
+                                                        @click="editDealFromKanban(card.id)" 
+                                                        class="kanban-card-btn kanban-card-btn-edit">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                    </svg>
+                                                    Edit
+                                                </button>
+                                                <button type="button" 
+                                                        @click="deleteDealFromKanban(card.id)" 
+                                                        class="kanban-card-btn kanban-card-btn-delete">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                                <div x-show="!kanbanData[stage] || kanbanData[stage].length === 0" class="kanban-empty-state">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mx-auto mb-2 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                                    </svg>
+                                    <div>No deals in this stage</div>
                                 </div>
                             </div>
                         </template>
