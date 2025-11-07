@@ -34,7 +34,8 @@ class ContactController extends Controller
         $query = Contact::query();
         
         // Filter by role (Executive sees only assigned records)
-        $query = PermissionHelper::filterByRole($query, auth()->user(), 'assigned_user_id');
+        // Pass null for ownerField since contacts table doesn't have owner_user_id column
+        $query = PermissionHelper::filterByRole($query, auth()->user(), 'assigned_user_id', null);
 
         if ($search = trim((string) $request->input('search'))) {
             $query->where(function ($q) use ($search) {
@@ -283,7 +284,8 @@ class ContactController extends Controller
         }
 
         // Filter by role (Executive sees only assigned records)
-        $query = PermissionHelper::filterByRole($query, auth()->user(), 'assigned_user_id');
+        // Pass null for ownerField since contacts table doesn't have owner_user_id column
+        $query = PermissionHelper::filterByRole($query, auth()->user(), 'assigned_user_id', null);
 
         // Search from DataTables
         if ($search = trim((string) $request->input('search.value'))) {
@@ -397,7 +399,8 @@ class ContactController extends Controller
         $query = Contact::query();
         
         // Filter by role (Executive sees only assigned records)
-        $query = PermissionHelper::filterByRole($query, auth()->user(), 'assigned_user_id');
+        // Pass null for ownerField since contacts table doesn't have owner_user_id column
+        $query = PermissionHelper::filterByRole($query, auth()->user(), 'assigned_user_id', null);
 
         if ($search = trim((string) $request->input('search'))) {
             $query->where(function ($q) use ($search) {

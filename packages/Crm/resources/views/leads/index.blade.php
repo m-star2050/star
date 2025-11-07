@@ -890,6 +890,10 @@ $(document).ready(function() {
         serverSide: true,
         ajax: {
             url: '{{ route('crm.leads.datatable') }}',
+            type: 'GET',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
             data: function(d) {
                 d.stage = $('#filterStage').val() || '';
                 d.source = $('#filterSource').val() || '';
@@ -897,6 +901,24 @@ $(document).ready(function() {
                 d.date_from = $('#filterDateFrom').val() || '';
                 d.date_to = $('#filterDateTo').val() || '';
                 d.lead_score = $('#filterLeadScore').val() || '';
+            },
+            error: function(xhr, error, thrown) {
+                console.error('DataTables AJAX error:', {
+                    status: xhr.status,
+                    statusText: xhr.statusText,
+                    responseText: xhr.responseText,
+                    error: error,
+                    thrown: thrown
+                });
+                
+                // Show user-friendly error message
+                if (xhr.status === 403) {
+                    alert('You do not have permission to view leads. Please contact your administrator.');
+                } else if (xhr.status === 500) {
+                    alert('A server error occurred. Please try refreshing the page or contact support.');
+                } else {
+                    alert('An error occurred while loading the leads table. Please try again.');
+                }
             }
         },
         columns: [

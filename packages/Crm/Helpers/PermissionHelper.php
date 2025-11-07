@@ -164,15 +164,34 @@ class PermissionHelper
             if (self::isExecutive($user)) {
                 $userId = $user->id;
                 return $query->where(function($q) use ($userId, $assignedField, $ownerField) {
+                    $hasConditions = false;
+                    
+                    // Check assigned field (only if provided)
                     if ($assignedField) {
                         $q->where($assignedField, $userId);
+                        $hasConditions = true;
                     }
+                    
+                    // Check owner field (only if provided and different from assigned field)
+                    // Important: Pass null for ownerField if the table doesn't have this column
                     if ($ownerField && $ownerField !== $assignedField) {
-                        $q->orWhere($ownerField, $userId);
+                        if ($hasConditions) {
+                            $q->orWhere($ownerField, $userId);
+                        } else {
+                            $q->where($ownerField, $userId);
+                            $hasConditions = true;
+                        }
                     }
-                    // For files, also check uploaded_by
-                    if ($assignedField === null && $ownerField === null) {
-                        $q->orWhere('uploaded_by', $userId);
+                    
+                    // For files, also check uploaded_by (only if no other fields specified)
+                    if (!$hasConditions && $assignedField === null && $ownerField === null) {
+                        $q->where('uploaded_by', $userId);
+                        $hasConditions = true;
+                    }
+                    
+                    // If no conditions were added, return empty result for safety
+                    if (!$hasConditions) {
+                        $q->whereRaw('1 = 0');
                     }
                 });
             }

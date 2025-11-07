@@ -901,6 +901,10 @@ $(document).ready(function() {
         serverSide: true,
         ajax: {
             url: '{{ route('crm.tasks.datatable') }}',
+            type: 'GET',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
             data: function(d) {
                 d.type = $('#filterType').val() || '';
                 d.priority = $('#filterPriority').val() || '';
@@ -908,6 +912,24 @@ $(document).ready(function() {
                 d.assigned_user_id = $('#filterAssigned').val() || '';
                 d.due_date_from = $('#filterDueDateFrom').val() || '';
                 d.due_date_to = $('#filterDueDateTo').val() || '';
+            },
+            error: function(xhr, error, thrown) {
+                console.error('DataTables AJAX error:', {
+                    status: xhr.status,
+                    statusText: xhr.statusText,
+                    responseText: xhr.responseText,
+                    error: error,
+                    thrown: thrown
+                });
+                
+                // Show user-friendly error message
+                if (xhr.status === 403) {
+                    alert('You do not have permission to view tasks. Please contact your administrator.');
+                } else if (xhr.status === 500) {
+                    alert('A server error occurred. Please try refreshing the page or contact support.');
+                } else {
+                    alert('An error occurred while loading the tasks table. Please try again.');
+                }
             }
         },
         columns: [

@@ -180,7 +180,23 @@ class ReportsController extends Controller
     public function datatable(Request $request)
     {
         try {
-            if (!auth()->user()->can('view reports')) {
+            // Defensive permission check
+            $user = auth()->user();
+            if (!$user) {
+                abort(403, 'Unauthorized. Please login to access reports.');
+            }
+            
+            // Check permission with error handling
+            $hasPermission = false;
+            try {
+                $hasPermission = $user->can('view reports');
+            } catch (\Exception $e) {
+                \Log::error('Permission check exception in reports datatable: ' . $e->getMessage());
+                // If permission system is broken, deny access for security
+                abort(500, 'Permission system error. Please contact administrator.');
+            }
+            
+            if (!$hasPermission) {
                 abort(403, 'Unauthorized. You do not have permission to view reports.');
             }
 
@@ -190,65 +206,83 @@ class ReportsController extends Controller
             $stage = $request->input('stage');
 
         // Get all user IDs that have deals, contacts, or leads
-        $dealsQuery = Pipeline::query();
-        $dealsQuery = PermissionHelper::filterByRole($dealsQuery, auth()->user(), null, 'owner_user_id');
-        
-        $userIdsFromDeals = $dealsQuery
-            ->when($dateFrom, function($q) use ($dateFrom) {
-                $q->whereDate('created_at', '>=', $dateFrom);
-            })
-            ->when($dateTo, function($q) use ($dateTo) {
-                $q->whereDate('created_at', '<=', $dateTo);
-            })
-            ->when($userId, function($q) use ($userId) {
-                $q->where('owner_user_id', $userId);
-            })
-            ->when($stage, function($q) use ($stage) {
-                $q->where('stage', $stage);
-            })
-            ->whereNotNull('owner_user_id')
-            ->distinct()
-            ->pluck('owner_user_id')
-            ->filter()
-            ->unique();
+        $userIdsFromDeals = collect([]);
+        try {
+            $dealsQuery = Pipeline::query();
+            $dealsQuery = PermissionHelper::filterByRole($dealsQuery, auth()->user(), null, 'owner_user_id');
+            
+            $userIdsFromDeals = $dealsQuery
+                ->when($dateFrom, function($q) use ($dateFrom) {
+                    $q->whereDate('created_at', '>=', $dateFrom);
+                })
+                ->when($dateTo, function($q) use ($dateTo) {
+                    $q->whereDate('created_at', '<=', $dateTo);
+                })
+                ->when($userId, function($q) use ($userId) {
+                    $q->where('owner_user_id', $userId);
+                })
+                ->when($stage, function($q) use ($stage) {
+                    $q->where('stage', $stage);
+                })
+                ->whereNotNull('owner_user_id')
+                ->distinct()
+                ->pluck('owner_user_id')
+                ->filter()
+                ->unique();
+        } catch (\Exception $e) {
+            \Log::warning('Error getting user IDs from deals: ' . $e->getMessage());
+            $userIdsFromDeals = collect([]);
+        }
 
-        $contactsQuery = Contact::query();
-        $contactsQuery = PermissionHelper::filterByRole($contactsQuery, auth()->user(), 'assigned_user_id');
-        
-        $userIdsFromContacts = $contactsQuery
-            ->when($dateFrom, function($q) use ($dateFrom) {
-                $q->whereDate('created_at', '>=', $dateFrom);
-            })
-            ->when($dateTo, function($q) use ($dateTo) {
-                $q->whereDate('created_at', '<=', $dateTo);
-            })
-            ->when($userId, function($q) use ($userId) {
-                $q->where('assigned_user_id', $userId);
-            })
-            ->whereNotNull('assigned_user_id')
-            ->distinct()
-            ->pluck('assigned_user_id')
-            ->filter()
-            ->unique();
+        $userIdsFromContacts = collect([]);
+        try {
+            $contactsQuery = Contact::query();
+            $contactsQuery = PermissionHelper::filterByRole($contactsQuery, auth()->user(), 'assigned_user_id');
+            
+            $userIdsFromContacts = $contactsQuery
+                ->when($dateFrom, function($q) use ($dateFrom) {
+                    $q->whereDate('created_at', '>=', $dateFrom);
+                })
+                ->when($dateTo, function($q) use ($dateTo) {
+                    $q->whereDate('created_at', '<=', $dateTo);
+                })
+                ->when($userId, function($q) use ($userId) {
+                    $q->where('assigned_user_id', $userId);
+                })
+                ->whereNotNull('assigned_user_id')
+                ->distinct()
+                ->pluck('assigned_user_id')
+                ->filter()
+                ->unique();
+        } catch (\Exception $e) {
+            \Log::warning('Error getting user IDs from contacts: ' . $e->getMessage());
+            $userIdsFromContacts = collect([]);
+        }
 
-        $leadsQuery = Lead::query();
-        $leadsQuery = PermissionHelper::filterByRole($leadsQuery, auth()->user(), 'assigned_user_id');
-        
-        $userIdsFromLeads = $leadsQuery
-            ->when($dateFrom, function($q) use ($dateFrom) {
-                $q->whereDate('created_at', '>=', $dateFrom);
-            })
-            ->when($dateTo, function($q) use ($dateTo) {
-                $q->whereDate('created_at', '<=', $dateTo);
-            })
-            ->when($userId, function($q) use ($userId) {
-                $q->where('assigned_user_id', $userId);
-            })
-            ->whereNotNull('assigned_user_id')
-            ->distinct()
-            ->pluck('assigned_user_id')
-            ->filter()
-            ->unique();
+        $userIdsFromLeads = collect([]);
+        try {
+            $leadsQuery = Lead::query();
+            $leadsQuery = PermissionHelper::filterByRole($leadsQuery, auth()->user(), 'assigned_user_id');
+            
+            $userIdsFromLeads = $leadsQuery
+                ->when($dateFrom, function($q) use ($dateFrom) {
+                    $q->whereDate('created_at', '>=', $dateFrom);
+                })
+                ->when($dateTo, function($q) use ($dateTo) {
+                    $q->whereDate('created_at', '<=', $dateTo);
+                })
+                ->when($userId, function($q) use ($userId) {
+                    $q->where('assigned_user_id', $userId);
+                })
+                ->whereNotNull('assigned_user_id')
+                ->distinct()
+                ->pluck('assigned_user_id')
+                ->filter()
+                ->unique();
+        } catch (\Exception $e) {
+            \Log::warning('Error getting user IDs from leads: ' . $e->getMessage());
+            $userIdsFromLeads = collect([]);
+        }
 
         // Combine all user IDs
         $allUserIds = $userIdsFromDeals
@@ -259,37 +293,58 @@ class ReportsController extends Controller
 
         // If no user IDs found and no specific user filter, show a summary row
         if ($allUserIds->isEmpty() && !$userId) {
-            // Show overall summary
-            $dealsQuery = Pipeline::query();
-            if ($dateFrom) {
-                $dealsQuery->whereDate('created_at', '>=', $dateFrom);
-            }
-            if ($dateTo) {
-                $dealsQuery->whereDate('created_at', '<=', $dateTo);
-            }
-            if ($stage) {
-                $dealsQuery->where('stage', $stage);
-            }
+            try {
+                // Show overall summary - but apply role filtering for Executive users
+                $dealsQuery = Pipeline::query();
+                $dealsQuery = PermissionHelper::filterByRole($dealsQuery, auth()->user(), null, 'owner_user_id');
+                
+                if ($dateFrom) {
+                    $dealsQuery->whereDate('created_at', '>=', $dateFrom);
+                }
+                if ($dateTo) {
+                    $dealsQuery->whereDate('created_at', '<=', $dateTo);
+                }
+                if ($stage) {
+                    $dealsQuery->where('stage', $stage);
+                }
 
-            $totalDeals = $dealsQuery->count();
-            $wonDeals = (clone $dealsQuery)->where('stage', 'closed_won')->count();
-            $lostDeals = (clone $dealsQuery)->where('stage', 'closed_lost')->count();
-            $conversionRate = $totalDeals > 0 ? round(($wonDeals / $totalDeals) * 100, 2) : 0;
-            $totalRevenue = (clone $dealsQuery)->where('stage', 'closed_won')->sum('value') ?? 0;
+                $totalDeals = $dealsQuery->count();
+                $wonDeals = (clone $dealsQuery)->where('stage', 'closed_won')->count();
+                $lostDeals = (clone $dealsQuery)->where('stage', 'closed_lost')->count();
+                $conversionRate = $totalDeals > 0 ? round(($wonDeals / $totalDeals) * 100, 2) : 0;
+                $totalRevenue = (clone $dealsQuery)->where('stage', 'closed_won')->sum('value') ?? 0;
 
-            $data = [[
-                'user_id' => '-',
-                'user_name' => 'All Users',
-                'total_deals' => $totalDeals,
-                'won_deals' => $wonDeals,
-                'lost_deals' => $lostDeals,
-                'conversion_rate' => $conversionRate . '%',
-                'total_revenue' => '$' . number_format($totalRevenue, 2),
-            ]];
+                // For Executive users, show their own name instead of "All Users"
+                $summaryLabel = 'All Users';
+                try {
+                    if (PermissionHelper::isExecutive(auth()->user())) {
+                        $summaryLabel = auth()->user()->name ?? 'My Summary';
+                    }
+                } catch (\Exception $e) {
+                    // Keep default label
+                }
+
+                $data = [[
+                    'user_id' => auth()->user()->id ?? '-',
+                    'user_name' => $summaryLabel,
+                    'total_deals' => $totalDeals,
+                    'won_deals' => $wonDeals,
+                    'lost_deals' => $lostDeals,
+                    'conversion_rate' => $conversionRate . '%',
+                    'total_revenue' => '$' . number_format($totalRevenue, 2),
+                ]];
+            } catch (\Exception $e) {
+                \Log::warning('Error building summary data: ' . $e->getMessage());
+                $data = [];
+            }
         } else {
             $data = [];
             foreach ($allUserIds as $uid) {
-                $userDealsQuery = Pipeline::query()->where('owner_user_id', $uid);
+                try {
+                // Apply role filtering to user-specific queries as well
+                $userDealsQuery = Pipeline::query();
+                $userDealsQuery = PermissionHelper::filterByRole($userDealsQuery, auth()->user(), null, 'owner_user_id');
+                $userDealsQuery->where('owner_user_id', $uid);
                 
                 if ($dateFrom) {
                     $userDealsQuery->whereDate('created_at', '>=', $dateFrom);
@@ -322,50 +377,87 @@ class ReportsController extends Controller
                     }
                 }
 
-                $data[] = [
-                    'user_id' => $uid,
-                    'user_name' => $userName,
-                    'total_deals' => $totalDeals,
-                    'won_deals' => $wonDeals,
-                    'lost_deals' => $lostDeals,
-                    'conversion_rate' => $conversionRate . '%',
-                    'total_revenue' => '$' . number_format($totalRevenue, 2),
-                ];
+                    $data[] = [
+                        'user_id' => $uid,
+                        'user_name' => $userName,
+                        'total_deals' => $totalDeals,
+                        'won_deals' => $wonDeals,
+                        'lost_deals' => $lostDeals,
+                        'conversion_rate' => $conversionRate . '%',
+                        'total_revenue' => '$' . number_format($totalRevenue, 2),
+                    ];
+                } catch (\Exception $e) {
+                    \Log::warning('Error processing user data for user ID ' . $uid . ': ' . $e->getMessage());
+                    // Continue to next user
+                }
             }
+        }
+
+        // Ensure data is an array
+        if (!is_array($data)) {
+            $data = [];
         }
 
         if ($search = trim((string) $request->input('search.value'))) {
             $data = array_filter($data, function($item) use ($search) {
-                return stripos($item['user_name'], $search) !== false ||
-                       stripos((string)$item['user_id'], $search) !== false;
+                if (!is_array($item)) {
+                    return false;
+                }
+                $userName = $item['user_name'] ?? '';
+                $userId = $item['user_id'] ?? '';
+                return stripos($userName, $search) !== false ||
+                       stripos((string)$userId, $search) !== false;
             });
         }
 
         $totalRecords = count($data);
         $filteredRecords = count($data);
 
-        $orderColumn = $request->input('order.0.column', 0);
+        $orderColumn = (int) $request->input('order.0.column', 0);
         $orderDir = $request->input('order.0.dir', 'desc');
 
         $columns = ['user_id', 'user_name', 'total_deals', 'won_deals', 'lost_deals', 'conversion_rate', 'total_revenue'];
         $sortColumn = $columns[$orderColumn] ?? 'user_id';
 
-        usort($data, function($a, $b) use ($sortColumn, $orderDir) {
-            $aVal = $a[$sortColumn];
-            $bVal = $b[$sortColumn];
-            
-            if (is_numeric($aVal)) {
-                $aVal = (float) $aVal;
-            }
-            if (is_numeric($bVal)) {
-                $bVal = (float) $bVal;
-            }
-            
-            if ($orderDir === 'asc') {
-                return $aVal <=> $bVal;
-            }
-            return $bVal <=> $aVal;
-        });
+        // Only sort if we have data
+        if (count($data) > 0) {
+            usort($data, function($a, $b) use ($sortColumn, $orderDir) {
+                if (!is_array($a) || !is_array($b)) {
+                    return 0;
+                }
+                
+                $aVal = $a[$sortColumn] ?? '';
+                $bVal = $b[$sortColumn] ?? '';
+                
+                // Handle percentage strings (e.g., "50%")
+                if (is_string($aVal) && strpos($aVal, '%') !== false) {
+                    $aVal = (float) str_replace('%', '', $aVal);
+                }
+                if (is_string($bVal) && strpos($bVal, '%') !== false) {
+                    $bVal = (float) str_replace('%', '', $bVal);
+                }
+                
+                // Handle currency strings (e.g., "$1,234.56")
+                if (is_string($aVal) && strpos($aVal, '$') !== false) {
+                    $aVal = (float) str_replace(['$', ','], '', $aVal);
+                }
+                if (is_string($bVal) && strpos($bVal, '$') !== false) {
+                    $bVal = (float) str_replace(['$', ','], '', $bVal);
+                }
+                
+                if (is_numeric($aVal)) {
+                    $aVal = (float) $aVal;
+                }
+                if (is_numeric($bVal)) {
+                    $bVal = (float) $bVal;
+                }
+                
+                if ($orderDir === 'asc') {
+                    return $aVal <=> $bVal;
+                }
+                return $bVal <=> $aVal;
+            });
+        }
 
         $start = $request->input('start', 0);
         $length = $request->input('length', 10);
@@ -378,18 +470,32 @@ class ReportsController extends Controller
             'data' => array_values($data),
         ]);
         } catch (\Exception $e) {
+            // Safely get user role for logging
+            $userRole = 'unknown';
+            try {
+                if (auth()->check() && method_exists(auth()->user(), 'roles')) {
+                    $userRole = auth()->user()->roles->pluck('name')->first() ?? 'none';
+                }
+            } catch (\Exception $roleEx) {
+                // Ignore role lookup errors
+            }
+            
             \Log::error('Reports datatable error: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'user_id' => auth()->id(),
+                'user_role' => $userRole,
                 'request' => $request->all()
             ]);
             
             // Return empty DataTables response on error
+            // Don't include 'error' field as DataTables will show it as a warning
             return response()->json([
                 'draw' => (int) $request->input('draw', 1),
                 'recordsTotal' => 0,
                 'recordsFiltered' => 0,
-                'data' => [],
-                'error' => 'An error occurred while loading the reports. Please try again later.'
+                'data' => []
             ]);
         }
     }

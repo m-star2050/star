@@ -978,27 +978,6 @@
                                                 <span class="kanban-card-detail-label">Owner:</span>
                                                 <span class="kanban-card-detail-value" x-text="card.owner || '-'"></span>
                                             </div>
-                                            
-                                            <div class="kanban-card-actions" x-show="card.canEdit || card.canDelete">
-                                                <button type="button" 
-                                                        x-show="card.canEdit"
-                                                        @click.stop="editDealFromKanban(card.id)"
-                                                        class="kanban-card-btn kanban-card-btn-edit">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-                                                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-8.5 8.5a2 2 0 01-.878.515l-3.3.943a.5.5 0 01-.62-.62l.943-3.3a2 2 0 01.515-.878l8.5-8.5z"/>
-                                                    </svg>
-                                                    Edit
-                                                </button>
-                                                <button type="button" 
-                                                        x-show="card.canDelete"
-                                                        @click.stop="deleteDealFromKanban(card.id)"
-                                                        class="kanban-card-btn kanban-card-btn-delete">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-                                                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                                                    </svg>
-                                                    Delete
-                                                </button>
-                                            </div>
                                         </div>
                                     </template>
                                 </div>

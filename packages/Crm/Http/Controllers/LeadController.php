@@ -418,18 +418,34 @@ class LeadController extends Controller
 
     public function datatable(Request $request)
     {
-        if (!auth()->user()->can('view leads')) {
-            abort(403, 'Unauthorized. You do not have permission to view leads.');
-        }
+        try {
+            // Defensive permission check
+            $user = auth()->user();
+            if (!$user) {
+                abort(403, 'Unauthorized. Please login to access leads.');
+            }
+            
+            // Check permission with error handling
+            $hasPermission = false;
+            try {
+                $hasPermission = $user->can('view leads');
+            } catch (\Exception $e) {
+                \Log::error('Permission check exception in leads datatable: ' . $e->getMessage());
+                abort(500, 'Permission system error. Please contact administrator.');
+            }
+            
+            if (!$hasPermission) {
+                abort(403, 'Unauthorized. You do not have permission to view leads.');
+            }
 
-        if (Schema::hasTable('users')) {
-            $query = Lead::with('assignedUser');
-        } else {
-            $query = Lead::query();
-        }
+            if (Schema::hasTable('users')) {
+                $query = Lead::with('assignedUser');
+            } else {
+                $query = Lead::query();
+            }
 
-        // Filter by role (Executive sees only assigned records)
-        $query = PermissionHelper::filterByRole($query, auth()->user(), 'assigned_user_id');
+            // Filter by role (Executive sees only assigned records)
+            $query = PermissionHelper::filterByRole($query, auth()->user(), 'assigned_user_id');
 
         if ($search = trim((string) $request->input('search.value'))) {
             $query->where(function ($q) use ($search) {
@@ -458,7 +474,11 @@ class LeadController extends Controller
             $query->where('lead_score', '>=', $request->input('lead_score'));
         }
 
-        $totalRecords = Lead::count();
+        // Get total records - must apply role filtering for accurate count
+        $totalRecordsQuery = Lead::query();
+        $totalRecordsQuery = PermissionHelper::filterByRole($totalRecordsQuery, auth()->user(), 'assigned_user_id');
+        $totalRecords = $totalRecordsQuery->count();
+        
         $filteredRecords = $query->count();
 
         $orderColumn = $request->input('order.0.column', 6);
@@ -485,26 +505,41 @@ class LeadController extends Controller
         $hasTagsColumn = Schema::hasColumn('crm_leads', 'tags');
         
         $user = auth()->user();
-        $canDelete = $user->can('delete leads');
-        $canEdit = $user->can('edit leads');
+        $canDelete = false;
+        $canEdit = false;
+        
+        try {
+            $canDelete = $user->can('delete leads');
+            $canEdit = $user->can('edit leads');
+        } catch (\Exception $e) {
+            \Log::warning('Permission check failed in leads datatable for edit/delete: ' . $e->getMessage());
+            // Continue with false values
+        }
 
         $data = $leads->map(function ($lead) use ($hasTagsColumn, $canDelete, $canEdit, $user) {
-            $stageColors = [
-                'new' => 'text-gray-600',
-                'contacted' => 'text-blue-600',
-                'qualified' => 'text-yellow-600',
-                'won' => 'text-green-600',
-                'lost' => 'text-red-600',
-            ];
-            $stageColor = $stageColors[$lead->stage] ?? 'text-gray-600';
-            
-            $tagsValue = '';
-            if ($hasTagsColumn) {
-                $tagsValue = is_array($lead->tags) ? implode(',', $lead->tags) : '';
-            }
-            
-            // Check if user can access this record for edit/delete
-            $canAccess = PermissionHelper::canAccessRecord($lead, $user);
+            try {
+                $stageColors = [
+                    'new' => 'text-gray-600',
+                    'contacted' => 'text-blue-600',
+                    'qualified' => 'text-yellow-600',
+                    'won' => 'text-green-600',
+                    'lost' => 'text-red-600',
+                ];
+                $stageColor = $stageColors[$lead->stage ?? 'new'] ?? 'text-gray-600';
+                
+                $tagsValue = '';
+                if ($hasTagsColumn) {
+                    $tagsValue = is_array($lead->tags) ? implode(',', $lead->tags) : '';
+                }
+                
+                // Check if user can access this record for edit/delete
+                $canAccess = false;
+                try {
+                    $canAccess = PermissionHelper::canAccessRecord($lead, $user);
+                } catch (\Exception $e) {
+                    \Log::warning('Error checking access for lead ' . $lead->id . ': ' . $e->getMessage());
+                    // Default to false for security
+                }
             
             $actionsHtml = '<div class="flex flex-col sm:flex-row gap-1 justify-center">';
             
@@ -530,14 +565,57 @@ class LeadController extends Controller
                 'created_at' => $lead->created_at?->format('Y-m-d') ?? '-',
                 'actions_html' => $actionsHtml,
             ];
+            } catch (\Exception $e) {
+                \Log::warning('Error mapping lead data for lead ID ' . ($lead->id ?? 'unknown') . ': ' . $e->getMessage());
+                // Return minimal safe data
+                return [
+                    'id' => $lead->id ?? 0,
+                    'name' => 'Error loading lead',
+                    'email' => '-',
+                    'source' => '-',
+                    'stage' => '-',
+                    'stage_html' => '<span class="text-gray-600">-</span>',
+                    'assigned' => '-',
+                    'created_at' => '-',
+                    'actions_html' => '<div class="flex gap-1 justify-center">-</div>',
+                ];
+            }
         });
 
         return response()->json([
-            'draw' => (int) $request->input('draw'),
+            'draw' => (int) $request->input('draw', 1),
             'recordsTotal' => $totalRecords,
             'recordsFiltered' => $filteredRecords,
             'data' => $data,
         ]);
+        } catch (\Exception $e) {
+            // Safely get user role for logging
+            $userRole = 'unknown';
+            try {
+                if (auth()->check() && method_exists(auth()->user(), 'roles')) {
+                    $userRole = auth()->user()->roles->pluck('name')->first() ?? 'none';
+                }
+            } catch (\Exception $roleEx) {
+                // Ignore role lookup errors
+            }
+            
+            \Log::error('Leads datatable error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'user_id' => auth()->id(),
+                'user_role' => $userRole,
+                'request' => $request->all()
+            ]);
+            
+            // Return empty DataTables response on error
+            return response()->json([
+                'draw' => (int) $request->input('draw', 1),
+                'recordsTotal' => 0,
+                'recordsFiltered' => 0,
+                'data' => []
+            ]);
+        }
     }
 }
 

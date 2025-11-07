@@ -268,18 +268,34 @@ class TaskController extends Controller
 
     public function datatable(Request $request)
     {
-        if (!auth()->user()->can('view tasks')) {
-            abort(403, 'Unauthorized. You do not have permission to view tasks.');
-        }
+        try {
+            // Defensive permission check
+            $user = auth()->user();
+            if (!$user) {
+                abort(403, 'Unauthorized. Please login to access tasks.');
+            }
+            
+            // Check permission with error handling
+            $hasPermission = false;
+            try {
+                $hasPermission = $user->can('view tasks');
+            } catch (\Exception $e) {
+                \Log::error('Permission check exception in tasks datatable: ' . $e->getMessage());
+                abort(500, 'Permission system error. Please contact administrator.');
+            }
+            
+            if (!$hasPermission) {
+                abort(403, 'Unauthorized. You do not have permission to view tasks.');
+            }
 
-        if (Schema::hasTable('users')) {
-            $query = Task::query()->with(['contact', 'lead', 'assignedUser']);
-        } else {
-            $query = Task::query()->with(['contact', 'lead']);
-        }
+            if (Schema::hasTable('users')) {
+                $query = Task::query()->with(['contact', 'lead', 'assignedUser']);
+            } else {
+                $query = Task::query()->with(['contact', 'lead']);
+            }
 
-        // Filter by role (Executive sees only assigned records)
-        $query = PermissionHelper::filterByRole($query, auth()->user(), 'assigned_user_id');
+            // Filter by role (Executive sees only assigned records)
+            $query = PermissionHelper::filterByRole($query, auth()->user(), 'assigned_user_id');
 
         if ($search = trim((string) $request->input('search.value'))) {
             $query->where(function ($q) use ($search) {
@@ -313,7 +329,11 @@ class TaskController extends Controller
             $query->whereDate('due_date', '<=', $request->input('due_date_to'));
         }
 
-        $totalRecords = Task::count();
+        // Get total records - must apply role filtering for accurate count
+        $totalRecordsQuery = Task::query();
+        $totalRecordsQuery = PermissionHelper::filterByRole($totalRecordsQuery, auth()->user(), 'assigned_user_id');
+        $totalRecords = $totalRecordsQuery->count();
+        
         $filteredRecords = $query->count();
 
         $orderColumn = $request->input('order.0.column', 8);
@@ -338,28 +358,43 @@ class TaskController extends Controller
             ->get();
 
         $user = auth()->user();
-        $canDelete = $user->can('delete tasks');
-        $canEdit = $user->can('edit tasks');
+        $canDelete = false;
+        $canEdit = false;
+        
+        try {
+            $canDelete = $user->can('delete tasks');
+            $canEdit = $user->can('edit tasks');
+        } catch (\Exception $e) {
+            \Log::warning('Permission check failed in tasks datatable for edit/delete: ' . $e->getMessage());
+            // Continue with false values
+        }
 
         $data = $tasks->map(function ($task) use ($canDelete, $canEdit, $user) {
-            $isArchived = !is_null($task->deleted_at ?? null);
-            
-            $priorityColors = [
-                'low' => 'text-green-600',
-                'medium' => 'text-yellow-600',
-                'high' => 'text-red-600',
-            ];
-            $priorityColor = $priorityColors[$task->priority] ?? 'text-gray-600';
-            
-            $statusColors = [
-                'pending' => 'text-gray-600',
-                'in_progress' => 'text-blue-600',
-                'completed' => 'text-green-600',
-            ];
-            $statusColor = $statusColors[$task->status] ?? 'text-gray-600';
-            
-            // Check if user can access this record for edit/delete
-            $canAccess = PermissionHelper::canAccessRecord($task, $user);
+            try {
+                $isArchived = !is_null($task->deleted_at ?? null);
+                
+                $priorityColors = [
+                    'low' => 'text-green-600',
+                    'medium' => 'text-yellow-600',
+                    'high' => 'text-red-600',
+                ];
+                $priorityColor = $priorityColors[$task->priority ?? 'medium'] ?? 'text-gray-600';
+                
+                $statusColors = [
+                    'pending' => 'text-gray-600',
+                    'in_progress' => 'text-blue-600',
+                    'completed' => 'text-green-600',
+                ];
+                $statusColor = $statusColors[$task->status ?? 'pending'] ?? 'text-gray-600';
+                
+                // Check if user can access this record for edit/delete
+                $canAccess = false;
+                try {
+                    $canAccess = PermissionHelper::canAccessRecord($task, $user);
+                } catch (\Exception $e) {
+                    \Log::warning('Error checking access for task ' . $task->id . ': ' . $e->getMessage());
+                    // Default to false for security
+                }
             
             $actionsHtml = '<div class="flex flex-col sm:flex-row gap-1 justify-center">';
             
@@ -390,14 +425,61 @@ class TaskController extends Controller
                     : '<span class="inline-flex items-center gap-1 text-blue-600"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-7.364 7.364a1 1 0 01-1.414 0L3.293 10.435a1 1 0 011.414-1.414l3.221 3.221 6.657-6.657a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Active</span>',
                 'actions_html' => $actionsHtml,
             ];
+            } catch (\Exception $e) {
+                \Log::warning('Error mapping task data for task ID ' . ($task->id ?? 'unknown') . ': ' . $e->getMessage());
+                // Return minimal safe data
+                return [
+                    'id' => $task->id ?? 0,
+                    'title' => 'Error loading task',
+                    'type' => '-',
+                    'priority' => '-',
+                    'priority_html' => '<span class="text-gray-600">-</span>',
+                    'due_date' => '-',
+                    'status' => '-',
+                    'status_html' => '<span class="text-gray-600">-</span>',
+                    'assigned' => '-',
+                    'lead' => '-',
+                    'created_at' => '-',
+                    'archive_html' => '<span class="text-gray-600">-</span>',
+                    'actions_html' => '<div class="flex gap-1 justify-center">-</div>',
+                ];
+            }
         });
 
         return response()->json([
-            'draw' => (int) $request->input('draw'),
+            'draw' => (int) $request->input('draw', 1),
             'recordsTotal' => $totalRecords,
             'recordsFiltered' => $filteredRecords,
             'data' => $data,
         ]);
+        } catch (\Exception $e) {
+            // Safely get user role for logging
+            $userRole = 'unknown';
+            try {
+                if (auth()->check() && method_exists(auth()->user(), 'roles')) {
+                    $userRole = auth()->user()->roles->pluck('name')->first() ?? 'none';
+                }
+            } catch (\Exception $roleEx) {
+                // Ignore role lookup errors
+            }
+            
+            \Log::error('Tasks datatable error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'user_id' => auth()->id(),
+                'user_role' => $userRole,
+                'request' => $request->all()
+            ]);
+            
+            // Return empty DataTables response on error
+            return response()->json([
+                'draw' => (int) $request->input('draw', 1),
+                'recordsTotal' => 0,
+                'recordsFiltered' => 0,
+                'data' => []
+            ]);
+        }
     }
 }
 
