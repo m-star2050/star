@@ -552,7 +552,7 @@
 </head>
 <body>
 
-<div x-data="{mobileMenu:false, open:true, showCreate:false, showEdit:false, showDelete:false, showBulkDelete:false, editId:null, editDeal:'', editStage:'prospect', editValue:'', editOwner:'', editCloseDate:'', editProbability:'', editContact:'', editCompany:'', editNotes:'', showNotification:false, notificationMessage:'', notificationType:'success', wasCreateOpen:false, viewMode:'list', kanbanData:{}, draggedCard:null, draggedFromStage:null, getStageLabel(stage) { const labels = {'prospect': 'Prospect', 'negotiation': 'Negotiation', 'proposal': 'Proposal', 'closed_won': 'Closed Won', 'closed_lost': 'Closed Lost'}; return labels[stage] || stage; }, handleDragStart(event, card, stage) { if (typeof window.handleDragStart === 'function') window.handleDragStart(event, card, stage); }, handleDragEnd(event) { if (typeof window.handleDragEnd === 'function') window.handleDragEnd(event); }, handleDrop(event, stage) { if (typeof window.handleDrop === 'function') window.handleDrop(event, stage); }, editDealFromKanban(dealId) { if (typeof window.editDealFromKanban === 'function') window.editDealFromKanban(dealId); }, deleteDealFromKanban(dealId) { if (typeof window.deleteDealFromKanban === 'function') window.deleteDealFromKanban(dealId); }}" 
+<div x-data="{mobileMenu:false, open:true, showCreate:false, showEdit:false, showDelete:false, showBulkDelete:false, editId:null, editDeal:'', editStage:'prospect', editValue:'', editOwner:'', editCloseDate:'', editProbability:'', editContact:'', editCompany:'', editNotes:'', showNotification:false, notificationMessage:'', notificationType:'success', wasCreateOpen:false, viewMode:'list', kanbanData:{}, draggedCard:null, draggedFromStage:null, getStageLabel(stage) { const labels = {'prospect': 'Prospect', 'negotiation': 'Negotiation', 'proposal': 'Proposal', 'closed_won': 'Closed Won', 'closed_lost': 'Closed Lost'}; return labels[stage] || stage; }, handleDragStart(event, card, stage) { if (event.target.closest('button') || event.target.closest('a')) { event.preventDefault(); return false; } this.draggedCard = JSON.parse(JSON.stringify(card)); this.draggedFromStage = stage; event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.dropEffect = 'move'; event.dataTransfer.setData('text/plain', card.id.toString()); const cardEl = event.target.closest('.kanban-card') || event.target; if (cardEl) cardEl.classList.add('dragging'); }, handleDragEnd(event) { document.querySelectorAll('.kanban-card').forEach(c => c.classList.remove('dragging')); document.querySelectorAll('.kanban-column').forEach(c => c.classList.remove('drag-over')); }, handleDrop(event, newStage) { event.preventDefault(); event.stopPropagation(); document.querySelectorAll('.kanban-column').forEach(c => c.classList.remove('drag-over')); if (!this.draggedCard || !this.draggedFromStage || this.draggedFromStage === newStage) { this.draggedCard = null; this.draggedFromStage = null; return; } const card = this.draggedCard; const fromStage = this.draggedFromStage; const cardCopy = JSON.parse(JSON.stringify(card)); cardCopy.stage = newStage; if (this.kanbanData[fromStage] && Array.isArray(this.kanbanData[fromStage])) { const index = this.kanbanData[fromStage].findIndex(c => c.id == card.id); if (index !== -1) this.kanbanData[fromStage].splice(index, 1); } if (!this.kanbanData[newStage]) this.kanbanData[newStage] = []; if (!this.kanbanData[newStage].find(c => c.id == card.id)) this.kanbanData[newStage].push(cardCopy); this.draggedCard = null; this.draggedFromStage = null; $.ajax({ url: '{{ route('crm.pipeline.update-stage', '__ID__') }}'.replace('__ID__', card.id), method: 'POST', data: { _token: '{{ csrf_token() }}', stage: newStage }, success: (response) => { const updatedCard = this.kanbanData[newStage].find(c => c.id == card.id); if (updatedCard) updatedCard.stage = newStage; if (typeof table !== 'undefined' && table) table.ajax.reload(null, false); showNotification('Deal moved to ' + this.getStageLabel(newStage) + ' successfully.', 'success'); }, error: (xhr, status, error) => { console.error('Error updating deal stage:', xhr, status, error); showNotification('Error updating deal stage. Reverting...', 'error'); if (this.kanbanData[newStage]) { const revertIndex = this.kanbanData[newStage].findIndex(c => c.id == card.id); if (revertIndex !== -1) this.kanbanData[newStage].splice(revertIndex, 1); } if (!this.kanbanData[fromStage]) this.kanbanData[fromStage] = []; if (!this.kanbanData[fromStage].find(c => c.id == card.id)) this.kanbanData[fromStage].push(card); if (typeof loadKanbanData === 'function') loadKanbanData(); } }); }, editDealFromKanban(dealId) { if (typeof window.editDealFromKanban === 'function') window.editDealFromKanban(dealId); }, deleteDealFromKanban(dealId) { if (typeof window.deleteDealFromKanban === 'function') window.deleteDealFromKanban(dealId); }}" 
      x-init="$watch('showCreate', value => { if (value && !wasCreateOpen) { setTimeout(() => { const form = document.getElementById('createForm'); if (form) form.reset(); const stage = document.getElementById('createStage'); if (stage) stage.value = 'prospect'; const btn = document.getElementById('createSubmitBtn'); if (btn) { btn.disabled = false; btn.textContent = 'Create Deal'; } }, 100); } wasCreateOpen = value; }); $watch('viewMode', value => { if (value === 'kanban' && Object.keys(kanbanData).length === 0) { setTimeout(() => { if (typeof loadKanbanData === 'function') loadKanbanData(); }, 100); } });" 
      class="relative">
     <div class="lg:hidden fixed top-0 left-0 right-0 z-50 glass-card rounded-b-2xl p-4 shadow-xl">
@@ -823,10 +823,12 @@
                     <div class="grid grid-cols-1 md:grid-cols-5 gap-5" style="min-width: 1400px;">
                         <template x-for="(stage, stageKey) in ['prospect', 'negotiation', 'proposal', 'closed_won', 'closed_lost']" :key="stageKey">
                             <div class="kanban-column" 
-                                 @dragover.prevent="if (draggedCard) { $event.currentTarget.classList.add('drag-over'); }"
-                                 @dragleave.prevent="$event.currentTarget.classList.remove('drag-over')"
+                                 @dragover.prevent="if (draggedCard && draggedFromStage !== stage) { $event.currentTarget.classList.add('drag-over'); }"
+                                 @dragenter.prevent="if (draggedCard && draggedFromStage !== stage) { $event.currentTarget.classList.add('drag-over'); }"
+                                 @dragleave.prevent="if (!$event.relatedTarget || !$event.currentTarget.contains($event.relatedTarget)) { $event.currentTarget.classList.remove('drag-over'); }"
                                  @drop.prevent="handleDrop($event, stage)"
-                                 :data-stage="stage">
+                                 :data-stage="stage"
+                                 :class="{ 'drag-over': draggedCard && draggedFromStage !== stage }">
                                 <div class="kanban-column-header">
                                     <div class="kanban-column-title">
                                         <svg x-show="stage === 'prospect'" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1135,7 +1137,6 @@ $.ajaxSetup({
     }
 });
 
-// Global functions - must be accessible outside document.ready
 function getAlpineData() {
     return document.querySelector('[x-data]');
 }
@@ -1965,14 +1966,33 @@ function loadKanbanData() {
 }
 
 window.handleDragStart = function(event, card, stage) {
-    const alpineData = getAlpineData();
-    if (alpineData && alpineData.__x) {
-        alpineData.__x.$data.draggedCard = card;
-        alpineData.__x.$data.draggedFromStage = stage;
+    // Don't start drag if clicking on interactive elements
+    if (event.target.closest('button') || event.target.closest('a')) {
+        event.preventDefault();
+        return false;
     }
+    
+    const alpineData = getAlpineData();
+    if (!alpineData || !alpineData.__x) {
+        console.error('Alpine data not found in handleDragStart');
+        return;
+    }
+    
+    // Create a copy of the card to avoid reference issues
+    const cardCopy = JSON.parse(JSON.stringify(card));
+    alpineData.__x.$data.draggedCard = cardCopy;
+    alpineData.__x.$data.draggedFromStage = stage;
+    
     event.dataTransfer.effectAllowed = 'move';
-    event.dataTransfer.setData('text/html', event.target.outerHTML);
-    event.target.classList.add('dragging');
+    event.dataTransfer.dropEffect = 'move';
+    event.dataTransfer.setData('text/plain', card.id.toString());
+    event.dataTransfer.setData('application/json', JSON.stringify({id: card.id, stage: stage}));
+    
+    // Add dragging class to the card element
+    const cardElement = event.target.closest('.kanban-card') || event.target;
+    if (cardElement) {
+        cardElement.classList.add('dragging');
+    }
 };
 
 window.handleDragEnd = function(event) {
@@ -1984,21 +2004,60 @@ window.handleDragEnd = function(event) {
 
 window.handleDrop = function(event, newStage) {
     event.preventDefault();
+    event.stopPropagation();
     event.currentTarget.classList.remove('drag-over');
     
     const alpineData = getAlpineData();
-    if (!alpineData || !alpineData.__x) return;
+    if (!alpineData || !alpineData.__x) {
+        console.error('Alpine data not found in handleDrop');
+        return;
+    }
     
     const data = alpineData.__x.$data;
     const card = data.draggedCard;
     const fromStage = data.draggedFromStage;
     
-    if (!card || fromStage === newStage) {
+    if (!card || !fromStage) {
+        console.warn('No card or fromStage in drag state');
         data.draggedCard = null;
         data.draggedFromStage = null;
         return;
     }
     
+    if (fromStage === newStage) {
+        data.draggedCard = null;
+        data.draggedFromStage = null;
+        return;
+    }
+    
+    // Create a deep copy of the card to avoid reference issues
+    const cardCopy = JSON.parse(JSON.stringify(card));
+    cardCopy.stage = newStage;
+    
+    // Update UI immediately (optimistic update)
+    if (data.kanbanData[fromStage] && Array.isArray(data.kanbanData[fromStage])) {
+        const index = data.kanbanData[fromStage].findIndex(c => c.id == card.id);
+        if (index !== -1) {
+            // Remove from old stage
+            data.kanbanData[fromStage].splice(index, 1);
+        }
+    }
+    
+    // Ensure new stage array exists
+    if (!data.kanbanData[newStage]) {
+        data.kanbanData[newStage] = [];
+    }
+    
+    // Add to new stage (only if not already there)
+    if (!data.kanbanData[newStage].find(c => c.id == card.id)) {
+        data.kanbanData[newStage].push(cardCopy);
+    }
+    
+    // Clear drag state
+    data.draggedCard = null;
+    data.draggedFromStage = null;
+    
+    // Update backend
     $.ajax({
         url: '{{ route('crm.pipeline.update-stage', '__ID__') }}'.replace('__ID__', card.id),
         method: 'POST',
@@ -2007,32 +2066,43 @@ window.handleDrop = function(event, newStage) {
             stage: newStage
         },
         success: function(response) {
-            if (data.kanbanData[fromStage]) {
-                const index = data.kanbanData[fromStage].findIndex(c => c.id === card.id);
-                if (index !== -1) {
-                    data.kanbanData[fromStage].splice(index, 1);
+            // Update the card's stage property in the new location
+            const updatedCard = data.kanbanData[newStage].find(c => c.id == card.id);
+            if (updatedCard) {
+                updatedCard.stage = newStage;
+            }
+            
+            // Reload table if it exists
+            if (typeof table !== 'undefined' && table) {
+                table.ajax.reload(null, false);
+            }
+            
+            showNotification('Deal moved to ' + data.getStageLabel(newStage) + ' successfully.', 'success');
+        },
+        error: function(xhr, status, error) {
+            console.error('Error updating deal stage:', xhr, status, error);
+            showNotification('Error updating deal stage. Reverting...', 'error');
+            
+            // Revert the UI change on error
+            if (data.kanbanData[newStage]) {
+                const revertIndex = data.kanbanData[newStage].findIndex(c => c.id == card.id);
+                if (revertIndex !== -1) {
+                    data.kanbanData[newStage].splice(revertIndex, 1);
                 }
             }
             
-            if (!data.kanbanData[newStage]) {
-                data.kanbanData[newStage] = [];
+            // Restore to original stage
+            if (!data.kanbanData[fromStage]) {
+                data.kanbanData[fromStage] = [];
+            }
+            if (!data.kanbanData[fromStage].find(c => c.id == card.id)) {
+                data.kanbanData[fromStage].push(card);
             }
             
-            card.stage = newStage;
-            data.kanbanData[newStage].push(card);
-            
-            data.draggedCard = null;
-            data.draggedFromStage = null;
-            
-            if (typeof table !== 'undefined') {
-                table.ajax.reload(null, false);
+            // Reload kanban data to ensure consistency
+            if (typeof loadKanbanData === 'function') {
+                loadKanbanData();
             }
-        },
-        error: function() {
-            showNotification('Error updating deal stage.', 'error');
-            data.draggedCard = null;
-            data.draggedFromStage = null;
-            loadKanbanData();
         }
     });
 };
