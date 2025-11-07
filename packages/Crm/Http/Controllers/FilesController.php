@@ -56,9 +56,7 @@ class FilesController extends Controller
             $file = File::create([
                 'original_name' => $originalName,
                 'stored_name' => $storedName,
-                'file_name' => $storedName,
                 'file_path' => $filePath,
-                'path' => $filePath,
                 'file_type' => $mimeType,
                 'file_size' => $fileSize,
                 'linked_type' => $request->input('linked_type'),
