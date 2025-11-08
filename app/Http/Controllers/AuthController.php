@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
-use Packages\Crm\database\seeders\CrmRolePermissionSeeder;
+// use Packages\Crm\database\seeders\CrmRolePermissionSeeder; // Use fully qualified name instead
 
 class AuthController extends Controller
 {
@@ -143,12 +143,25 @@ class AuthController extends Controller
             $roleClass = \Spatie\Permission\Models\Role::class;
             // Check if roles exist, if not, seed them
             if (!$roleClass::where('guard_name', 'web')->exists()) {
-                $seeder = new CrmRolePermissionSeeder();
-                $seeder->run();
+                // Use fully qualified class name to avoid autoload issues
+                $seederClass = 'Packages\Crm\database\seeders\CrmRolePermissionSeeder';
+                
+                // Try to load the class file directly if autoloader hasn't found it
+                $seederPath = base_path('packages/Crm/database/seeders/CrmRolePermissionSeeder.php');
+                if (file_exists($seederPath) && !class_exists($seederClass)) {
+                    require_once $seederPath;
+                }
+                
+                if (class_exists($seederClass)) {
+                    $seeder = new $seederClass();
+                    $seeder->run();
+                } else {
+                    \Log::warning('CrmRolePermissionSeeder class not found. Run: composer dump-autoload on server.');
+                }
             }
         } catch (\Exception $e) {
             // If seeding fails, log but don't block registration
-            \Log::error('Failed to seed CRM permissions: ' . $e->getMessage());
+            \Log::error('Failed to seed CRM permissions: ' . $e->getMessage() . ' | Trace: ' . $e->getTraceAsString());
         }
     }
 
