@@ -40,7 +40,7 @@ class LeadController extends Controller
                 'source' => ['nullable', 'string', 'max:255'],
                 'stage' => ['required', Rule::in(['new', 'contacted', 'qualified', 'won', 'lost'])],
                 'assigned_user_id' => ['nullable', 'integer'],
-                'lead_score' => ['nullable', 'integer', 'min:0', 'max:100'],
+                'lead_score' => ['nullable', 'integer', 'min:0'],
                 'tags' => ['nullable'],
                 'notes' => ['nullable', 'string'],
             ]);

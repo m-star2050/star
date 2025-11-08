@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Packages\Crm\Models\File;
+use Packages\Crm\Models\Contact;
+use Packages\Crm\Models\Lead;
+use Packages\Crm\Models\Pipeline;
 use Packages\Crm\Helpers\PermissionHelper;
 
 class FilesController extends Controller
@@ -16,7 +19,24 @@ class FilesController extends Controller
             abort(403, 'Unauthorized. You do not have permission to view files.');
         }
 
-        return view('crm::files.index');
+        // Get contacts, leads, and deals (pipelines) for dropdown, filtered by user permissions
+        $contactsQuery = Contact::query();
+        $contactsQuery = PermissionHelper::filterByUserId($contactsQuery, auth()->user());
+        $contacts = $contactsQuery->orderBy('name', 'asc')->get(['id', 'name', 'company']);
+
+        $leadsQuery = Lead::query();
+        $leadsQuery = PermissionHelper::filterByUserId($leadsQuery, auth()->user());
+        $leads = $leadsQuery->orderBy('name', 'asc')->get(['id', 'name', 'company']);
+
+        $dealsQuery = Pipeline::query();
+        $dealsQuery = PermissionHelper::filterByUserId($dealsQuery, auth()->user());
+        $deals = $dealsQuery->orderBy('deal_name', 'asc')->get(['id', 'deal_name', 'company']);
+
+        return view('crm::files.index', [
+            'contacts' => $contacts,
+            'leads' => $leads,
+            'deals' => $deals,
+        ]);
     }
 
     public function store(Request $request)

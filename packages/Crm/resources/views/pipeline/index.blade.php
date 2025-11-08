@@ -1082,8 +1082,13 @@
                     <input name="probability" id="createProbability" type="number" min="0" max="100" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="0-100">
                                 </div>
                                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Contact ID</label>
-                    <input name="contact_id" id="createContact" type="number" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="Contact ID">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Contact</label>
+                    <select name="contact_id" id="createContact" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                        <option value="">-- Select Contact --</option>
+                        @foreach($contacts ?? [] as $contact)
+                            <option value="{{ $contact->id }}">{{ $contact->name }}@if($contact->company) - {{ $contact->company }}@endif</option>
+                        @endforeach
+                    </select>
                                 </div>
                                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Company</label>
@@ -1152,8 +1157,13 @@
                     <input name="probability" id="editProbability" type="number" min="0" max="100" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="0-100" x-model="editProbability">
                                 </div>
                                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Contact ID</label>
-                    <input name="contact_id" id="editContact" type="number" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="Contact ID" x-model="editContact">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Contact</label>
+                    <select name="contact_id" id="editContact" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" x-model="editContact">
+                        <option value="">-- Select Contact --</option>
+                        @foreach($contacts ?? [] as $contact)
+                            <option value="{{ $contact->id }}">{{ $contact->name }}@if($contact->company) - {{ $contact->company }}@endif</option>
+                        @endforeach
+                    </select>
                                 </div>
                                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Company</label>

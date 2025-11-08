@@ -22,7 +22,13 @@ class PipelineController extends Controller
 
         // Get users for dropdown, excluding admins for non-admin users
         $users = PermissionHelper::getUsersForSelection();
-        return view('crm::pipeline.index', ['users' => $users]);
+        
+        // Get contacts for dropdown, filtered by user permissions
+        $contactsQuery = Contact::query();
+        $contactsQuery = PermissionHelper::filterByUserId($contactsQuery, auth()->user());
+        $contacts = $contactsQuery->orderBy('name', 'asc')->get();
+        
+        return view('crm::pipeline.index', ['users' => $users, 'contacts' => $contacts]);
     }
 
     public function kanban(Request $request)
@@ -33,7 +39,13 @@ class PipelineController extends Controller
 
         // Get users for dropdown, excluding admins for non-admin users
         $users = PermissionHelper::getUsersForSelection();
-        return view('crm::pipeline.index', ['view' => 'kanban', 'users' => $users]);
+        
+        // Get contacts for dropdown, filtered by user permissions
+        $contactsQuery = Contact::query();
+        $contactsQuery = PermissionHelper::filterByUserId($contactsQuery, auth()->user());
+        $contacts = $contactsQuery->orderBy('name', 'asc')->get();
+        
+        return view('crm::pipeline.index', ['view' => 'kanban', 'users' => $users, 'contacts' => $contacts]);
     }
 
     public function store(Request $request)

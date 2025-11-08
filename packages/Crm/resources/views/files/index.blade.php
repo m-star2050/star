@@ -650,8 +650,10 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Linked ID</label>
-                    <input type="number" name="linked_id" id="uploadLinkedId" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 transition-all duration-200" placeholder="ID">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Linked To</label>
+                    <select name="linked_id" id="uploadLinkedId" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" disabled>
+                        <option value="">-- Select --</option>
+                    </select>
                 </div>
                 <div class="md:col-span-2">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Description</label>
@@ -749,6 +751,62 @@
 </div>
 
 <script>
+// Store contacts, leads, and deals data for dropdown
+const linkedData = {
+    contacts: @json($contacts ?? []),
+    leads: @json($leads ?? []),
+    deals: @json($deals ?? [])
+};
+
+// Function to update the linked_id dropdown based on linked_type
+function updateLinkedIdDropdown() {
+    const linkedType = $('#uploadLinkedId').closest('form').find('#uploadLinkedType').val() || $('#uploadLinkedType').val();
+    const linkedIdSelect = $('#uploadLinkedId');
+    
+    // Clear existing options
+    linkedIdSelect.html('<option value="">-- Select --</option>');
+    
+    if (!linkedType || linkedType === '') {
+        // No type selected, disable dropdown
+        linkedIdSelect.prop('disabled', true);
+        return;
+    }
+    
+    // Enable dropdown
+    linkedIdSelect.prop('disabled', false);
+    
+    // Get the appropriate data based on type
+    let items = [];
+    let nameField = 'name';
+    let displayField = 'name';
+    
+    if (linkedType === 'contact') {
+        items = linkedData.contacts || [];
+        nameField = 'name';
+        displayField = 'name';
+    } else if (linkedType === 'lead') {
+        items = linkedData.leads || [];
+        nameField = 'name';
+        displayField = 'name';
+    } else if (linkedType === 'deal') {
+        items = linkedData.deals || [];
+        nameField = 'deal_name';
+        displayField = 'deal_name';
+    }
+    
+    // Populate dropdown with items
+    items.forEach(function(item) {
+        let displayText = item[displayField] || item.name || item.deal_name || 'Unknown';
+        if (item.company && item.company.trim() !== '') {
+            displayText += ' - ' + item.company;
+        }
+        linkedIdSelect.append(
+            $('<option></option>')
+                .attr('value', item.id)
+                .text(displayText)
+        );
+    });
+}
 
 $.ajaxSetup({
     headers: {
@@ -774,6 +832,11 @@ $(document).ready(function() {
         error: function() {
             // Silently fail - notification check is not critical
         }
+    });
+    
+    // Watch for linked_type dropdown change and update linked_id dropdown
+    $(document).on('change', '#uploadLinkedType', function() {
+        updateLinkedIdDropdown();
     });
     
     let table = $('#filesTable').DataTable({
@@ -1027,7 +1090,7 @@ $(document).ready(function() {
         
         // Reset other fields
         $('#uploadLinkedType').val('');
-        $('#uploadLinkedId').val('');
+        $('#uploadLinkedId').val('').html('<option value="">-- Select --</option>').prop('disabled', true);
         $('#uploadDescription').val('');
         
         // Reset button state
