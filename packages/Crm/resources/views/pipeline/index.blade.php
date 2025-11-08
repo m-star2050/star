@@ -552,7 +552,7 @@
 </head>
 <body>
 
-<div x-data="{mobileMenu:false, open:true, showCreate:false, showEdit:false, showDelete:false, showBulkDelete:false, editId:null, editDeal:'', editStage:'prospect', editValue:'', editOwner:'', editCloseDate:'', editProbability:'', editContact:'', editCompany:'', editNotes:'', showNotification:false, notificationMessage:'', notificationType:'success', wasCreateOpen:false, viewMode:'list', kanbanData:{}, draggedCard:null, draggedFromStage:null, getStageLabel(stage) { const labels = {'prospect': 'Prospect', 'negotiation': 'Negotiation', 'proposal': 'Proposal', 'closed_won': 'Closed Won', 'closed_lost': 'Closed Lost'}; return labels[stage] || stage; }, handleDragStart(event, card, stage) { if (event.target.closest('button') || event.target.closest('a')) { event.preventDefault(); return false; } this.draggedCard = JSON.parse(JSON.stringify(card)); this.draggedFromStage = stage; event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.dropEffect = 'move'; event.dataTransfer.setData('text/plain', card.id.toString()); const cardEl = event.target.closest('.kanban-card') || event.target; if (cardEl) cardEl.classList.add('dragging'); }, handleDragEnd(event) { document.querySelectorAll('.kanban-card').forEach(c => c.classList.remove('dragging')); document.querySelectorAll('.kanban-column').forEach(c => c.classList.remove('drag-over')); }, handleDrop(event, newStage) { event.preventDefault(); event.stopPropagation(); document.querySelectorAll('.kanban-column').forEach(c => c.classList.remove('drag-over')); if (!this.draggedCard || !this.draggedFromStage || this.draggedFromStage === newStage) { this.draggedCard = null; this.draggedFromStage = null; return; } const card = this.draggedCard; const fromStage = this.draggedFromStage; const cardCopy = JSON.parse(JSON.stringify(card)); cardCopy.stage = newStage; if (this.kanbanData[fromStage] && Array.isArray(this.kanbanData[fromStage])) { const index = this.kanbanData[fromStage].findIndex(c => c.id == card.id); if (index !== -1) this.kanbanData[fromStage].splice(index, 1); } if (!this.kanbanData[newStage]) this.kanbanData[newStage] = []; if (!this.kanbanData[newStage].find(c => c.id == card.id)) this.kanbanData[newStage].push(cardCopy); this.draggedCard = null; this.draggedFromStage = null; $.ajax({ url: '{{ route('crm.pipeline.update-stage', '__ID__') }}'.replace('__ID__', card.id), method: 'POST', data: { _token: '{{ csrf_token() }}', stage: newStage }, success: (response) => { const updatedCard = this.kanbanData[newStage].find(c => c.id == card.id); if (updatedCard) updatedCard.stage = newStage; if (typeof window.table !== 'undefined' && window.table) window.table.ajax.reload(null, false); }, error: (xhr, status, error) => { console.error('Error updating deal stage:', xhr, status, error); showNotification('Error updating deal stage. Reverting...', 'error'); if (this.kanbanData[newStage]) { const revertIndex = this.kanbanData[newStage].findIndex(c => c.id == card.id); if (revertIndex !== -1) this.kanbanData[newStage].splice(revertIndex, 1); } if (!this.kanbanData[fromStage]) this.kanbanData[fromStage] = []; if (!this.kanbanData[fromStage].find(c => c.id == card.id)) this.kanbanData[fromStage].push(card); if (typeof loadKanbanData === 'function') loadKanbanData(); } }); }, editDealFromKanban(dealId) { if (typeof window.editDealFromKanban === 'function') window.editDealFromKanban(dealId); }, deleteDealFromKanban(dealId) { if (typeof window.deleteDealFromKanban === 'function') window.deleteDealFromKanban(dealId); }}" 
+<div x-data="{mobileMenu:false, open:true, showCreate:false, showEdit:false, showDelete:false, showBulkDelete:false, editId:null, editDeal:'', editStage:'prospect', editValue:'', editOwner:'', editCloseDate:'', editProbability:'', editContact:'', editCompany:'', editNotes:'', showNotification:false, notificationMessage:'', notificationType:'success', wasCreateOpen:false, showRoleChangeNotification:false, roleChangeMessage:'', viewMode:'list', kanbanData:{}, draggedCard:null, draggedFromStage:null, getStageLabel(stage) { const labels = {'prospect': 'Prospect', 'negotiation': 'Negotiation', 'proposal': 'Proposal', 'closed_won': 'Closed Won', 'closed_lost': 'Closed Lost'}; return labels[stage] || stage; }, handleDragStart(event, card, stage) { if (event.target.closest('button') || event.target.closest('a')) { event.preventDefault(); return false; } this.draggedCard = JSON.parse(JSON.stringify(card)); this.draggedFromStage = stage; event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.dropEffect = 'move'; event.dataTransfer.setData('text/plain', card.id.toString()); const cardEl = event.target.closest('.kanban-card') || event.target; if (cardEl) cardEl.classList.add('dragging'); }, handleDragEnd(event) { document.querySelectorAll('.kanban-card').forEach(c => c.classList.remove('dragging')); document.querySelectorAll('.kanban-column').forEach(c => c.classList.remove('drag-over')); }, handleDrop(event, newStage) { event.preventDefault(); event.stopPropagation(); document.querySelectorAll('.kanban-column').forEach(c => c.classList.remove('drag-over')); if (!this.draggedCard || !this.draggedFromStage || this.draggedFromStage === newStage) { this.draggedCard = null; this.draggedFromStage = null; return; } const card = this.draggedCard; const fromStage = this.draggedFromStage; const cardCopy = JSON.parse(JSON.stringify(card)); cardCopy.stage = newStage; if (this.kanbanData[fromStage] && Array.isArray(this.kanbanData[fromStage])) { const index = this.kanbanData[fromStage].findIndex(c => c.id == card.id); if (index !== -1) this.kanbanData[fromStage].splice(index, 1); } if (!this.kanbanData[newStage]) this.kanbanData[newStage] = []; if (!this.kanbanData[newStage].find(c => c.id == card.id)) this.kanbanData[newStage].push(cardCopy); this.draggedCard = null; this.draggedFromStage = null; $.ajax({ url: '{{ route('crm.pipeline.update-stage', '__ID__') }}'.replace('__ID__', card.id), method: 'POST', data: { _token: '{{ csrf_token() }}', stage: newStage }, success: (response) => { const updatedCard = this.kanbanData[newStage].find(c => c.id == card.id); if (updatedCard) updatedCard.stage = newStage; if (typeof window.table !== 'undefined' && window.table) window.table.ajax.reload(null, false); }, error: (xhr, status, error) => { console.error('Error updating deal stage:', xhr, status, error); showNotification('Error updating deal stage. Reverting...', 'error'); if (this.kanbanData[newStage]) { const revertIndex = this.kanbanData[newStage].findIndex(c => c.id == card.id); if (revertIndex !== -1) this.kanbanData[newStage].splice(revertIndex, 1); } if (!this.kanbanData[fromStage]) this.kanbanData[fromStage] = []; if (!this.kanbanData[fromStage].find(c => c.id == card.id)) this.kanbanData[fromStage].push(card); if (typeof loadKanbanData === 'function') loadKanbanData(); } }); }, editDealFromKanban(dealId) { if (typeof window.editDealFromKanban === 'function') window.editDealFromKanban(dealId); }, deleteDealFromKanban(dealId) { if (typeof window.deleteDealFromKanban === 'function') window.deleteDealFromKanban(dealId); }}" 
      x-init="$watch('showCreate', value => { if (value && !wasCreateOpen) { setTimeout(() => { const form = document.getElementById('createForm'); if (form) form.reset(); const stage = document.getElementById('createStage'); if (stage) stage.value = 'prospect'; const btn = document.getElementById('createSubmitBtn'); if (btn) { btn.disabled = false; btn.textContent = 'Create Deal'; } }, 100); } wasCreateOpen = value; }); $watch('viewMode', value => { if (value === 'kanban' && Object.keys(kanbanData).length === 0) { setTimeout(() => { if (typeof loadKanbanData === 'function') loadKanbanData(); }, 100); } else if (value === 'list') { setTimeout(() => { if (typeof window.table !== 'undefined' && window.table) { window.table.ajax.reload(null, false); } }, 150); } });" 
      class="relative">
     <div class="lg:hidden fixed top-0 left-0 right-0 z-50 glass-card rounded-b-2xl p-4 shadow-xl">
@@ -1215,6 +1215,40 @@
             </div>
         </div>
     </div>
+
+    <!-- Role Change Notification Modal -->
+    <div x-show="showRoleChangeNotification" x-transition.opacity class="fixed inset-0 z-[70] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 sm:p-8">
+            <div class="flex items-center gap-4 mb-4">
+                <div class="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800">Role Changed</h2>
+                </div>
+            </div>
+            <p class="text-sm text-gray-700 mb-6 ml-16" x-text="roleChangeMessage"></p>
+            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 ml-16">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-semibold text-yellow-800">Please refresh the page</p>
+                        <p class="text-sm text-yellow-700 mt-1">Press <kbd class="px-2 py-1 bg-yellow-100 border border-yellow-300 rounded text-xs font-mono font-bold">F5</kbd> or click the button below to refresh and see your updated permissions.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                <button type="button" @click="location.reload()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200">Refresh Page</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 
@@ -1255,7 +1289,26 @@ function showNotification(message, type = 'success') {
     }, 5000);
 }
 
+// Check for role change notifications on page load
 $(document).ready(function() {
+    // Check for role change notification
+    $.ajax({
+        url: '{{ route('crm.user-roles.check-notification') }}',
+        method: 'GET',
+        success: function(response) {
+            if (response.success && response.has_notification && response.notification) {
+                const alpineData = document.querySelector('[x-data]');
+                if (alpineData && alpineData.__x) {
+                    alpineData.__x.$data.showRoleChangeNotification = true;
+                    alpineData.__x.$data.roleChangeMessage = response.notification.message;
+                }
+            }
+        },
+        error: function() {
+            // Silently fail - notification check is not critical
+        }
+    });
+    
     let table = $('#pipelineTable').DataTable({
         processing: true,
         serverSide: true,

@@ -100,6 +100,7 @@ Route::prefix('crm')->group(function () {
             Route::get('user-roles', [\Packages\Crm\Http\Controllers\UserRoleController::class, 'index'])->name('user-roles.index');
             Route::put('user-roles/{user}', [\Packages\Crm\Http\Controllers\UserRoleController::class, 'update'])->name('user-roles.update');
             Route::get('api/user-roles/{user}', [\Packages\Crm\Http\Controllers\UserRoleController::class, 'show'])->name('user-roles.show');
+            Route::get('api/user-roles/check-notification', [\Packages\Crm\Http\Controllers\UserRoleController::class, 'checkNotification'])->name('user-roles.check-notification');
         });
     });
 

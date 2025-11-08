@@ -81,6 +81,16 @@ class UserRoleController extends Controller
         ]);
 
         try {
+            // Get old role before changing
+            $oldRoles = $user->roles->pluck('name')->toArray();
+            $oldRole = $oldRoles[0] ?? null;
+            $newRole = $request->input('role');
+            
+            // Check if this is a promotion or demotion between Executive and Manager
+            $isPromotion = ($oldRole === 'Executive' && $newRole === 'Manager');
+            $isDemotion = ($oldRole === 'Manager' && $newRole === 'Executive');
+            $shouldNotify = $isPromotion || $isDemotion;
+            
             // Remove all existing roles
             $user->roles()->detach();
 
@@ -93,9 +103,31 @@ class UserRoleController extends Controller
                 $user->assignRole($role);
                 \Log::info("User {$user->email} role updated to {$request->input('role')} by " . auth()->user()->email);
 
+                // If this is a promotion or demotion, create a notification for the user
+                if ($shouldNotify) {
+                    // Store notification in session for the affected user
+                    // We'll use cache with a unique key so the user sees it on their next page load
+                    $notificationKey = 'role_change_notification_' . $user->id;
+                    $message = $isPromotion 
+                        ? "Congratulations! You have been promoted from Executive to Manager. Please refresh the page (F5) to see your updated permissions."
+                        : "Your role has been changed from Manager to Executive. Please refresh the page (F5) to see your updated permissions.";
+                    
+                    // Store in cache for 24 hours (user will see it until they refresh)
+                    \Cache::put($notificationKey, [
+                        'message' => $message,
+                        'old_role' => $oldRole,
+                        'new_role' => $newRole,
+                        'type' => $isPromotion ? 'promotion' : 'demotion',
+                        'created_at' => now()->toDateTimeString()
+                    ], now()->addHours(24));
+                    
+                    \Log::info("Role change notification created for user {$user->email}: {$oldRole} -> {$newRole}");
+                }
+
                 return response()->json([
                     'success' => true,
-                    'message' => "User role updated to {$request->input('role')} successfully."
+                    'message' => "User role updated to {$request->input('role')} successfully.",
+                    'notification_sent' => $shouldNotify
                 ]);
             }
 
@@ -151,6 +183,39 @@ class UserRoleController extends Controller
                 'roles' => $userRoles,
                 'primary_role' => $userRoles[0] ?? null,
             ]
+        ]);
+    }
+
+    /**
+     * Check for role change notifications (API endpoint)
+     */
+    public function checkNotification()
+    {
+        if (!auth()->check()) {
+            return response()->json([
+                'success' => false,
+                'has_notification' => false
+            ]);
+        }
+
+        $user = auth()->user();
+        $notificationKey = 'role_change_notification_' . $user->id;
+        $notification = \Cache::get($notificationKey);
+
+        if ($notification) {
+            // Return notification and delete it from cache (one-time display)
+            \Cache::forget($notificationKey);
+            
+            return response()->json([
+                'success' => true,
+                'has_notification' => true,
+                'notification' => $notification
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'has_notification' => false
         ]);
     }
 }
