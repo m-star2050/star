@@ -97,7 +97,7 @@ class CrmRoleAccessMiddleware
         try {
             $roleClass = \Spatie\Permission\Models\Role::class;
             if (!$roleClass::where('guard_name', 'web')->exists()) {
-                $seeder = new \Packages\Crm\Database\Seeders\CrmRolePermissionSeeder();
+                $seeder = new \Packages\Crm\database\seeders\CrmRolePermissionSeeder();
                 $seeder->run();
             }
         } catch (\Exception $e) {

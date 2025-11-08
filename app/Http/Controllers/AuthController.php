@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
-use Packages\Crm\Database\Seeders\CrmRolePermissionSeeder;
+use Packages\Crm\database\seeders\CrmRolePermissionSeeder;
 
 class AuthController extends Controller
 {
@@ -30,6 +30,13 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
+        // Check if users table exists
+        if (!Schema::hasTable('users')) {
+            return back()->withErrors([
+                'email' => 'Database not set up. Please run migrations: php artisan migrate',
+            ])->withInput();
+        }
+
         $credentials = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required'],
@@ -81,6 +88,13 @@ class AuthController extends Controller
      */
     public function register(Request $request)
     {
+        // Check if users table exists
+        if (!Schema::hasTable('users')) {
+            return back()->withErrors([
+                'email' => 'Database not set up. Please run migrations: php artisan migrate',
+            ])->withInput();
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],

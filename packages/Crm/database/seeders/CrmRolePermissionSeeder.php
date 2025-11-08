@@ -1,6 +1,6 @@
 <?php
 
-namespace Packages\Crm\Database\Seeders;
+namespace Packages\Crm\database\seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
