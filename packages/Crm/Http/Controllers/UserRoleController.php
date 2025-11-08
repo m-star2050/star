@@ -77,8 +77,16 @@ class UserRoleController extends Controller
         }
 
         $request->validate([
-            'role' => 'required|string|in:Admin,Manager,Executive',
+            'role' => 'required|string|in:Manager,Executive',
         ]);
+        
+        // Prevent assigning Admin role through this interface
+        if ($request->input('role') === 'Admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Admin role cannot be assigned through this interface.'
+            ], 403);
+        }
 
         try {
             // Get old role before changing

@@ -461,19 +461,37 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         @if($packageInstalled)
-                                            <select 
-                                                class="role-select"
-                                                data-user-id="{{ $user->id }}"
-                                                data-user-email="{{ $user->email }}"
-                                                onchange="updateUserRole({{ $user->id }}, this.value)">
-                                                <option value="">-- Select Role --</option>
-                                                @foreach($roles as $role)
-                                                    <option value="{{ $role->name }}" 
-                                                        {{ $user->roles->contains($role) ? 'selected' : '' }}>
-                                                        {{ $role->name }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
+                                            @php
+                                                // Filter out Admin role completely from dropdown
+                                                $availableRoles = $roles->filter(function($role) {
+                                                    return $role->name !== 'Admin';
+                                                });
+                                                // Get current user role for display
+                                                $currentUserRole = $user->roles->first();
+                                                $currentRoleName = $currentUserRole ? $currentUserRole->name : null;
+                                            @endphp
+                                            @if($currentRoleName === 'Admin')
+                                                <div class="flex items-center gap-2">
+                                                    <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold shadow-md bg-gradient-to-r from-purple-500 to-purple-600 text-white">
+                                                        Admin
+                                                    </span>
+                                                    <span class="text-xs text-gray-500 italic">(Cannot be changed)</span>
+                                                </div>
+                                            @else
+                                                <select 
+                                                    class="role-select"
+                                                    data-user-id="{{ $user->id }}"
+                                                    data-user-email="{{ $user->email }}"
+                                                    onchange="updateUserRole({{ $user->id }}, this.value)">
+                                                    <option value="">-- Select Role --</option>
+                                                    @foreach($availableRoles as $role)
+                                                        <option value="{{ $role->name }}" 
+                                                            {{ $user->roles->contains($role) ? 'selected' : '' }}>
+                                                            {{ $role->name }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            @endif
                                         @else
                                             <span class="text-sm text-gray-400 font-medium">N/A</span>
                                         @endif
@@ -534,7 +552,7 @@
                                     </svg>
                                     <div>
                                         <p class="text-sm font-semibold text-gray-800 mb-1">Change Roles</p>
-                                        <p class="text-sm text-gray-600">Use the dropdown above to assign Admin, Manager, or Executive roles</p>
+                                        <p class="text-sm text-gray-600">Use the dropdown above to assign Manager or Executive roles</p>
                                     </div>
                                 </div>
                             </div>
