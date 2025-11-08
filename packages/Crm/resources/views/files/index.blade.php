@@ -325,6 +325,7 @@
         #filesTable th.sorting_desc {
             white-space: nowrap;
         }
+        [x-cloak] { display: none !important; }
     </style>
 </head>
 <body>
@@ -921,17 +922,28 @@ $(document).ready(function() {
     }
     
     function closeModal(modalName) {
-        // Let Alpine.js handle visibility - just set the data property
         const alpineData = getAlpineData();
         if (alpineData && alpineData.__x) {
             alpineData.__x.$data[modalName] = false;
         }
         
-        // Remove any inline styles that might interfere with Alpine.js
         const modal = $('[x-show="' + modalName + '"]');
         if (modal.length) {
-            modal.removeAttr('style');
+            modal.hide();
+            modal.css('display', 'none');
         }
+        
+        setTimeout(function() {
+            const alpineDataAfter = getAlpineData();
+            if (alpineDataAfter && alpineDataAfter.__x) {
+                alpineDataAfter.__x.$data[modalName] = false;
+            }
+            const modalAfter = $('[x-show="' + modalName + '"]');
+            if (modalAfter.length && modalAfter.is(':visible')) {
+                modalAfter.hide();
+                modalAfter.css('display', 'none');
+            }
+        }, 50);
     }
     
     let isUploading = false;
@@ -1147,6 +1159,7 @@ $(document).ready(function() {
                 closeModal('showDelete');
                 currentFileId = null;
                 
+                // Also ensure modal is hidden
                 const deleteModal = $('[x-show="showDelete"]');
                 if (deleteModal.length) {
                     deleteModal.hide();
@@ -1216,21 +1229,22 @@ $(document).ready(function() {
         $('.row-check').prop('checked', $(this).prop('checked'));
     });
     
+    // Use event delegation for cancel buttons to handle dynamically created elements
+    $(document).off('click', '.cancel-upload-btn').on('click', '.cancel-upload-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        closeModal('showUpload');
+        return false;
+    });
+    
     setTimeout(function() {
-        $('.cancel-upload-btn').off('click').on('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            e.stopImmediatePropagation();
-            // Form will be recreated automatically when modal opens again
-            closeModal('showUpload');
-            return false;
-        });
-        
         $('.cancel-delete-btn').off('click').on('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
             e.stopImmediatePropagation();
             closeModal('showDelete');
+            currentFileId = null;
             return false;
         });
         
@@ -1243,27 +1257,12 @@ $(document).ready(function() {
         });
     }, 100);
     
-    $(document).off('click', '.cancel-create-btn').on('click', '.cancel-create-btn', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        closeModal('showCreate');
-        return false;
-    });
-    
-    $(document).off('click', '.cancel-edit-btn').on('click', '.cancel-edit-btn', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        closeModal('showEdit');
-        return false;
-    });
-    
     $(document).off('click', '.cancel-delete-btn').on('click', '.cancel-delete-btn', function(e) {
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
         closeModal('showDelete');
+        currentFileId = null;
         return false;
     });
     
