@@ -1463,6 +1463,53 @@ $(document).ready(function() {
         $('.row-check').prop('checked', $(this).prop('checked'));
     });
     
+    // Auto-refresh table every 30 seconds to show new data added by other users
+    let autoRefreshInterval = null;
+    let isModalOpen = false;
+    
+    function startAutoRefresh() {
+        if (autoRefreshInterval) {
+            clearInterval(autoRefreshInterval);
+        }
+        
+        autoRefreshInterval = setInterval(function() {
+            if (!document.hidden && !isModalOpen && typeof table !== 'undefined' && table) {
+                table.ajax.reload(null, false);
+            }
+        }, 30000); // Refresh every 30 seconds
+    }
+    
+    function stopAutoRefresh() {
+        if (autoRefreshInterval) {
+            clearInterval(autoRefreshInterval);
+            autoRefreshInterval = null;
+        }
+    }
+    
+    startAutoRefresh();
+    
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            stopAutoRefresh();
+        } else {
+            startAutoRefresh();
+        }
+    });
+    
+    // Monitor modal state
+    const alpineData = getAlpineData();
+    if (alpineData && alpineData.__x) {
+        setInterval(function() {
+            if (alpineData && alpineData.__x) {
+                const data = alpineData.__x.$data;
+                const newModalState = data.showCreate || data.showEdit || data.showDelete || data.showBulkDelete || data.showNotification || data.showConvert;
+                if (newModalState !== isModalOpen) {
+                    isModalOpen = newModalState;
+                }
+            }
+        }, 500);
+    }
+    
     setTimeout(function() {
         $('.cancel-create-btn').off('click').on('click', function(e) {
             e.preventDefault();

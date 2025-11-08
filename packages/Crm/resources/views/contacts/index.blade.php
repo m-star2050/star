@@ -1451,9 +1451,75 @@ $(document).ready(function() {
         return false;
     });
 
+    // Auto-refresh table every 30 seconds to show new data added by other users
+    let autoRefreshInterval = null;
+    let isModalOpen = false;
+    
+    function startAutoRefresh() {
+        // Clear any existing interval
+        if (autoRefreshInterval) {
+            clearInterval(autoRefreshInterval);
+        }
+        
+        // Only refresh if page is visible and no modal is open
+        autoRefreshInterval = setInterval(function() {
+            if (!document.hidden && !isModalOpen && typeof table !== 'undefined' && table) {
+                // Reload table silently (without resetting pagination)
+                table.ajax.reload(null, false);
+            }
+        }, 30000); // Refresh every 30 seconds
+    }
+    
+    function stopAutoRefresh() {
+        if (autoRefreshInterval) {
+            clearInterval(autoRefreshInterval);
+            autoRefreshInterval = null;
+        }
+    }
+    
+    // Start auto-refresh when page loads
+    startAutoRefresh();
+    
+    // Pause auto-refresh when page is hidden
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            stopAutoRefresh();
+        } else {
+            startAutoRefresh();
+        }
+    });
+    
+    // Track modal state to pause refresh when modals are open
+    $(document).on('click', '[x-show]', function() {
+        const alpineData = getAlpineData();
+        if (alpineData && alpineData.__x) {
+            const data = alpineData.__x.$data;
+            isModalOpen = data.showCreate || data.showEdit || data.showDelete || data.showBulkDelete || data.showNotification;
+        }
+    });
+    
+    // Monitor Alpine.js modal state changes
+    const alpineData = getAlpineData();
+    if (alpineData && alpineData.__x) {
+        const originalShowCreate = alpineData.__x.$data.showCreate;
+        const originalShowEdit = alpineData.__x.$data.showEdit;
+        const originalShowDelete = alpineData.__x.$data.showDelete;
+        
+        // Watch for modal state changes
+        setInterval(function() {
+            if (alpineData && alpineData.__x) {
+                const data = alpineData.__x.$data;
+                const newModalState = data.showCreate || data.showEdit || data.showDelete || data.showBulkDelete || data.showNotification;
+                if (newModalState !== isModalOpen) {
+                    isModalOpen = newModalState;
+                }
+            }
+        }, 500);
+    }
+
     $('#applyFilters').on('click', function() {
         table.ajax.reload(function() {
-        }, false); 
+        }, false);
     });
 
     $('#resetFilters').on('click', function() {
