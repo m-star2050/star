@@ -71,18 +71,71 @@
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
-        .back-button {
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            background: rgba(255,255,255,0.3);
-            border: 2px solid rgba(255,255,255,0.4);
+        .sidebar-link{ 
+            display:flex; 
+            align-items:center; 
+            gap:.875rem; 
+            color:#1f2937; 
+            text-decoration:none; 
+            padding:.75rem 1rem; 
+            border-radius:.75rem; 
+            line-height:1; 
+            font-weight:500;
+            font-size:0.875rem;
             transition: all 0.2s ease;
+            position: relative;
+            overflow: visible;
+            white-space: nowrap;
         }
-        .back-button:hover {
-            background: rgba(255,255,255,0.5);
-            border-color: rgba(255,255,255,0.6);
-            transform: translateX(-4px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        .sidebar-link:hover{ 
+            background: rgba(255,255,255,0.25);
+            color: #111827;
+        }
+        .sidebar-link:not(.justify-center):hover {
+            transform: translateX(4px);
+        }
+        .sidebar-link svg{ 
+            width:20px; 
+            height:20px; 
+            min-width:20px; 
+            min-height:20px; 
+            max-width:20px;
+            max-height:20px;
+            flex-shrink:0; 
+            display:block;
+            transition: all 0.2s ease;
+            overflow: visible;
+        }
+        .sidebar-link:hover svg {
+            transform: scale(1.1);
+        }
+        .sidebar-link span{ 
+            line-height:1.2; 
+            display:flex; 
+            align-items:center;
+            font-weight: 500;
+        }
+        .sidebar-link.active {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.15), rgba(59, 130, 246, 0.1));
+            color: #2563eb;
+            font-weight: 600;
+        }
+        .sidebar-link.active:not(.justify-center) {
+            border-left: 3px solid #2563eb;
+            padding-left: calc(1rem - 3px);
+        }
+        .sidebar-link.active svg {
+            color: #2563eb;
+        }
+        .sidebar-section-title {
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #6b7280;
+            padding: 0.5rem 1rem;
+            margin-top: 0.5rem;
+            margin-bottom: 0.25rem;
         }
         .notification {
             backdrop-filter: blur(10px);
@@ -101,21 +154,205 @@
         }
     </style>
 </head>
-<body>
-    <div class="min-h-screen px-4 py-8">
-        <div class="max-w-7xl mx-auto">
-            <!-- Back Button and Header -->
-            <div class="mb-6 flex items-center gap-4">
-                <a href="{{ route('crm.contacts.index') }}" class="back-button inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-gray-700 font-semibold shadow-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                    </svg>
-                    <span>Back to CRM</span>
+<body x-data="{ open: true, mobileMenu: false }">
+    <!-- Mobile Menu -->
+    <div class="lg:hidden fixed top-0 left-0 right-0 z-50 glass-card rounded-b-2xl shadow-2xl p-4">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
+                    @if(auth()->check() && auth()->user()->name)
+                        <span class="text-white font-bold text-sm">{{ strtoupper(substr(auth()->user()->name, 0, 2)) }}</span>
+                    @else
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                    @endif
+                </div>
+                <div>
+                    <div class="text-gray-800 font-bold text-sm leading-tight">{{ auth()->check() ? auth()->user()->name : 'User' }}</div>
+                    <div class="text-gray-600 font-medium text-xs">{{ auth()->check() ? auth()->user()->email : 'user@example.com' }}</div>
+                    @if(auth()->check() && method_exists(auth()->user(), 'hasRole'))
+                        @php
+                            $user = auth()->user();
+                            $isAdmin = method_exists($user, 'hasRole') && $user->hasRole('Admin');
+                            $isManager = method_exists($user, 'hasRole') && $user->hasRole('Manager');
+                            $isExecutive = method_exists($user, 'hasRole') && $user->hasRole('Executive');
+                        @endphp
+                        @if($isAdmin)
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 mt-1">Admin</span>
+                        @elseif($isManager)
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mt-1">Manager</span>
+                        @elseif($isExecutive)
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mt-1">Executive</span>
+                        @endif
+                    @endif
+                </div>
+            </div>
+            <button @click="mobileMenu=!mobileMenu" class="text-gray-700 bg-white/20 hover:bg-white/30 border border-white/30 rounded-lg w-10 h-10 flex items-center justify-center transition-all duration-200 shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+        </div>
+        <div x-show="mobileMenu" x-transition class="mt-4 pt-4 border-t border-white/30">
+            <div class="sidebar-section-title mb-2">Navigation</div>
+            <nav class="space-y-1.5">
+                <a href="{{ route('crm.contacts.index') }}" class="sidebar-link {{ request()->routeIs('crm.contacts.*') ? 'active' : '' }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 1.293a1 1 0 00-1.414 0l-7 7A1 1 0 003 10h1v7a1 1 0 001 1h4v-4h2v4h4a1 1 0 001-1v-7h1a1 1 0 00.707-1.707l-7-7z"/></svg>
+                    <span>Contacts</span>
+                </a>
+                <a href="{{ route('crm.leads.index') }}" class="sidebar-link {{ request()->routeIs('crm.leads.*') ? 'active' : '' }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M3 3h2l.4 2M7 13h8l2-8H5.4M7 13L6 6m1 7l-1 4m8-4l1 4m-5-4v4"/></svg>
+                    <span>Leads</span>
+                </a>
+                <a href="{{ route('crm.tasks.index') }}" class="sidebar-link {{ request()->routeIs('crm.tasks.*') ? 'active' : '' }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/></svg>
+                    <span>Tasks</span>
+                </a>
+                <a href="{{ route('crm.pipeline.index') }}" class="sidebar-link {{ request()->routeIs('crm.pipeline.*') ? 'active' : '' }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z"/><path d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z"/><path d="M17 5c0 1.657-3.134 3-7 3S3 6.657 3 5s3.134-3 7-3 7 1.343 7 3z"/></svg>
+                    <span>Pipeline</span>
+                </a>
+                <a href="{{ route('crm.reports.index') }}" class="sidebar-link {{ request()->routeIs('crm.reports.*') ? 'active' : '' }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>
+                    <span>Reports</span>
+                </a>
+                <a href="{{ route('crm.files.index') }}" class="sidebar-link {{ request()->routeIs('crm.files.*') ? 'active' : '' }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/></svg>
+                    <span>Files</span>
+                </a>
+                @php
+                    $showUserRolesMobile = false;
+                    if (auth()->check()) {
+                        $user = auth()->user();
+                        $firstUser = \App\Models\User::orderBy('id', 'asc')->first();
+                        $isFirstUser = $firstUser && $firstUser->id === $user->id;
+                        
+                        if (method_exists($user, 'hasRole')) {
+                            try {
+                                $showUserRolesMobile = $user->hasRole('Admin') || $isFirstUser;
+                            } catch (\Exception $e) {
+                                $showUserRolesMobile = $isFirstUser;
+                            }
+                        } else {
+                            $showUserRolesMobile = $isFirstUser;
+                        }
+                    }
+                @endphp
+                @if($showUserRolesMobile)
+                <div class="pt-4 mt-4 border-t border-white/30">
+                    <div class="sidebar-section-title mb-2">Administration</div>
+                    <a href="{{ route('crm.user-roles.index') }}" class="sidebar-link {{ request()->routeIs('crm.user-roles.*') ? 'active' : '' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg>
+                        <span>User Roles</span>
+                    </a>
+                </div>
+                @endif
+            </nav>
+        </div>
+    </div>
+
+    <!-- Desktop Sidebar -->
+    <aside class="hidden lg:flex fixed top-3 left-3 h-[calc(100vh-24px)] glass-card rounded-2xl transition-all duration-300 z-40 flex-col shadow-2xl overflow-hidden" :class="open ? 'w-64 p-4' : 'w-16 p-3'">
+        <div class="flex items-center mb-6 pb-4 border-b border-white/20" :class="open ? 'justify-between' : 'justify-center'">
+            <div class="flex items-center gap-3" :class="open ? 'opacity-100' : 'opacity-0 pointer-events-none absolute'">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
+                    @if(auth()->check() && auth()->user()->name)
+                        <span class="text-white font-bold text-sm">{{ strtoupper(substr(auth()->user()->name, 0, 2)) }}</span>
+                    @else
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                    @endif
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="text-gray-800 font-bold text-sm leading-tight truncate">{{ auth()->check() ? auth()->user()->name : 'User' }}</div>
+                    <div class="text-gray-600 font-medium text-xs truncate">{{ auth()->check() ? auth()->user()->email : 'user@example.com' }}</div>
+                    @if(auth()->check() && method_exists(auth()->user(), 'hasRole'))
+                        @php
+                            $user = auth()->user();
+                            $isAdmin = method_exists($user, 'hasRole') && $user->hasRole('Admin');
+                            $isManager = method_exists($user, 'hasRole') && $user->hasRole('Manager');
+                            $isExecutive = method_exists($user, 'hasRole') && $user->hasRole('Executive');
+                        @endphp
+                        @if($isAdmin)
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 mt-1">Admin</span>
+                        @elseif($isManager)
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mt-1">Manager</span>
+                        @elseif($isExecutive)
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mt-1">Executive</span>
+                        @endif
+                    @endif
+                </div>
+            </div>
+            <button @click="open=!open" class="text-gray-600 bg-white/20 hover:bg-white/30 border border-white/30 rounded-lg w-8 h-8 flex items-center justify-center hover:scale-110 transition-all duration-200 flex-shrink-0 shadow-sm" :aria-expanded="open">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" :d="open ? 'M15 19l-7-7 7-7' : 'M9 5l7 7-7 7'"/></svg>
+            </button>
+        </div>
+        <div class="sidebar-section-title" :class="open ? 'opacity-100' : 'opacity-0 pointer-events-none'">
+            <span x-show="open" x-transition>Navigation</span>
+        </div>
+        <nav class="space-y-1.5 mt-2 flex-1 overflow-y-auto overflow-x-hidden">
+            <a href="{{ route('crm.contacts.index') }}" class="sidebar-link {{ request()->routeIs('crm.contacts.*') ? 'active' : '' }}" :class="!open ? 'justify-center px-0' : ''">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 1.293a1 1 0 00-1.414 0l-7 7A1 1 0 003 10h1v7a1 1 0 001 1h4v-4h2v4h4a1 1 0 001-1v-7h1a1 1 0 00.707-1.707l-7-7z"/></svg>
+                <span x-show="open" x-transition>Contacts</span>
+            </a>
+            <a href="{{ route('crm.leads.index') }}" class="sidebar-link {{ request()->routeIs('crm.leads.*') ? 'active' : '' }}" :class="!open ? 'justify-center px-0' : ''">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M3 3h2l.4 2M7 13h8l2-8H5.4M7 13L6 6m1 7l-1 4m8-4l1 4m-5-4v4"/></svg>
+                <span x-show="open" x-transition>Leads</span>
+            </a>
+            <a href="{{ route('crm.tasks.index') }}" class="sidebar-link {{ request()->routeIs('crm.tasks.*') ? 'active' : '' }}" :class="!open ? 'justify-center px-0' : ''">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/></svg>
+                <span x-show="open" x-transition>Tasks</span>
+            </a>
+            <a href="{{ route('crm.pipeline.index') }}" class="sidebar-link {{ request()->routeIs('crm.pipeline.*') ? 'active' : '' }}" :class="!open ? 'justify-center px-0' : ''">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z"/><path d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z"/><path d="M17 5c0 1.657-3.134 3-7 3S3 6.657 3 5s3.134-3 7-3 7 1.343 7 3z"/></svg>
+                <span x-show="open" x-transition>Pipeline</span>
+            </a>
+            <a href="{{ route('crm.reports.index') }}" class="sidebar-link {{ request()->routeIs('crm.reports.*') ? 'active' : '' }}" :class="!open ? 'justify-center px-0' : ''">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>
+                <span x-show="open" x-transition>Reports</span>
+            </a>
+            <a href="{{ route('crm.files.index') }}" class="sidebar-link {{ request()->routeIs('crm.files.*') ? 'active' : '' }}" :class="!open ? 'justify-center px-0' : ''">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/></svg>
+                <span x-show="open" x-transition>Files</span>
+            </a>
+            @php
+                $showUserRoles = false;
+                if (auth()->check()) {
+                    $user = auth()->user();
+                    $firstUser = \App\Models\User::orderBy('id', 'asc')->first();
+                    $isFirstUser = $firstUser && $firstUser->id === $user->id;
+                    
+                    if (method_exists($user, 'hasRole')) {
+                        try {
+                            $showUserRoles = $user->hasRole('Admin') || $isFirstUser;
+                        } catch (\Exception $e) {
+                            $showUserRoles = $isFirstUser;
+                        }
+                    } else {
+                        $showUserRoles = $isFirstUser;
+                    }
+                }
+            @endphp
+            @if($showUserRoles)
+            <div class="pt-4 mt-4 border-t border-white/20">
+                <div class="sidebar-section-title mb-2" :class="open ? 'opacity-100' : 'opacity-0 pointer-events-none'">
+                    <span x-show="open" x-transition>Administration</span>
+                </div>
+                <a href="{{ route('crm.user-roles.index') }}" class="sidebar-link {{ request()->routeIs('crm.user-roles.*') ? 'active' : '' }}" :class="!open ? 'justify-center px-0' : ''">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg>
+                    <span x-show="open" x-transition>User Roles</span>
                 </a>
             </div>
+            @endif
+        </nav>
+    </aside>
 
-            <!-- Header Card -->
-            <div class="glass-card rounded-2xl p-6 mb-6">
+    <!-- Main Content -->
+    <div class="lg:transition-all lg:duration-300 pt-16 lg:pt-0" :class="{'lg:pl-[280px]': open, 'lg:pl-[88px]': !open}">
+        <div class="min-h-screen px-4 py-8">
+            <div class="max-w-7xl mx-auto">
+                <!-- Header Card -->
+                <div class="glass-card rounded-2xl p-6 mb-6">
                 <div class="flex items-center justify-between">
                     <div>
                         <h1 class="text-3xl font-bold text-gray-800 mb-2 flex items-center gap-3">
@@ -314,6 +551,7 @@
                             </div>
                         </div>
                     </div>
+                </div>
                 </div>
             </div>
         </div>
