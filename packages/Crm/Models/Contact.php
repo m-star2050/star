@@ -17,7 +17,8 @@ class Contact extends Model
         'company',
         'email',
         'phone',
-        'assigned_user_id',
+        'user_id',
+        'assigned_user_id', 
         'status',
         'tags',
         'notes',
@@ -27,7 +28,11 @@ class Contact extends Model
         'tags' => 'array',
     ];
 
-    // Relationships
+    public function user()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'user_id');
+    }
+
     public function assignedUser()
     {
         return $this->belongsTo(\App\Models\User::class, 'assigned_user_id');

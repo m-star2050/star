@@ -48,12 +48,12 @@ class ReportsController extends Controller
         $leadsQuery = Lead::query();
         $dealsQuery = Pipeline::query();
 
-        // Filter by role (Executive sees only assigned records)
-        // Contacts and Leads only have assigned_user_id, not owner_user_id, so pass null for ownerField
-        $contactsQuery = PermissionHelper::filterByRole($contactsQuery, $user, 'assigned_user_id', null);
-        $leadsQuery = PermissionHelper::filterByRole($leadsQuery, $user, 'assigned_user_id', null);
-        // Deals/Pipeline use owner_user_id instead of assigned_user_id
-        $dealsQuery = PermissionHelper::filterByRole($dealsQuery, $user, null, 'owner_user_id');
+        // Filter by user_id: Admins see all, others see only their own records
+        $contactsQuery = PermissionHelper::filterByUserId($contactsQuery, $user);
+        $leadsQuery = PermissionHelper::filterByUserId($leadsQuery, $user);
+        $tasksQuery = Task::query();
+        $tasksQuery = PermissionHelper::filterByUserId($tasksQuery, $user);
+        $dealsQuery = PermissionHelper::filterByUserId($dealsQuery, $user);
 
         if ($dateFrom) {
             $contactsQuery->whereDate('created_at', '>=', $dateFrom);
@@ -132,7 +132,7 @@ class ReportsController extends Controller
         $dealsQuery = Pipeline::query();
         
         // Filter by role (Executive sees only assigned records)
-        $dealsQuery = PermissionHelper::filterByRole($dealsQuery, auth()->user(), null, 'owner_user_id');
+        $dealsQuery = PermissionHelper::filterByUserId($dealsQuery, auth()->user());
 
         if ($dateFrom) {
             $dealsQuery->whereDate('created_at', '>=', $dateFrom);
@@ -227,7 +227,7 @@ class ReportsController extends Controller
         $userIdsFromDeals = collect([]);
         try {
             $dealsQuery = Pipeline::query();
-            $dealsQuery = PermissionHelper::filterByRole($dealsQuery, auth()->user(), null, 'owner_user_id');
+            $dealsQuery = PermissionHelper::filterByUserId($dealsQuery, auth()->user());
             
             $userIdsFromDeals = $dealsQuery
                 ->when($dateFrom, function($q) use ($dateFrom) {
@@ -255,7 +255,7 @@ class ReportsController extends Controller
         $userIdsFromContacts = collect([]);
         try {
             $contactsQuery = Contact::query();
-            $contactsQuery = PermissionHelper::filterByRole($contactsQuery, auth()->user(), 'assigned_user_id', null);
+            $contactsQuery = PermissionHelper::filterByUserId($contactsQuery, auth()->user());
             
             $userIdsFromContacts = $contactsQuery
                 ->when($dateFrom, function($q) use ($dateFrom) {
@@ -280,7 +280,7 @@ class ReportsController extends Controller
         $userIdsFromLeads = collect([]);
         try {
             $leadsQuery = Lead::query();
-            $leadsQuery = PermissionHelper::filterByRole($leadsQuery, auth()->user(), 'assigned_user_id', null);
+            $leadsQuery = PermissionHelper::filterByUserId($leadsQuery, auth()->user());
             
             $userIdsFromLeads = $leadsQuery
                 ->when($dateFrom, function($q) use ($dateFrom) {
@@ -314,7 +314,7 @@ class ReportsController extends Controller
             try {
                 // Show overall summary - but apply role filtering for Executive users
                 $dealsQuery = Pipeline::query();
-                $dealsQuery = PermissionHelper::filterByRole($dealsQuery, auth()->user(), null, 'owner_user_id');
+                $dealsQuery = PermissionHelper::filterByUserId($dealsQuery, auth()->user());
                 
                 if ($dateFrom) {
                     $dealsQuery->whereDate('created_at', '>=', $dateFrom);
@@ -361,8 +361,12 @@ class ReportsController extends Controller
                 try {
                 // Apply role filtering to user-specific queries as well
                 $userDealsQuery = Pipeline::query();
-                $userDealsQuery = PermissionHelper::filterByRole($userDealsQuery, auth()->user(), null, 'owner_user_id');
-                $userDealsQuery->where('owner_user_id', $uid);
+                $userDealsQuery = PermissionHelper::filterByUserId($userDealsQuery, auth()->user());
+                // Filter by user_id (new standard) or owner_user_id (fallback)
+                $userDealsQuery->where(function($q) use ($uid) {
+                    $q->where('user_id', $uid)
+                      ->orWhere('owner_user_id', $uid);
+                });
                 
                 if ($dateFrom) {
                     $userDealsQuery->whereDate('created_at', '>=', $dateFrom);

@@ -68,6 +68,9 @@ class LeadController extends Controller
                 unset($data['tags']);
             }
 
+            // Set user_id to current user's ID (users can only create their own records)
+            $data['user_id'] = auth()->id();
+
             $lead = Lead::create($data);
             
             if ($request->ajax()) {
@@ -147,6 +150,10 @@ class LeadController extends Controller
         } else {
             unset($data['tags']);
         }
+
+        // Ensure user_id is not changed (users can only update their own records)
+        // user_id represents the owner/creator and should remain unchanged
+        unset($data['user_id']);
 
         $lead->update($data);
         
@@ -289,7 +296,8 @@ class LeadController extends Controller
                 'deal_name' => $lead->name . ' - Deal',
                 'stage' => 'prospect',
                 'value' => 0,
-                'owner_user_id' => $lead->assigned_user_id,
+                'user_id' => auth()->id(), // Set user_id (new standard)
+                'owner_user_id' => $lead->assigned_user_id, // Keep for backward compatibility
                 'contact_id' => null,
                 'company' => $lead->company,
                 'notes' => $lead->notes,
@@ -343,7 +351,7 @@ class LeadController extends Controller
         $leads = Lead::query();
         
         // Filter by role (Executive sees only assigned records)
-        $leads = PermissionHelper::filterByRole($leads, auth()->user(), 'assigned_user_id', null);
+        $leads = PermissionHelper::filterByUserId($leads, auth()->user());
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -433,13 +441,13 @@ class LeadController extends Controller
             }
 
             if (Schema::hasTable('users')) {
-                $query = Lead::with('assignedUser');
+                $query = Lead::with(['user', 'assignedUser']);
             } else {
                 $query = Lead::query();
             }
 
-            // Filter by role (Executive sees only assigned records)
-            $query = PermissionHelper::filterByRole($query, auth()->user(), 'assigned_user_id', null);
+            // Filter by user_id: Admins see all, others see only their own records
+            $query = PermissionHelper::filterByUserId($query, auth()->user());
 
         if ($search = trim((string) $request->input('search.value'))) {
             $query->where(function ($q) use ($search) {
@@ -468,9 +476,9 @@ class LeadController extends Controller
             $query->where('lead_score', '>=', $request->input('lead_score'));
         }
 
-        // Get total records - must apply role filtering for accurate count
+        // Get total records - must apply user filtering for accurate count
         $totalRecordsQuery = Lead::query();
-        $totalRecordsQuery = PermissionHelper::filterByRole($totalRecordsQuery, auth()->user(), 'assigned_user_id', null);
+        $totalRecordsQuery = PermissionHelper::filterByUserId($totalRecordsQuery, auth()->user());
         $totalRecords = $totalRecordsQuery->count();
         
         $filteredRecords = $query->count();

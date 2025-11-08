@@ -55,6 +55,9 @@ class PipelineController extends Controller
                 'notes' => ['nullable', 'string'],
             ]);
 
+            // Set user_id to current user's ID (users can only create their own records)
+            $data['user_id'] = auth()->id();
+
             $pipeline = Pipeline::create($data);
             
             if ($request->ajax()) {
@@ -111,6 +114,10 @@ class PipelineController extends Controller
             'company' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string'],
         ]);
+
+        // Ensure user_id is not changed (users can only update their own records)
+        // user_id represents the owner/creator and should remain unchanged
+        unset($data['user_id']);
 
         $pipeline->update($data);
         
@@ -224,7 +231,7 @@ class PipelineController extends Controller
         $pipelines = Pipeline::query();
         
         // Filter by role (Executive sees only assigned records)
-        $pipelines = PermissionHelper::filterByRole($pipelines, auth()->user(), null, 'owner_user_id');
+        $pipelines = PermissionHelper::filterByUserId($pipelines, auth()->user());
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -293,13 +300,13 @@ class PipelineController extends Controller
         }
 
         if (Schema::hasTable('users')) {
-            $query = Pipeline::query()->with(['contact', 'ownerUser']);
+            $query = Pipeline::query()->with(['user', 'contact', 'ownerUser']);
         } else {
             $query = Pipeline::query()->with(['contact']);
         }
 
-        // Filter by role (Executive sees only assigned records)
-        $query = PermissionHelper::filterByRole($query, auth()->user(), null, 'owner_user_id');
+        // Filter by user_id: Admins see all, others see only their own records
+        $query = PermissionHelper::filterByUserId($query, auth()->user());
 
         if ($search = trim((string) $request->input('search.value'))) {
             $query->where(function ($q) use ($search) {
@@ -330,7 +337,10 @@ class PipelineController extends Controller
             $query->where('probability', '>=', $request->input('probability'));
         }
 
-        $totalRecords = Pipeline::count();
+        // Get total records - must apply user filtering for accurate count
+        $totalRecordsQuery = Pipeline::query();
+        $totalRecordsQuery = PermissionHelper::filterByUserId($totalRecordsQuery, auth()->user());
+        $totalRecords = $totalRecordsQuery->count();
         $filteredRecords = $query->count();
 
         $orderColumn = $request->input('order.0.column', 9);
@@ -416,10 +426,10 @@ class PipelineController extends Controller
             abort(403, 'Unauthorized. You do not have permission to view pipeline.');
         }
 
-        $query = Pipeline::query()->with(['contact']);
+        $query = Pipeline::query()->with(['user', 'contact']);
         
-        // Filter by role (Executive sees only assigned records)
-        $query = PermissionHelper::filterByRole($query, auth()->user(), null, 'owner_user_id');
+        // Filter by user_id: Admins see all, others see only their own records
+        $query = PermissionHelper::filterByUserId($query, auth()->user());
 
         if ($request->filled('stage')) {
             $query->where('stage', $request->input('stage'));

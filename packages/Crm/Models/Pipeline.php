@@ -16,7 +16,8 @@ class Pipeline extends Model
         'deal_name',
         'stage',
         'value',
-        'owner_user_id',
+        'user_id',
+        'owner_user_id', // Keep for backward compatibility
         'close_date',
         'probability',
         'contact_id',
@@ -31,6 +32,11 @@ class Pipeline extends Model
     ];
 
     // Relationships
+    public function user()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'user_id');
+    }
+
     public function contact()
     {
         return $this->belongsTo(Contact::class, 'contact_id');

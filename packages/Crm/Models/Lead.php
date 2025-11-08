@@ -18,7 +18,8 @@ class Lead extends Model
         'company',
         'source',
         'stage',
-        'assigned_user_id',
+        'user_id',
+        'assigned_user_id', // Keep for backward compatibility
         'lead_score',
         'tags',
         'notes',
@@ -29,6 +30,11 @@ class Lead extends Model
     ];
 
     // Relationships
+    public function user()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'user_id');
+    }
+
     public function assignedUser()
     {
         return $this->belongsTo(\App\Models\User::class, 'assigned_user_id');

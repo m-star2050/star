@@ -18,7 +18,8 @@ class Task extends Model
         'priority',
         'due_date',
         'status',
-        'assigned_user_id',
+        'user_id',
+        'assigned_user_id', // Keep for backward compatibility
         'contact_id',
         'lead_id',
         'notes',
@@ -31,6 +32,11 @@ class Task extends Model
     ];
 
     // Relationships
+    public function user()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'user_id');
+    }
+
     public function contact()
     {
         return $this->belongsTo(Contact::class, 'contact_id');

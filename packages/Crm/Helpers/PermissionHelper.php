@@ -3,6 +3,7 @@
 namespace Packages\Crm\Helpers;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 class PermissionHelper
 {
@@ -108,7 +109,7 @@ class PermissionHelper
     }
 
     /**
-     * Check if user can access record (for Executive role)
+     * Check if user can access record
      */
     public static function canAccessRecord($record, $user = null)
     {
@@ -123,30 +124,26 @@ class PermissionHelper
             return true;
         }
 
-        // Manager can access team records (all records)
-        if (self::isManager($user)) {
+        // Managers and Executives can only access their own records (where user_id matches)
+        $userId = $user->id;
+        
+        // Check if record has user_id and it matches the current user
+        if (isset($record->user_id) && $record->user_id == $userId) {
             return true;
         }
 
-        // Executive can only access assigned records
-        if (self::isExecutive($user)) {
-            $userId = $user->id;
-            
-            // Check if record is assigned to user
-            if (isset($record->assigned_user_id) && $record->assigned_user_id == $userId) {
-                return true;
-            }
+        // Fallback: Check old fields for backward compatibility
+        if (isset($record->assigned_user_id) && $record->assigned_user_id == $userId) {
+            return true;
+        }
 
-            if (isset($record->owner_user_id) && $record->owner_user_id == $userId) {
-                return true;
-            }
+        if (isset($record->owner_user_id) && $record->owner_user_id == $userId) {
+            return true;
+        }
 
-            // For files, check uploaded_by
-            if (isset($record->uploaded_by) && $record->uploaded_by == $userId) {
-                return true;
-            }
-
-            return false;
+        // For files, check uploaded_by
+        if (isset($record->uploaded_by) && $record->uploaded_by == $userId) {
+            return true;
         }
 
         return false;
@@ -154,8 +151,15 @@ class PermissionHelper
 
     /**
      * Filter query based on user role
+     * Admins see all records, Managers and Executives see only their own records (user_id = their ID)
+     * 
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param \App\Models\User|null $user
+     * @param string|null $assignedField Deprecated - kept for backward compatibility
+     * @param string|null $ownerField Deprecated - kept for backward compatibility
+     * @return \Illuminate\Database\Eloquent\Builder
      */
-    public static function filterByRole($query, $user = null, $assignedField = 'assigned_user_id', $ownerField = 'owner_user_id')
+    public static function filterByRole($query, $user = null, $assignedField = null, $ownerField = null)
     {
         try {
             $user = $user ?? Auth::user();
@@ -165,15 +169,10 @@ class PermissionHelper
                 return $query->whereRaw('1 = 0'); // Return empty result if no user
             }
 
-            // Check roles with better error handling
+            // Check if user is admin
             $isAdmin = false;
-            $isManager = false;
-            $isExecutive = false;
-
             try {
                 $isAdmin = self::isAdmin($user);
-                $isManager = self::isManager($user);
-                $isExecutive = self::isExecutive($user);
             } catch (\Exception $e) {
                 \Log::error('PermissionHelper::filterByRole - Role check exception: ' . $e->getMessage(), [
                     'user_id' => $user->id ?? null,
@@ -186,75 +185,72 @@ class PermissionHelper
                 return $query;
             }
 
-            // Manager sees everything (team data)
-            if ($isManager) {
-                return $query;
-            }
-
-            // Executive sees only assigned records
-            if ($isExecutive) {
-                $userId = $user->id;
+            // Managers and Executives see only their own records (where user_id matches)
+            $userId = $user->id;
+            
+            // Get the table name from the query
+            $tableName = $query->getModel()->getTable();
+            
+            return $query->where(function($q) use ($userId, $tableName) {
+                // Primary: Check user_id field (new standard)
+                $q->where('user_id', $userId);
                 
-                \Log::debug('PermissionHelper::filterByRole - Filtering for Executive user', [
-                    'user_id' => $userId,
-                    'assigned_field' => $assignedField,
-                    'owner_field' => $ownerField
-                ]);
-                
-                return $query->where(function($q) use ($userId, $assignedField, $ownerField) {
-                    $hasConditions = false;
-                    
-                    // Check assigned field (only if provided)
-                    if ($assignedField) {
-                        $q->where($assignedField, $userId);
-                        $hasConditions = true;
-                    }
-                    
-                    // Check owner field (only if provided and different from assigned field)
-                    // Important: Pass null for ownerField if the table doesn't have this column
-                    if ($ownerField && $ownerField !== $assignedField) {
-                        if ($hasConditions) {
-                            $q->orWhere($ownerField, $userId);
-                        } else {
-                            $q->where($ownerField, $userId);
-                            $hasConditions = true;
-                        }
-                    }
-                    
-                    // For files, also check uploaded_by (only if no other fields specified)
-                    if (!$hasConditions && $assignedField === null && $ownerField === null) {
-                        $q->where('uploaded_by', $userId);
-                        $hasConditions = true;
-                    }
-                    
-                    // If no conditions were added, return empty result for safety
-                    if (!$hasConditions) {
-                        \Log::warning('PermissionHelper::filterByRole - No conditions added for Executive user', [
-                            'user_id' => $userId,
-                            'assigned_field' => $assignedField,
-                            'owner_field' => $ownerField
-                        ]);
-                        $q->whereRaw('1 = 0');
-                    }
+                // Fallback: Check old fields for backward compatibility if user_id is null
+                // This handles cases where records haven't been migrated yet
+                $q->orWhere(function($subQ) use ($userId, $tableName) {
+                    $subQ->whereNull('user_id')
+                         ->where(function($fallbackQ) use ($userId, $tableName) {
+                             // Check if assigned_user_id exists and matches
+                             if (Schema::hasColumn($tableName, 'assigned_user_id')) {
+                                 $fallbackQ->where('assigned_user_id', $userId);
+                             }
+                             // Check if owner_user_id exists and matches
+                             if (Schema::hasColumn($tableName, 'owner_user_id')) {
+                                 $fallbackQ->orWhere('owner_user_id', $userId);
+                             }
+                             // Check if uploaded_by exists and matches (for files)
+                             if (Schema::hasColumn($tableName, 'uploaded_by')) {
+                                 $fallbackQ->orWhere('uploaded_by', $userId);
+                             }
+                         });
                 });
-            }
-
-            // Log if user doesn't match any role
-            \Log::warning('PermissionHelper::filterByRole - User does not match any role, denying access', [
-                'user_id' => $user->id ?? null,
-                'is_admin' => $isAdmin,
-                'is_manager' => $isManager,
-                'is_executive' => $isExecutive
-            ]);
-
-            // Default: no access
-            return $query->whereRaw('1 = 0');
+            });
         } catch (\Exception $e) {
             // Log error and return empty result to prevent crashes
             \Log::error('PermissionHelper::filterByRole error: ' . $e->getMessage(), [
                 'user_id' => $user->id ?? null,
                 'trace' => $e->getTraceAsString()
             ]);
+            return $query->whereRaw('1 = 0');
+        }
+    }
+
+    /**
+     * Filter query by user_id - simplified version for new standard
+     * Admins see all, others see only their own records
+     * 
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param \App\Models\User|null $user
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public static function filterByUserId($query, $user = null)
+    {
+        try {
+            $user = $user ?? Auth::user();
+
+            if (!$user) {
+                return $query->whereRaw('1 = 0');
+            }
+
+            // Admin sees everything
+            if (self::isAdmin($user)) {
+                return $query;
+            }
+
+            // Others see only their own records
+            return $query->where('user_id', $user->id);
+        } catch (\Exception $e) {
+            \Log::error('PermissionHelper::filterByUserId error: ' . $e->getMessage());
             return $query->whereRaw('1 = 0');
         }
     }

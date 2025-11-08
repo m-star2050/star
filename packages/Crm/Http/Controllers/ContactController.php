@@ -25,9 +25,8 @@ class ContactController extends Controller
 
         $query = Contact::query();
         
-        // Filter by role (Executive sees only assigned records)
-        // Pass null for ownerField since contacts table doesn't have owner_user_id column
-        $query = PermissionHelper::filterByRole($query, auth()->user(), 'assigned_user_id', null);
+        // Filter by user_id: Admins see all, others see only their own records
+        $query = PermissionHelper::filterByUserId($query, auth()->user());
 
         if ($search = trim((string) $request->input('search'))) {
             $query->where(function ($q) use ($search) {
@@ -106,6 +105,9 @@ class ContactController extends Controller
             }
         }
 
+        // Set user_id to current user's ID (users can only create their own records)
+        $data['user_id'] = auth()->id();
+
         $contact = Contact::create($data);
         
         if ($request->ajax()) {
@@ -152,6 +154,10 @@ class ContactController extends Controller
                 $data['tags'] = array_filter(array_map('trim', explode(',', $data['tags'])));
             }
         }
+
+        // Ensure user_id is not changed (users can only update their own records)
+        // user_id represents the owner/creator and should remain unchanged
+        unset($data['user_id']);
 
         $contact->update($data);
         
@@ -264,14 +270,13 @@ class ContactController extends Controller
         }
 
         if (Schema::hasTable('users')) {
-            $query = Contact::with('assignedUser');
+            $query = Contact::with(['user', 'assignedUser']);
         } else {
             $query = Contact::query();
         }
 
-        // Filter by role (Executive sees only assigned records)
-        // Pass null for ownerField since contacts table doesn't have owner_user_id column
-        $query = PermissionHelper::filterByRole($query, auth()->user(), 'assigned_user_id', null);
+        // Filter by user_id: Admins see all, others see only their own records
+        $query = PermissionHelper::filterByUserId($query, auth()->user());
 
         // Search from DataTables
         if ($search = trim((string) $request->input('search.value'))) {
@@ -300,8 +305,10 @@ class ContactController extends Controller
             $query->whereDate('created_at', '<=', $request->input('created_to'));
         }
 
-        // Get total count before filtering
-        $totalRecords = Contact::count();
+        // Get total count before filtering (apply same user filter)
+        $totalRecordsQuery = Contact::query();
+        $totalRecordsQuery = PermissionHelper::filterByUserId($totalRecordsQuery, auth()->user());
+        $totalRecords = $totalRecordsQuery->count();
         $filteredRecords = $query->count();
 
         // Ordering
@@ -384,9 +391,8 @@ class ContactController extends Controller
 
         $query = Contact::query();
         
-        // Filter by role (Executive sees only assigned records)
-        // Pass null for ownerField since contacts table doesn't have owner_user_id column
-        $query = PermissionHelper::filterByRole($query, auth()->user(), 'assigned_user_id', null);
+        // Filter by user_id: Admins see all, others see only their own records
+        $query = PermissionHelper::filterByUserId($query, auth()->user());
 
         if ($search = trim((string) $request->input('search'))) {
             $query->where(function ($q) use ($search) {

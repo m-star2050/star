@@ -50,6 +50,9 @@ class TaskController extends Controller
             'notes' => ['nullable', 'string'],
         ]);
 
+        // Set user_id to current user's ID (users can only create their own records)
+        $data['user_id'] = auth()->id();
+
         $task = Task::create($data);
         
         if ($request->ajax()) {
@@ -85,6 +88,10 @@ class TaskController extends Controller
             'lead_id' => ['nullable', 'integer', 'exists:crm_leads,id'],
             'notes' => ['nullable', 'string'],
         ]);
+
+        // Ensure user_id is not changed (users can only update their own records)
+        // user_id represents the owner/creator and should remain unchanged
+        unset($data['user_id']);
 
         $task->update($data);
         
@@ -201,7 +208,7 @@ class TaskController extends Controller
         $query = Task::query()->with(['contact', 'lead']);
         
         // Filter by role (Executive sees only assigned records)
-        $query = PermissionHelper::filterByRole($query, auth()->user(), 'assigned_user_id');
+        $query = PermissionHelper::filterByUserId($query, auth()->user());
 
         if ($search = trim((string) $request->input('search'))) {
             $query->where(function ($q) use ($search) {
@@ -283,13 +290,13 @@ class TaskController extends Controller
             }
 
             if (Schema::hasTable('users')) {
-                $query = Task::query()->with(['contact', 'lead', 'assignedUser']);
+                $query = Task::query()->with(['user', 'contact', 'lead', 'assignedUser']);
             } else {
                 $query = Task::query()->with(['contact', 'lead']);
             }
 
-            // Filter by role (Executive sees only assigned records)
-            $query = PermissionHelper::filterByRole($query, auth()->user(), 'assigned_user_id');
+            // Filter by user_id: Admins see all, others see only their own records
+            $query = PermissionHelper::filterByUserId($query, auth()->user());
 
         if ($search = trim((string) $request->input('search.value'))) {
             $query->where(function ($q) use ($search) {
@@ -323,9 +330,9 @@ class TaskController extends Controller
             $query->whereDate('due_date', '<=', $request->input('due_date_to'));
         }
 
-        // Get total records - must apply role filtering for accurate count
+        // Get total records - must apply user filtering for accurate count
         $totalRecordsQuery = Task::query();
-        $totalRecordsQuery = PermissionHelper::filterByRole($totalRecordsQuery, auth()->user(), 'assigned_user_id');
+        $totalRecordsQuery = PermissionHelper::filterByUserId($totalRecordsQuery, auth()->user());
         $totalRecords = $totalRecordsQuery->count();
         
         $filteredRecords = $query->count();

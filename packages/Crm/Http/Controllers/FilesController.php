@@ -70,7 +70,8 @@ class FilesController extends Controller
                 'file_size' => $fileSize,
                 'linked_type' => $request->input('linked_type'),
                 'linked_id' => $request->input('linked_id'),
-                'uploaded_by' => auth()->id() ?? 1,
+                'user_id' => auth()->id(), // Set user_id (new standard)
+                'uploaded_by' => auth()->id() ?? 1, // Keep for backward compatibility
                 'description' => $request->input('description'),
             ]);
 
@@ -213,11 +214,8 @@ class FilesController extends Controller
 
         $query = File::query();
         
-        // Filter by role (Executive sees only uploaded files)
-        $user = auth()->user();
-        if (PermissionHelper::isExecutive($user)) {
-            $query->where('uploaded_by', $user->id);
-        }
+        // Filter by user_id: Admins see all, others see only their own records
+        $query = PermissionHelper::filterByUserId($query, auth()->user());
 
         if ($search = trim((string) $request->input('search.value'))) {
             $query->where(function ($q) use ($search) {
@@ -243,11 +241,9 @@ class FilesController extends Controller
             $query->whereDate('created_at', '<=', $request->input('uploaded_to'));
         }
 
-        // Count total and filtered records with role filtering
+        // Count total and filtered records with user filtering
         $totalQuery = File::query();
-        if (PermissionHelper::isExecutive(auth()->user())) {
-            $totalQuery->where('uploaded_by', auth()->id());
-        }
+        $totalQuery = PermissionHelper::filterByUserId($totalQuery, auth()->user());
         $totalRecords = $totalQuery->count();
         $filteredRecords = $query->count();
 

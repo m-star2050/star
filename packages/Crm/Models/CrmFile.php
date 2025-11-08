@@ -22,9 +22,16 @@ class CrmFile extends Model
         'file_size',
         'linked_type',
         'linked_id',
-        'uploaded_by',
+        'user_id',
+        'uploaded_by', // Keep for backward compatibility
         'description',
     ];
+
+    // Relationships
+    public function user()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'user_id');
+    }
 
     /**
      * Get the linked model (polymorphic relationship)
