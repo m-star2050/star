@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Schema;
 use Packages\Crm\Models\Contact;
 use Packages\Crm\Models\Lead;
 use Packages\Crm\Models\Pipeline;
+use Packages\Crm\Models\Task;
 
 class ReportsController extends Controller
 {
@@ -67,13 +68,32 @@ class ReportsController extends Controller
             $dealsQuery->whereDate('created_at', '<=', $dateTo);
         }
 
-        // Apply user filter if provided
-        // Note: For Executives, the role-based filter already restricts to their own records
+        // Apply user filter if provided (only for admins)
+        // Note: For Executives and Managers, the role-based filter already restricts to their own records
         // So if they select another user, they'll see no results (correct behavior)
-        if ($userId) {
-            $contactsQuery->where('assigned_user_id', $userId);
-            $leadsQuery->where('assigned_user_id', $userId);
-            $dealsQuery->where('owner_user_id', $userId);
+        if ($userId && PermissionHelper::isAdmin($user)) {
+            // Use user_id if column exists, otherwise fallback to old fields
+            $contactsTableName = (new Contact())->getTable();
+            $leadsTableName = (new Lead())->getTable();
+            $dealsTableName = (new Pipeline())->getTable();
+            
+            if (Schema::hasColumn($contactsTableName, 'user_id')) {
+                $contactsQuery->where('user_id', $userId);
+            } else {
+                $contactsQuery->where('assigned_user_id', $userId);
+            }
+            
+            if (Schema::hasColumn($leadsTableName, 'user_id')) {
+                $leadsQuery->where('user_id', $userId);
+            } else {
+                $leadsQuery->where('assigned_user_id', $userId);
+            }
+            
+            if (Schema::hasColumn($dealsTableName, 'user_id')) {
+                $dealsQuery->where('user_id', $userId);
+            } else {
+                $dealsQuery->where('owner_user_id', $userId);
+            }
         }
 
         $totalContacts = $contactsQuery->count();
@@ -142,8 +162,14 @@ class ReportsController extends Controller
             $dealsQuery->whereDate('created_at', '<=', $dateTo);
         }
 
-        if ($userId) {
-            $dealsQuery->where('owner_user_id', $userId);
+        // Apply user filter if provided (only for admins)
+        if ($userId && PermissionHelper::isAdmin(auth()->user())) {
+            $dealsTableName = (new Pipeline())->getTable();
+            if (Schema::hasColumn($dealsTableName, 'user_id')) {
+                $dealsQuery->where('user_id', $userId);
+            } else {
+                $dealsQuery->where('owner_user_id', $userId);
+            }
         }
 
         if ($chartType === 'deals_won_lost') {
@@ -229,24 +255,32 @@ class ReportsController extends Controller
             $dealsQuery = Pipeline::query();
             $dealsQuery = PermissionHelper::filterByUserId($dealsQuery, auth()->user());
             
-            $userIdsFromDeals = $dealsQuery
+            $dealsTableName = (new Pipeline())->getTable();
+            $hasUserIdColumn = Schema::hasColumn($dealsTableName, 'user_id');
+            
+            $query = $dealsQuery
                 ->when($dateFrom, function($q) use ($dateFrom) {
                     $q->whereDate('created_at', '>=', $dateFrom);
                 })
                 ->when($dateTo, function($q) use ($dateTo) {
                     $q->whereDate('created_at', '<=', $dateTo);
                 })
-                ->when($userId, function($q) use ($userId) {
-                    $q->where('owner_user_id', $userId);
+                ->when($userId && PermissionHelper::isAdmin(auth()->user()), function($q) use ($userId, $hasUserIdColumn) {
+                    if ($hasUserIdColumn) {
+                        $q->where('user_id', $userId);
+                    } else {
+                        $q->where('owner_user_id', $userId);
+                    }
                 })
                 ->when($stage, function($q) use ($stage) {
                     $q->where('stage', $stage);
-                })
-                ->whereNotNull('owner_user_id')
-                ->distinct()
-                ->pluck('owner_user_id')
-                ->filter()
-                ->unique();
+                });
+            
+            if ($hasUserIdColumn) {
+                $userIdsFromDeals = $query->whereNotNull('user_id')->distinct()->pluck('user_id')->filter()->unique();
+            } else {
+                $userIdsFromDeals = $query->whereNotNull('owner_user_id')->distinct()->pluck('owner_user_id')->filter()->unique();
+            }
         } catch (\Exception $e) {
             \Log::warning('Error getting user IDs from deals: ' . $e->getMessage());
             $userIdsFromDeals = collect([]);
@@ -257,21 +291,29 @@ class ReportsController extends Controller
             $contactsQuery = Contact::query();
             $contactsQuery = PermissionHelper::filterByUserId($contactsQuery, auth()->user());
             
-            $userIdsFromContacts = $contactsQuery
+            $contactsTableName = (new Contact())->getTable();
+            $hasUserIdColumn = Schema::hasColumn($contactsTableName, 'user_id');
+            
+            $query = $contactsQuery
                 ->when($dateFrom, function($q) use ($dateFrom) {
                     $q->whereDate('created_at', '>=', $dateFrom);
                 })
                 ->when($dateTo, function($q) use ($dateTo) {
                     $q->whereDate('created_at', '<=', $dateTo);
                 })
-                ->when($userId, function($q) use ($userId) {
-                    $q->where('assigned_user_id', $userId);
-                })
-                ->whereNotNull('assigned_user_id')
-                ->distinct()
-                ->pluck('assigned_user_id')
-                ->filter()
-                ->unique();
+                ->when($userId && PermissionHelper::isAdmin(auth()->user()), function($q) use ($userId, $hasUserIdColumn) {
+                    if ($hasUserIdColumn) {
+                        $q->where('user_id', $userId);
+                    } else {
+                        $q->where('assigned_user_id', $userId);
+                    }
+                });
+            
+            if ($hasUserIdColumn) {
+                $userIdsFromContacts = $query->whereNotNull('user_id')->distinct()->pluck('user_id')->filter()->unique();
+            } else {
+                $userIdsFromContacts = $query->whereNotNull('assigned_user_id')->distinct()->pluck('assigned_user_id')->filter()->unique();
+            }
         } catch (\Exception $e) {
             \Log::warning('Error getting user IDs from contacts: ' . $e->getMessage());
             $userIdsFromContacts = collect([]);
@@ -282,21 +324,29 @@ class ReportsController extends Controller
             $leadsQuery = Lead::query();
             $leadsQuery = PermissionHelper::filterByUserId($leadsQuery, auth()->user());
             
-            $userIdsFromLeads = $leadsQuery
+            $leadsTableName = (new Lead())->getTable();
+            $hasUserIdColumn = Schema::hasColumn($leadsTableName, 'user_id');
+            
+            $query = $leadsQuery
                 ->when($dateFrom, function($q) use ($dateFrom) {
                     $q->whereDate('created_at', '>=', $dateFrom);
                 })
                 ->when($dateTo, function($q) use ($dateTo) {
                     $q->whereDate('created_at', '<=', $dateTo);
                 })
-                ->when($userId, function($q) use ($userId) {
-                    $q->where('assigned_user_id', $userId);
-                })
-                ->whereNotNull('assigned_user_id')
-                ->distinct()
-                ->pluck('assigned_user_id')
-                ->filter()
-                ->unique();
+                ->when($userId && PermissionHelper::isAdmin(auth()->user()), function($q) use ($userId, $hasUserIdColumn) {
+                    if ($hasUserIdColumn) {
+                        $q->where('user_id', $userId);
+                    } else {
+                        $q->where('assigned_user_id', $userId);
+                    }
+                });
+            
+            if ($hasUserIdColumn) {
+                $userIdsFromLeads = $query->whereNotNull('user_id')->distinct()->pluck('user_id')->filter()->unique();
+            } else {
+                $userIdsFromLeads = $query->whereNotNull('assigned_user_id')->distinct()->pluck('assigned_user_id')->filter()->unique();
+            }
         } catch (\Exception $e) {
             \Log::warning('Error getting user IDs from leads: ' . $e->getMessage());
             $userIdsFromLeads = collect([]);
@@ -362,11 +412,21 @@ class ReportsController extends Controller
                 // Apply role filtering to user-specific queries as well
                 $userDealsQuery = Pipeline::query();
                 $userDealsQuery = PermissionHelper::filterByUserId($userDealsQuery, auth()->user());
+                
                 // Filter by user_id (new standard) or owner_user_id (fallback)
-                $userDealsQuery->where(function($q) use ($uid) {
-                    $q->where('user_id', $uid)
-                      ->orWhere('owner_user_id', $uid);
-                });
+                $dealsTableName = (new Pipeline())->getTable();
+                $hasUserIdColumn = Schema::hasColumn($dealsTableName, 'user_id');
+                
+                if ($hasUserIdColumn) {
+                    $userDealsQuery->where(function($q) use ($uid) {
+                        $q->where('user_id', $uid)
+                          ->orWhere(function($subQ) use ($uid) {
+                              $subQ->whereNull('user_id')->where('owner_user_id', $uid);
+                          });
+                    });
+                } else {
+                    $userDealsQuery->where('owner_user_id', $uid);
+                }
                 
                 if ($dateFrom) {
                     $userDealsQuery->whereDate('created_at', '>=', $dateFrom);
@@ -529,27 +589,54 @@ class ReportsController extends Controller
         $userId = $request->input('user_id');
         $stage = $request->input('stage');
 
-        $userIds = Pipeline::query()
+        $dealsQuery = Pipeline::query();
+        // Apply role filtering
+        $dealsQuery = PermissionHelper::filterByUserId($dealsQuery, auth()->user());
+        
+        $dealsTableName = (new Pipeline())->getTable();
+        $hasUserIdColumn = Schema::hasColumn($dealsTableName, 'user_id');
+
+        $query = $dealsQuery
             ->when($dateFrom, function($q) use ($dateFrom) {
                 $q->whereDate('created_at', '>=', $dateFrom);
             })
             ->when($dateTo, function($q) use ($dateTo) {
                 $q->whereDate('created_at', '<=', $dateTo);
             })
-            ->when($userId, function($q) use ($userId) {
-                $q->where('owner_user_id', $userId);
+            ->when($userId && PermissionHelper::isAdmin(auth()->user()), function($q) use ($userId, $hasUserIdColumn) {
+                if ($hasUserIdColumn) {
+                    $q->where('user_id', $userId);
+                } else {
+                    $q->where('owner_user_id', $userId);
+                }
             })
             ->when($stage, function($q) use ($stage) {
                 $q->where('stage', $stage);
-            })
-            ->distinct()
-            ->pluck('owner_user_id')
-            ->filter()
-            ->unique();
+            });
+        
+        if ($hasUserIdColumn) {
+            $userIds = $query->whereNotNull('user_id')->distinct()->pluck('user_id')->filter()->unique();
+        } else {
+            $userIds = $query->whereNotNull('owner_user_id')->distinct()->pluck('owner_user_id')->filter()->unique();
+        }
 
         $rows = [];
         foreach ($userIds as $uid) {
-            $userDealsQuery = Pipeline::query()->where('owner_user_id', $uid);
+            $userDealsQuery = Pipeline::query();
+            // Apply role filtering
+            $userDealsQuery = PermissionHelper::filterByUserId($userDealsQuery, auth()->user());
+            
+            // Filter by user_id (new standard) or owner_user_id (fallback)
+            if ($hasUserIdColumn) {
+                $userDealsQuery->where(function($q) use ($uid) {
+                    $q->where('user_id', $uid)
+                      ->orWhere(function($subQ) use ($uid) {
+                          $subQ->whereNull('user_id')->where('owner_user_id', $uid);
+                      });
+                });
+            } else {
+                $userDealsQuery->where('owner_user_id', $uid);
+            }
             
             if ($dateFrom) {
                 $userDealsQuery->whereDate('created_at', '>=', $dateFrom);
@@ -569,9 +656,22 @@ class ReportsController extends Controller
             $revenueQuery = clone $userDealsQuery;
             $totalRevenue = $revenueQuery->where('stage', 'closed_won')->sum('value') ?? 0;
 
+            // Try to get user name if users table exists
+            $userName = 'User ' . $uid;
+            if (Schema::hasTable('users')) {
+                try {
+                    $user = \App\Models\User::find($uid);
+                    if ($user && $user->name) {
+                        $userName = $user->name;
+                    }
+                } catch (\Exception $e) {
+                    // Keep default name
+                }
+            }
+
             $rows[] = [
                 'user_id' => $uid,
-                'user_name' => 'User ' . $uid,
+                'user_name' => $userName,
                 'total_deals' => $totalDeals,
                 'won_deals' => $wonDeals,
                 'lost_deals' => $lostDeals,

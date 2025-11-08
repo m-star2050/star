@@ -228,6 +228,7 @@ class PermissionHelper
     /**
      * Filter query by user_id - simplified version for new standard
      * Admins see all, others see only their own records
+     * Includes fallback to old fields for backward compatibility
      * 
      * @param \Illuminate\Database\Eloquent\Builder $query
      * @param \App\Models\User|null $user
@@ -248,9 +249,62 @@ class PermissionHelper
             }
 
             // Others see only their own records
-            return $query->where('user_id', $user->id);
+            $userId = $user->id;
+            
+            // Get the table name from the query
+            $tableName = $query->getModel()->getTable();
+            
+            // Check if user_id column exists
+            $hasUserIdColumn = Schema::hasColumn($tableName, 'user_id');
+            
+            if ($hasUserIdColumn) {
+                // Use user_id with fallback to old fields for backward compatibility
+                return $query->where(function($q) use ($userId, $tableName) {
+                    // Primary: Check user_id field (new standard)
+                    $q->where('user_id', $userId);
+                    
+                    // Fallback: Check old fields for backward compatibility if user_id is null
+                    // This handles cases where records haven't been migrated yet
+                    $q->orWhere(function($subQ) use ($userId, $tableName) {
+                        $subQ->whereNull('user_id')
+                             ->where(function($fallbackQ) use ($userId, $tableName) {
+                                 // Check if assigned_user_id exists and matches
+                                 if (Schema::hasColumn($tableName, 'assigned_user_id')) {
+                                     $fallbackQ->where('assigned_user_id', $userId);
+                                 }
+                                 // Check if owner_user_id exists and matches
+                                 if (Schema::hasColumn($tableName, 'owner_user_id')) {
+                                     $fallbackQ->orWhere('owner_user_id', $userId);
+                                 }
+                                 // Check if uploaded_by exists and matches (for files)
+                                 if (Schema::hasColumn($tableName, 'uploaded_by')) {
+                                     $fallbackQ->orWhere('uploaded_by', $userId);
+                                 }
+                             });
+                    });
+                });
+            } else {
+                // user_id column doesn't exist yet, use old fields
+                return $query->where(function($q) use ($userId, $tableName) {
+                    // Check if assigned_user_id exists and matches
+                    if (Schema::hasColumn($tableName, 'assigned_user_id')) {
+                        $q->where('assigned_user_id', $userId);
+                    }
+                    // Check if owner_user_id exists and matches
+                    if (Schema::hasColumn($tableName, 'owner_user_id')) {
+                        $q->orWhere('owner_user_id', $userId);
+                    }
+                    // Check if uploaded_by exists and matches (for files)
+                    if (Schema::hasColumn($tableName, 'uploaded_by')) {
+                        $q->orWhere('uploaded_by', $userId);
+                    }
+                });
+            }
         } catch (\Exception $e) {
-            \Log::error('PermissionHelper::filterByUserId error: ' . $e->getMessage());
+            \Log::error('PermissionHelper::filterByUserId error: ' . $e->getMessage(), [
+                'user_id' => $user->id ?? null,
+                'trace' => $e->getTraceAsString()
+            ]);
             return $query->whereRaw('1 = 0');
         }
     }
