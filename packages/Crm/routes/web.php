@@ -73,7 +73,7 @@ Route::prefix('crm')->group(function () {
 
             // API endpoints for dropdowns
             Route::get('api/users', function() {
-                $users = \App\Models\User::select('id', 'name', 'email')->orderBy('name')->get();
+                $users = \Packages\Crm\Helpers\PermissionHelper::getUsersForSelection();
                 return response()->json([
                     'success' => true,
                     'data' => $users

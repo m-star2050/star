@@ -20,14 +20,8 @@ class TaskController extends Controller
             abort(403, 'Unauthorized. You do not have permission to view tasks.');
         }
 
-        $users = collect([]);
-        if (Schema::hasTable('users')) {
-            try {
-                $users = User::select('id', 'name', 'email')->orderBy('name')->get();
-            } catch (\Exception $e) {
-                $users = collect([]);
-            }
-        }
+        // Get users for dropdown, excluding admins for non-admin users
+        $users = PermissionHelper::getUsersForSelection();
         $contacts = Contact::select('id', 'name', 'email', 'company')->orderBy('name')->get();
         $leads = Lead::select('id', 'name', 'email', 'company')->orderBy('name')->get();
         

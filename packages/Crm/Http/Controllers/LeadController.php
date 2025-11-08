@@ -21,14 +21,8 @@ class LeadController extends Controller
             abort(403, 'Unauthorized. You do not have permission to view leads.');
         }
 
-        $users = collect([]);
-        if (Schema::hasTable('users')) {
-            try {
-                $users = User::select('id', 'name', 'email')->orderBy('name')->get();
-            } catch (\Exception $e) {
-                $users = collect([]);
-            }
-        }
+        // Get users for dropdown, excluding admins for non-admin users
+        $users = PermissionHelper::getUsersForSelection();
         return view('crm::leads.index', ['users' => $users]);
     }
 

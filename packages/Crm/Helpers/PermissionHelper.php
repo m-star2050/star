@@ -314,5 +314,53 @@ class PermissionHelper
 
         return $user->can($permission);
     }
+
+    /**
+     * Get users for dropdown/selection, excluding admins for non-admin users
+     * 
+     * @param \App\Models\User|null $currentUser The current authenticated user
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public static function getUsersForSelection($currentUser = null)
+    {
+        $currentUser = $currentUser ?? Auth::user();
+        
+        if (!$currentUser) {
+            return collect([]);
+        }
+
+        try {
+            $query = \App\Models\User::select('id', 'name', 'email')->orderBy('name');
+            
+            // Only admins can see admin users in dropdowns
+            // Managers and executives should not see admin users
+            if (!self::isAdmin($currentUser)) {
+                // Check if Spatie package is installed and roles table exists
+                if (class_exists(\Spatie\Permission\Models\Role::class) && \Illuminate\Support\Facades\Schema::hasTable('roles')) {
+                    // Filter out users with Admin role
+                    $query->whereDoesntHave('roles', function($q) {
+                        $q->where('name', 'Admin');
+                    });
+                } else {
+                    // If Spatie is not installed, we can't filter by roles
+                    // In this case, return all users (fallback behavior)
+                    \Log::debug('PermissionHelper::getUsersForSelection - Spatie package not installed, returning all users');
+                }
+            }
+            
+            return $query->get();
+        } catch (\Exception $e) {
+            \Log::error('PermissionHelper::getUsersForSelection error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            // On error, return all users as fallback to prevent breaking the application
+            try {
+                return \App\Models\User::select('id', 'name', 'email')->orderBy('name')->get();
+            } catch (\Exception $fallbackError) {
+                \Log::error('PermissionHelper::getUsersForSelection fallback error: ' . $fallbackError->getMessage());
+                return collect([]);
+            }
+        }
+    }
 }
 

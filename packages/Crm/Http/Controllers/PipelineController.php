@@ -20,14 +20,8 @@ class PipelineController extends Controller
             abort(403, 'Unauthorized. You do not have permission to view pipeline.');
         }
 
-        $users = collect([]);
-        if (Schema::hasTable('users')) {
-            try {
-                $users = User::select('id', 'name', 'email')->orderBy('name')->get();
-            } catch (\Exception $e) {
-                $users = collect([]);
-            }
-        }
+        // Get users for dropdown, excluding admins for non-admin users
+        $users = PermissionHelper::getUsersForSelection();
         return view('crm::pipeline.index', ['users' => $users]);
     }
 
@@ -37,14 +31,8 @@ class PipelineController extends Controller
             abort(403, 'Unauthorized. You do not have permission to view pipeline.');
         }
 
-        $users = collect([]);
-        if (Schema::hasTable('users')) {
-            try {
-                $users = User::select('id', 'name', 'email')->orderBy('name')->get();
-            } catch (\Exception $e) {
-                $users = collect([]);
-            }
-        }
+        // Get users for dropdown, excluding admins for non-admin users
+        $users = PermissionHelper::getUsersForSelection();
         return view('crm::pipeline.index', ['view' => 'kanban', 'users' => $users]);
     }
 
