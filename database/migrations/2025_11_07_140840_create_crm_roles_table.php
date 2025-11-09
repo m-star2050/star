@@ -8,12 +8,14 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('crm_roles', function (Blueprint $table) {
-            $table->id();
-            $table->string('name')->unique();
-            $table->string('description')->nullable();
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('crm_roles')) {
+            Schema::create('crm_roles', function (Blueprint $table) {
+                $table->id();
+                $table->string('name')->unique();
+                $table->string('description')->nullable();
+                $table->timestamps();
+            });
+        }
     }
 
     public function down(): void

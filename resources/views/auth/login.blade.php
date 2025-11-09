@@ -12,7 +12,7 @@
             <h1 class="text-3xl font-bold text-gray-800 mb-2">Welcome Back</h1>
             <p class="text-gray-700 mb-6">Please login to access the CRM system</p>
 
-            @if ($errors->any())
+            @if (isset($errors) && $errors->any())
                 <div class="mb-4 p-4 bg-red-500/20 border border-red-500/50 rounded-lg text-red-100">
                     <ul class="list-disc list-inside">
                         @foreach ($errors->all() as $error)
