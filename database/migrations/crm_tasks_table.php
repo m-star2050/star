@@ -16,6 +16,7 @@ return new class extends Migration
                 $table->enum('priority', ['low', 'medium', 'high'])->default('medium')->index();
                 $table->date('due_date')->nullable()->index();
                 $table->enum('status', ['pending', 'in_progress', 'completed'])->default('pending')->index();
+                $table->unsignedBigInteger('user_id')->index(); // Owner/creator of the task
                 $table->unsignedBigInteger('assigned_user_id')->nullable()->index();
                 $table->unsignedBigInteger('contact_id')->nullable()->index();
                 $table->unsignedBigInteger('lead_id')->nullable()->index();

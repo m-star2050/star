@@ -331,7 +331,7 @@
 </head>
 <body>
 
-<div x-data="{mobileMenu:false, open:true, showCreate:false, showEdit:false, showDelete:false, showBulkDelete:false, editId:null, editTitle:'', editType:'', editPriority:'medium', editDueDate:'', editStatus:'pending', editAssigned:'', editContact:'', editLead:'', editNotes:'', showNotification:false, notificationMessage:'', notificationType:'success', wasCreateOpen:false, showRoleChangeNotification:false, roleChangeMessage:''}" 
+<div x-data="{mobileMenu:false, open:true, showCreate:false, showEdit:false, showDelete:false, showBulkDelete:false, editId:null, editTitle:'', editType:'', editPriority:'medium', editDueDate:'', editStatus:'pending', editAssigned:'', editContact:'', editLead:'', editNotes:'', showNotification:false, notificationMessage:'', notificationType:'error', wasCreateOpen:false, showRoleChangeNotification:false, roleChangeMessage:''}" 
      x-init="$watch('showCreate', value => { if (value && !wasCreateOpen) { setTimeout(() => { const form = document.getElementById('createForm'); if (form) form.reset(); const priority = document.getElementById('createPriority'); if (priority) priority.value = 'medium'; const status = document.getElementById('createStatus'); if (status) status.value = 'pending'; const btn = document.getElementById('createSubmitBtn'); if (btn) { btn.disabled = false; btn.textContent = 'Create'; } } }, 100); } wasCreateOpen = value; })" 
      class="relative">
     <div class="lg:hidden fixed top-0 left-0 right-0 z-50 glass-card rounded-b-2xl p-4 shadow-xl">
@@ -858,26 +858,28 @@
         </div>
     </div>
 
-    <div x-show="showNotification" x-transition.opacity class="fixed inset-0 z-[60] flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-black/50" @click="showNotification=false"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+    <!-- Error notification modal only (success notifications disabled) -->
+    <div x-show="showNotification && notificationType === 'error'" 
+         x-cloak
+         class="fixed inset-0 z-[60] flex items-center justify-center p-4" 
+         style="display: none;">
+        <div class="absolute inset-0 bg-black/50" @click="showNotification = false; if (typeof window.hideNotification === 'function') { window.hideNotification(); }"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6" @click.stop>
             <div class="flex items-start gap-4">
-                <div :class="notificationType === 'success' ? 'bg-green-100 text-green-600' : notificationType === 'error' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'" class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center">
-                    <svg x-show="notificationType === 'success'" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                    </svg>
-                    <svg x-show="notificationType === 'error'" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                <div class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center bg-red-100 text-red-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                    </svg>
-                    <svg x-show="notificationType !== 'success' && notificationType !== 'error'" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
                     </svg>
                 </div>
                 <div class="flex-1">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-1" x-text="notificationType === 'success' ? 'Success' : notificationType === 'error' ? 'Error' : 'Notice'"></h3>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-1">Error</h3>
                     <p class="text-sm text-gray-600 mb-4 whitespace-pre-line" x-text="notificationMessage"></p>
-                    <div class="flex justify-end">
-                        <button type="button" @click="showNotification=false" class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors">OK</button>
+                    <div class="flex justify-end gap-2">
+                        <button type="button" 
+                                @click="showNotification = false; if (typeof window.hideNotification === 'function') { window.hideNotification(); }" 
+                                class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                            OK
+                        </button>
                     </div>
                 </div>
             </div>
@@ -1143,28 +1145,64 @@ $(document).ready(function() {
         }
     });
 
-    function showNotification(message, type = 'success') {
+    function showNotification(message, type = 'error') {
+        // Only show error notifications, no success notifications
+        if (type === 'success') {
+            return;
+        }
+        
+        console.log('Showing error notification:', message);
+        
+        // Clear any existing timeout first
+        if (window.notificationTimeout) {
+            clearTimeout(window.notificationTimeout);
+            window.notificationTimeout = null;
+        }
+        
         const alpineData = getAlpineData();
         if (alpineData && alpineData.__x) {
             const data = alpineData.__x.$data;
             data.notificationMessage = message;
-            data.notificationType = type;
+            data.notificationType = 'error';
             data.showNotification = true;
         }
+        
+        // Show the modal using jQuery
         const notificationModal = $('[x-show="showNotification"]');
         if (notificationModal.length) {
-            notificationModal[0].style.display = 'flex';
+            notificationModal.css('display', 'flex');
+            notificationModal.show();
         }
         
-        setTimeout(function() {
-            if (alpineData && alpineData.__x) {
-                alpineData.__x.$data.showNotification = false;
-            }
-            if (notificationModal.length) {
-                notificationModal[0].style.display = 'none';
-            }
+        // Auto-hide after 5 seconds for errors
+        window.notificationTimeout = setTimeout(function() {
+            hideNotification();
         }, 5000);
     }
+    
+    function hideNotification() {
+        // Clear timeout
+        if (window.notificationTimeout) {
+            clearTimeout(window.notificationTimeout);
+            window.notificationTimeout = null;
+        }
+        
+        // Hide using Alpine.js
+        const alpineData = getAlpineData();
+        if (alpineData && alpineData.__x) {
+            alpineData.__x.$data.showNotification = false;
+        }
+        
+        // Hide using jQuery as backup
+        const notificationModal = $('[x-show="showNotification"]');
+        if (notificationModal.length) {
+            notificationModal.hide();
+            notificationModal.css('display', 'none');
+        }
+    }
+    
+    // Make hideNotification globally accessible
+    window.hideNotification = hideNotification;
 
     function getAlpineData() {
         return document.querySelector('[x-data]');
@@ -1199,6 +1237,9 @@ $(document).ready(function() {
         $('#createForm')[0].reset();
         $('#createPriority').val('medium');
         $('#createStatus').val('pending');
+        $('#createAssigned').val('');
+        $('#createContact').val('');
+        $('#createLead').val('');
         const submitBtn = $('#createSubmitBtn');
         submitBtn.prop('disabled', false).text('Create Task');
     }
@@ -1299,17 +1340,24 @@ $(document).ready(function() {
         const originalText = submitBtn.text();
         submitBtn.prop('disabled', true).text('Creating...');
         
+        const titleValue = $('#createTitle').val();
+        if (!titleValue || titleValue.trim() === '') {
+            showNotification('Task title is required.', 'error');
+            submitBtn.prop('disabled', false).text(originalText);
+            return false;
+        }
+        
         const formData = {
             _token: '{{ csrf_token() }}',
-            title: $('#createTitle').val(),
-            type: $('#createType').val() || null,
+            title: titleValue.trim(),
+            type: $('#createType').val() ? $('#createType').val().trim() : null,
             priority: $('#createPriority').val() || 'medium',
             due_date: $('#createDueDate').val() || null,
             status: $('#createStatus').val() || 'pending',
-            assigned_user_id: $('#createAssigned').val() || null,
-            contact_id: $('#createContact').val() || null,
-            lead_id: $('#createLead').val() || null,
-            notes: $('#createNotes').val() || null
+            assigned_user_id: $('#createAssigned').val() ? parseInt($('#createAssigned').val()) : null,
+            contact_id: $('#createContact').val() ? parseInt($('#createContact').val()) : null,
+            lead_id: $('#createLead').val() ? parseInt($('#createLead').val()) : null,
+            notes: $('#createNotes').val() ? $('#createNotes').val().trim() : null
         };
         
         $.ajax({
@@ -1317,49 +1365,136 @@ $(document).ready(function() {
             method: 'POST',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
             data: formData,
-            success: function(response) {
-                submitBtn.prop('disabled', false).text(originalText);
-                table.ajax.reload();
+            success: function(response, textStatus, xhr) {
+                console.log('Create task response:', response);
+                console.log('Response type:', typeof response);
+                console.log('Response success:', response?.success);
+                console.log('Response task_id:', response?.task_id);
+                console.log('HTTP Status:', xhr.status);
+                console.log('Response text:', xhr.responseText);
                 
+                // Check HTTP status first - if it's not 200-299, treat as error
+                if (xhr.status < 200 || xhr.status >= 300) {
+                    console.error('Non-success HTTP status:', xhr.status);
+                    const errorMsg = (response && response.message) ? response.message : 'Task creation failed with HTTP status ' + xhr.status;
+                    showNotification(errorMsg, 'error');
+                    submitBtn.prop('disabled', false).text(originalText);
+                    return;
+                }
+                
+                // STRICT validation - response MUST have success=true AND task_id
+                if (!response || response.success !== true || !response.task_id) {
+                    console.error('Task creation failed - invalid response:', response);
+                    const errorMsg = (response && response.message) ? response.message : 'Task creation failed. The task was not created in the database.';
+                    showNotification(errorMsg, 'error');
+                    submitBtn.prop('disabled', false).text(originalText);
+                    return;
+                }
+                
+                // Task created successfully - NO NOTIFICATION, just close and reload
+                console.log('Task created successfully with ID:', response.task_id);
+                submitBtn.prop('disabled', false).text(originalText);
+                
+                // Reset form first
                 resetCreateForm();
                 
+                // Close modal immediately
                 const alpineData = getAlpineData();
                 if (alpineData && alpineData.__x) {
                     alpineData.__x.$data.showCreate = false;
                 }
                 
-                const modal = $('[x-show="showCreate"]');
-                if (modal.length) {
-                    modal.hide();
-                    modal.css('display', 'none');
+                // Hide modal using multiple methods to ensure it closes
+                const createModal = $('[x-show="showCreate"]');
+                if (createModal.length) {
+                    createModal.hide();
+                    createModal.css('display', 'none');
+                    createModal.removeClass('show');
                 }
                 
+                // Also hide notification modal if it's somehow visible
+                const notificationModal = $('[x-show="showNotification"]');
+                if (notificationModal.length) {
+                    notificationModal.hide();
+                    notificationModal.css('display', 'none');
+                }
+                
+                // Ensure Alpine state is closed
+                if (alpineData && alpineData.__x) {
+                    alpineData.__x.$data.showNotification = false;
+                }
+                
+                // Reload table to show new task
+                if (typeof table !== 'undefined' && table && typeof table.ajax !== 'undefined' && typeof table.ajax.reload === 'function') {
+                    table.ajax.reload(null, false);
+                } else {
+                    console.error('Table not found, reloading page');
+                    setTimeout(function() {
+                        location.reload();
+                    }, 100);
+                    return;
+                }
+                
+                // Ensure modal stays closed
                 setTimeout(function() {
                     const alpineDataAfter = getAlpineData();
                     if (alpineDataAfter && alpineDataAfter.__x) {
                         alpineDataAfter.__x.$data.showCreate = false;
+                        alpineDataAfter.__x.$data.showNotification = false;
                     }
-                    const modalAfter = $('[x-show="showCreate"]');
-                    if (modalAfter.length && modalAfter.is(':visible')) {
-                        modalAfter.hide();
-                        modalAfter.css('display', 'none');
-                    }
+                    $('[x-show="showCreate"]').hide().css('display', 'none');
+                    $('[x-show="showNotification"]').hide().css('display', 'none');
                 }, 50);
             },
-            error: function(xhr) {
+            error: function(xhr, status, error) {
+                console.error('Error creating task:', xhr, status, error);
+                console.error('Response status:', xhr.status);
+                console.error('Response text:', xhr.responseText);
+                console.error('Response JSON:', xhr.responseJSON);
+                
                 submitBtn.prop('disabled', false).text(originalText);
-                console.error('Error creating task:', xhr);
-                if (xhr.responseJSON && xhr.responseJSON.errors) {
-                    let errors = Object.values(xhr.responseJSON.errors).flat();
-                    showNotification('Validation errors:\n' + errors.join('\n'), 'error');
-                } else if (xhr.responseJSON && xhr.responseJSON.message) {
-                    showNotification('Error: ' + xhr.responseJSON.message, 'error');
-                } else {
-                    showNotification('Error creating task. Please try again.', 'error');
+                
+                let errorMessage = 'Error creating task. Please try again.';
+                
+                // Try to parse JSON response
+                let jsonResponse = null;
+                try {
+                    if (xhr.responseJSON) {
+                        jsonResponse = xhr.responseJSON;
+                    } else if (xhr.responseText) {
+                        jsonResponse = JSON.parse(xhr.responseText);
+                    }
+                } catch (e) {
+                    console.error('Failed to parse response as JSON:', e);
                 }
+                
+                if (xhr.status === 422 && jsonResponse && jsonResponse.errors) {
+                    let errors = Object.values(jsonResponse.errors).flat();
+                    errorMessage = 'Validation errors:\n' + errors.join('\n');
+                } else if (jsonResponse && jsonResponse.message) {
+                    errorMessage = 'Error: ' + jsonResponse.message;
+                } else if (xhr.status === 0) {
+                    errorMessage = 'Network error. Please check your connection and try again.';
+                } else if (xhr.status === 403) {
+                    errorMessage = 'You do not have permission to create tasks.';
+                } else if (xhr.status === 500) {
+                    // Check if response text contains database error
+                    if (xhr.responseText && (xhr.responseText.includes('SQLSTATE') || xhr.responseText.includes('column') || xhr.responseText.includes('user_id'))) {
+                        errorMessage = 'Database error: The tasks table may be missing the user_id column. Please run: php artisan migrate';
+                    } else {
+                        errorMessage = 'Server error. Please check the server logs for details.';
+                    }
+                } else if (xhr.responseText && xhr.responseText.includes('SQLSTATE')) {
+                    errorMessage = 'Database error detected. Please run: php artisan migrate';
+                } else {
+                    errorMessage = 'Error creating task: ' + (error || 'Unknown error') + ' (Status: ' + xhr.status + ')';
+                }
+                
+                showNotification(errorMessage, 'error');
             }
         });
         

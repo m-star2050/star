@@ -34,36 +34,172 @@ class TaskController extends Controller
 
     public function store(Request $request)
     {
-        if (!auth()->user()->can('create tasks')) {
-            abort(403, 'Unauthorized. You do not have permission to create tasks.');
-        }
+        try {
+            if (!auth()->user()->can('create tasks')) {
+                if ($request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Unauthorized. You do not have permission to create tasks.'
+                    ], 403);
+                }
+                abort(403, 'Unauthorized. You do not have permission to create tasks.');
+            }
 
-        $data = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'type' => ['nullable', 'string', 'max:255'],
-            'priority' => ['required', Rule::in(['low', 'medium', 'high'])],
-            'due_date' => ['nullable', 'date'],
-            'status' => ['required', Rule::in(['pending', 'in_progress', 'completed'])],
-            'assigned_user_id' => ['nullable', 'integer'],
-            'contact_id' => ['nullable', 'integer', 'exists:crm_contacts,id'],
-            'lead_id' => ['nullable', 'integer', 'exists:crm_leads,id'],
-            'notes' => ['nullable', 'string'],
-        ]);
-
-        // Set user_id to current user's ID (users can only create their own records)
-        $data['user_id'] = auth()->id();
-
-        $task = Task::create($data);
-        
-        if ($request->ajax()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Task created successfully',
-                'task' => $task
+            $data = $request->validate([
+                'title' => ['required', 'string', 'max:255'],
+                'type' => ['nullable', 'string', 'max:255'],
+                'priority' => ['required', Rule::in(['low', 'medium', 'high'])],
+                'due_date' => ['nullable', 'date'],
+                'status' => ['required', Rule::in(['pending', 'in_progress', 'completed'])],
+                'assigned_user_id' => ['nullable', 'integer'],
+                'contact_id' => ['nullable', 'integer', 'exists:crm_contacts,id'],
+                'lead_id' => ['nullable', 'integer', 'exists:crm_leads,id'],
+                'notes' => ['nullable', 'string'],
             ]);
+
+            // Check if user_id column exists in the table
+            $hasUserIdColumn = Schema::hasColumn('crm_tasks', 'user_id');
+            
+            // Set user_id to current user's ID (users can only create their own records)
+            if ($hasUserIdColumn) {
+                $data['user_id'] = auth()->id();
+                
+                // Verify user_id is set
+                if (empty($data['user_id'])) {
+                    throw new \Exception('User ID is required but was not set.');
+                }
+            } else {
+                // If user_id column doesn't exist, remove it from data
+                unset($data['user_id']);
+                \Log::warning('crm_tasks table is missing user_id column. Task created without user_id. Please run: php artisan migrate');
+            }
+
+            \Log::info('Attempting to create task', [
+                'user_id' => auth()->id(),
+                'data_keys' => array_keys($data),
+                'has_user_id_column' => $hasUserIdColumn,
+                'data_user_id' => $data['user_id'] ?? 'not set'
+            ]);
+            
+            try {
+                $task = Task::create($data);
+                \Log::info('Task created successfully', [
+                    'task_id' => $task->id ?? 'no id',
+                    'task_title' => $task->title ?? 'no title'
+                ]);
+            } catch (\Illuminate\Database\QueryException $e) {
+                \Log::error('Database QueryException creating task', [
+                    'message' => $e->getMessage(),
+                    'code' => $e->getCode(),
+                    'sql' => $e->getSql() ?? 'N/A',
+                    'bindings' => $e->getBindings() ?? []
+                ]);
+                
+                // If it's a column error, provide helpful message
+                if (str_contains($e->getMessage(), "Unknown column 'user_id'") || str_contains($e->getMessage(), "column 'user_id' does not exist")) {
+                    if ($request->ajax()) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Database error: The tasks table is missing the user_id column. Please run: php artisan migrate',
+                            'error_type' => 'missing_column'
+                        ], 500);
+                    }
+                    throw new \Exception('Database error: The tasks table is missing the user_id column. Please run: php artisan migrate');
+                }
+                // Re-throw other database errors to be caught by outer catch
+                throw $e;
+            }
+            
+            // Verify task was actually created
+            if (!$task || !$task->id) {
+                \Log::error('Task creation returned no ID', [
+                    'task' => $task ? 'exists but no id' : 'null',
+                    'task_data' => $task ? $task->toArray() : 'null'
+                ]);
+                throw new \Exception('Task creation failed - no task ID returned.');
+            }
+            
+            // Verify task actually exists in database by querying it
+            $taskExists = Task::find($task->id);
+            if (!$taskExists) {
+                \Log::error('Task was created but not found in database', ['task_id' => $task->id]);
+                throw new \Exception('Task creation failed - task was not saved to database.');
+            }
+            
+            // Reload task from database to ensure it was saved
+            try {
+                $task->refresh();
+                \Log::info('Task refreshed from database', ['task_id' => $task->id]);
+            } catch (\Exception $e) {
+                \Log::warning('Could not refresh task, but continuing', ['error' => $e->getMessage()]);
+                // Continue anyway - the task might still be valid
+            }
+            
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Task created successfully',
+                    'task' => $task,
+                    'task_id' => $task->id
+                ], 200); // Explicitly set 200 status
+            }
+            
+            return redirect()->route('crm.tasks.index')->with('status', 'Task created');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            throw $e;
+        } catch (\Illuminate\Database\QueryException $e) {
+            \Log::error('Database error creating task: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'user_id' => auth()->id(),
+                'request_data' => $request->all()
+            ]);
+            
+            $errorMessage = 'Database error while creating task.';
+            
+            // Check if it's a missing column error
+            if (str_contains($e->getMessage(), "Unknown column 'user_id'") || str_contains($e->getMessage(), "column 'user_id' does not exist")) {
+                $errorMessage = 'Database error: The tasks table is missing the user_id column. Please run: php artisan migrate';
+            } elseif (str_contains($e->getMessage(), 'SQLSTATE')) {
+                $errorMessage = 'Database error: ' . substr($e->getMessage(), 0, 200);
+            } else {
+                $errorMessage = 'Database error while creating task: ' . substr($e->getMessage(), 0, 200);
+            }
+            
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $errorMessage,
+                    'error_type' => 'database_error'
+                ], 500);
+            }
+            
+            return redirect()->back()->with('error', $errorMessage);
+        } catch (\Exception $e) {
+            \Log::error('Error creating task: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'user_id' => auth()->id(),
+                'request_data' => $request->all()
+            ]);
+            
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'An error occurred while creating the task: ' . substr($e->getMessage(), 0, 200),
+                    'error_type' => 'general_error'
+                ], 500);
+            }
+            
+            return redirect()->back()->with('error', 'An error occurred while creating the task.');
         }
-        
-        return redirect()->route('crm.tasks.index')->with('status', 'Task created');
     }
 
     public function update(Request $request, Task $task)
